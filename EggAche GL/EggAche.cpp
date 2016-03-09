@@ -107,24 +107,6 @@ namespace EggAche					// MsgBox
 	}
 }
 
-namespace EggAche					// Timer
-{
-	Timer::Timer (int gap_ms, ONTIMER fn_callback)
-	{
-		CreateTimerQueueTimer (
-			&this->_hTimer, NULL,
-			(WAITORTIMERCALLBACK) fn_callback,
-			NULL, 0, gap_ms, WT_EXECUTELONGFUNCTION);
-	}
-
-	Timer::~Timer ()
-	{
-		DeleteTimerQueueTimer (
-			NULL, this->_hTimer,
-			INVALID_HANDLE_VALUE);
-	}
-}
-
 namespace EggAche					// Egg
 {
 	bool Egg::SetPen (int width, int r, int g, int b)

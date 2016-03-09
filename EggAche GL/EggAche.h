@@ -97,20 +97,6 @@ namespace EggAche
 	void MsgBox (
 		const char *szTxt,				// the Text String
 		const char *szCap);				// the Caption String
-
-	//===================Timer Function========================
-
-	class Timer : private _Timer
-	{
-	public:
-		Timer (
-			int gap_ms,					// Time gap, millisecond
-			ONTIMER fn_callback);		// Callback void fn () per Tick
-
-		Timer (const Timer&) = delete;	// Not allow to copy
-
-		~Timer ();						// Stop the Timer
-	};
 }
 
 #endif  //EGGACHE_GL

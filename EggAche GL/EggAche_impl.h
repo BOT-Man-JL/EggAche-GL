@@ -53,14 +53,6 @@ namespace EggAche
 		static const COLORREF _colorMask;
 		static const COLORREF _GetColor (int r, int g, int b);
 	};
-
-	typedef void (*ONTIMER)();
-
-	class _Timer
-	{
-	public:
-		HANDLE	_hTimer;
-	};
 }
 
 #endif  //EGGACHE_GL_IMPL
