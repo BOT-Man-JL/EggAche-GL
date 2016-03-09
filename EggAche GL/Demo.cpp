@@ -13,7 +13,6 @@ int main ()
 
 	e.DrawTxt (0, 0, "haha");
 	ee = e;
-	ee.DrawTxt (10, 0, "hh");
 
 	wnd.AddEgg (e);
 	wwnd.AddEgg (ee);

@@ -42,6 +42,7 @@ namespace EggAche
 
 		bool Refresh () override;							// Refresh the Window
 		bool IsClosed () const;								// Is Window closed
+		void operator = (const Window &) = delete;
 	protected:
 		std::list<Egg *> ly;								// Egg layer data
 	};
@@ -86,6 +87,7 @@ namespace EggAche
 					  int b = -1);							// Blue color of mask
 
 		void Clear ();										// Clear the Egg
+		void operator = (const Egg &) = delete;
 	private:
 		int x, y;											// Postion data
 	};
