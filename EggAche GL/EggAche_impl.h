@@ -1,3 +1,7 @@
+//
+// Implementation Interface of EggAche Graphics Library
+// By BOT Man, 2016
+//
 
 #ifndef EGGACHE_GL_IMPL
 #define EGGACHE_GL_IMPL

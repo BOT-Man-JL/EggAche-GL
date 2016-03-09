@@ -1,3 +1,7 @@
+//
+// Inner Implementation of EggAche Graphics Library
+// By BOT Man, 2016
+//
 
 #include <windows.h>
 #include <windowsx.h>
@@ -108,7 +112,6 @@ namespace EggAche					// _Window
 
 	LRESULT CALLBACK _Window::_WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		int a, b, c;
 		switch (message)
 		{
 		case WM_LBUTTONUP:
@@ -127,10 +130,6 @@ namespace EggAche					// _Window
 		case WM_SIZE:
 			_mHwnd[hwnd]->_cxClient = LOWORD (lParam);
 			_mHwnd[hwnd]->_cyClient = HIWORD (lParam);
-
-			a = LOWORD (lParam);
-			b = HIWORD (lParam);
-			c = GetSystemMetrics (SM_CYSCREEN);
 			return 0;
 
 		case WM_PAINT:

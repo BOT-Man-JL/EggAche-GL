@@ -1,3 +1,7 @@
+//
+// Implementation of EggAche Graphics Library
+// By BOT Man, 2016
+//
 
 #include <windows.h>
 #include <windowsx.h>
@@ -109,7 +113,7 @@ namespace EggAche					// MsgBox
 
 namespace EggAche					// Egg
 {
-	bool Egg::SetPen (int width, int r, int g, int b)
+	bool Egg::SetPen (unsigned int width, unsigned int r, unsigned int g, unsigned int b)
 	{
 		HPEN		hPen;
 		HGDIOBJ		hObj;
@@ -133,7 +137,7 @@ namespace EggAche					// Egg
 		return true;
 	}
 
-	bool Egg::SetBrush (int r, int g, int b)
+	bool Egg::SetBrush (unsigned int r, unsigned int g, unsigned int b)
 	{
 		HBRUSH		hBrush;
 		HGDIOBJ		hObj;
