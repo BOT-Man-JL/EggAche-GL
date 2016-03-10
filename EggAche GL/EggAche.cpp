@@ -10,6 +10,16 @@
 #include "EggAche.h"
 #include "EggAche_impl.h"
 
+// Defined in windows.h but not in MinGW
+
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
 namespace EggAche					// Window
 {
 	Window::Window (int width, int height, const char * cap_string,

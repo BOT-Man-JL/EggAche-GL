@@ -12,6 +12,16 @@
 
 #include "EggAche_impl.h"
 
+// Defined in windows.h but not in MinGW
+
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
 namespace EggAche					// _Window
 {
 	double _dRatio ()	// _dRatio Wrapper
@@ -32,6 +42,8 @@ namespace EggAche					// _Window
 		if (width < 240 || height < 120)
 			throw std::runtime_error ("Err_Window_#1_Too_Small");
 
+#ifdef _MSC_VER
+		// Windows SDK only support Unicode version Window Class
 		if (_mHwnd ().empty ())
 		{
 			WNDCLASSW wndclass;
@@ -49,6 +61,26 @@ namespace EggAche					// _Window
 			if (!RegisterClassW (&wndclass))
 				throw std::runtime_error ("Err_Window_#2_RegClass");
 		}
+#else
+		// MinGW only support ANSI version Window Class
+		if (_mHwnd ().empty ())
+		{
+			WNDCLASSA wndclass;
+			wndclass.style = CS_HREDRAW | CS_VREDRAW;
+			wndclass.lpfnWndProc = _WndProc;
+			wndclass.cbClsExtra = 0;
+			wndclass.cbWndExtra = 0;
+			wndclass.hInstance = (HINSTANCE) GetCurrentProcess ();
+			wndclass.hIcon = LoadIcon (NULL, IDI_APPLICATION);
+			wndclass.hCursor = LoadCursor (NULL, IDC_ARROW);
+			wndclass.hbrBackground = (HBRUSH) GetStockObject (WHITE_BRUSH);
+			wndclass.lpszMenuName = NULL;
+			wndclass.lpszClassName = "LJN_WNDCLASSA";
+
+			if (!RegisterClassA (&wndclass))
+				throw std::runtime_error ("Err_Window_#2_RegClass");
+		}
+#endif
 
 		this->_hEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
 		if (!this->_hEvent)
@@ -122,6 +154,7 @@ namespace EggAche					// _Window
 
 	LRESULT CALLBACK _Window::_WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
+		int a, b, c;
 		switch (message)
 		{
 		case WM_LBUTTONUP:
@@ -140,6 +173,10 @@ namespace EggAche					// _Window
 		case WM_SIZE:
 			_mHwnd ()[hwnd]->_cxClient = LOWORD (lParam);
 			_mHwnd ()[hwnd]->_cyClient = HIWORD (lParam);
+
+			a = LOWORD (lParam);
+			b = HIWORD (lParam);
+			c = GetSystemMetrics (SM_CYSCREEN);
 			return 0;
 
 		case WM_PAINT:
