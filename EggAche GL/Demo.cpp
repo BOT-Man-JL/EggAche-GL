@@ -52,8 +52,8 @@ int main ()
 		// 刷新一下g_window
 		g_window.Refresh ();
 
-		// 延时100毫秒
-		std::this_thread::sleep_for (std::chrono::milliseconds (100));
+		// 延时50毫秒
+		std::this_thread::sleep_for (std::chrono::milliseconds (50));
 	}
 
 	return 0;

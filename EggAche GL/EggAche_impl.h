@@ -14,7 +14,7 @@ namespace EggAche
 	typedef void (*ONCLICK)(int, int);
 	typedef void (*ONPRESS)(char);
 
-	const double _dRatio = (double) GetSystemMetrics (SM_CYSCREEN) / 1000;
+	double _dRatio ();
 	
 	class _Window
 	{

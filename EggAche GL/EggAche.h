@@ -7,6 +7,7 @@
 #define EGGACHE_GL
 
 #include <list>
+#include <exception>
 #include "EggAche_impl.h"
 
 namespace EggAche
@@ -31,6 +32,7 @@ namespace EggAche
 		// 2. If you click or press a key on Window, back-end will call fnClick or fnPress;
 		//    Calling fnClick with (int x, int y) means point (x, y) is Clicked;
 		//    Calling fnPress with (char ch) means character ch is Inputed;
+		// 3. When an error occurs, throw std::runtime_error
 
 		Window (const Window &);
 		~Window ();
@@ -54,6 +56,8 @@ namespace EggAche
 
 		Egg (unsigned int width, unsigned int height,		// Egg's size
 			 int pos_x = 0, int pos_y = 0);					// Egg's initial postion
+		// Remarks:
+		// When an error occurs, throw std::runtime_error
 
 		int GetX () const;									// Get Egg's coordinate x
 		int GetY () const;									// Get Egg's coordinate y

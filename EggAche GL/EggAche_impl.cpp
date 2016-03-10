@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <exception>
+#include <string>
 #include <unordered_map>
 #pragma comment (lib, "Msimg32.lib")
 
@@ -13,16 +14,25 @@
 
 namespace EggAche					// _Window
 {
-	std::unordered_map<HWND, _Window *> _mHwnd;
+	double _dRatio ()	// _dRatio Wrapper
+	{
+		return (double) GetSystemMetrics (SM_CYSCREEN) / 1000;
+	}
+
+	std::unordered_map<HWND, _Window *> &_mHwnd ()	// _mHwnd Wrapper
+	{
+		static std::unordered_map<HWND, _Window *> m;
+		return m;
+	}
 
 	_Window::_Window (ONCLICK fnClick, ONPRESS fnPress, const char * cap_string, int width, int height)
 		: _hwnd (NULL), _hEvent (NULL), _fFailed (false), _fClosed (false),
 		_fnOnClick (fnClick), _fnOnPress (fnPress), _szCap (cap_string), _cxCanvas (width), _cyCanvas (height)
 	{
 		if (width < 240 || height < 120)
-			throw std::exception ("Err_Window_#1_Too_Small");
+			throw std::runtime_error ("Err_Window_#1_Too_Small");
 
-		if (_mHwnd.empty ())
+		if (_mHwnd ().empty ())
 		{
 			WNDCLASSW wndclass;
 			wndclass.style = CS_HREDRAW | CS_VREDRAW;
@@ -34,16 +44,16 @@ namespace EggAche					// _Window
 			wndclass.hCursor = LoadCursor (NULL, IDC_ARROW);
 			wndclass.hbrBackground = (HBRUSH) GetStockObject (WHITE_BRUSH);
 			wndclass.lpszMenuName = NULL;
-			wndclass.lpszClassName = L"LJN_WNDCLASS";
+			wndclass.lpszClassName = L"LJN_WNDCLASSA";
 
 			if (!RegisterClassW (&wndclass))
-				throw std::exception ("Err_Window_#2_RegClass");
+				throw std::runtime_error ("Err_Window_#2_RegClass");
 		}
 
 		this->_hEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
 		if (!this->_hEvent)
 		{
-			throw std::exception ("Err_Window_#2_Event");
+			throw std::runtime_error ("Err_Window_#2_Event");
 		}
 
 		auto hThread = CreateThread (NULL, 0, (LPTHREAD_START_ROUTINE) _NewWindow_Thread,
@@ -52,7 +62,7 @@ namespace EggAche					// _Window
 		if (!hThread)
 		{
 			CloseHandle (this->_hEvent);
-			throw std::exception ("Err_Window_#2_Thread");
+			throw std::runtime_error ("Err_Window_#2_Thread");
 		}
 
 		WaitForSingleObject (this->_hEvent, INFINITE);
@@ -60,7 +70,7 @@ namespace EggAche					// _Window
 		CloseHandle (this->_hEvent);
 
 		if (this->_fFailed)
-			throw std::exception ("Err_Window_#3_CreateWindow");
+			throw std::runtime_error ("Err_Window_#3_CreateWindow");
 	}
 
 	_Window::_Window (const _Window & origin)
@@ -84,11 +94,11 @@ namespace EggAche					// _Window
 	{
 		MSG msg;
 
-		pew->_hwnd = CreateWindowA ("LJN_WNDCLASS", pew->_szCap.c_str (),
+		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->_szCap.c_str (),
 								   WS_OVERLAPPEDWINDOW,  // & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
 								   CW_USEDEFAULT, CW_USEDEFAULT,  //CW_USEDEFAULT, CW_USEDEFAULT,
-								   (int) (pew->_cxCanvas * _dRatio) + GetSystemMetrics (SM_CXSIZEFRAME) * 4,
-								   (int) (pew->_cyCanvas * _dRatio)
+								   (int) (pew->_cxCanvas * _dRatio ()) + GetSystemMetrics (SM_CXSIZEFRAME) * 4,
+								   (int) (pew->_cyCanvas * _dRatio ())
 								   + GetSystemMetrics (SM_CYSIZEFRAME) * 4 + GetSystemMetrics (SM_CYCAPTION),
 								   NULL, NULL, (HINSTANCE) GetCurrentProcess (), NULL);
 		if (!pew->_hwnd)
@@ -97,7 +107,7 @@ namespace EggAche					// _Window
 			SetEvent (pew->_hEvent);
 		}
 
-		_mHwnd[pew->_hwnd] = pew;
+		_mHwnd ()[pew->_hwnd] = pew;
 
 		ShowWindow (pew->_hwnd, SW_NORMAL);
 		UpdateWindow (pew->_hwnd);
@@ -116,30 +126,30 @@ namespace EggAche					// _Window
 		{
 		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
-			if (_mHwnd[hwnd]->_fnOnClick)
-				_mHwnd[hwnd]->_fnOnClick (
-					GET_X_LPARAM (lParam) * _mHwnd[hwnd]->_cxCanvas / _mHwnd[hwnd]->_cxClient,
-					GET_Y_LPARAM (lParam) * _mHwnd[hwnd]->_cyCanvas / _mHwnd[hwnd]->_cyClient);
+			if (_mHwnd ()[hwnd]->_fnOnClick)
+				_mHwnd ()[hwnd]->_fnOnClick (
+					GET_X_LPARAM (lParam) * _mHwnd ()[hwnd]->_cxCanvas / _mHwnd ()[hwnd]->_cxClient,
+					GET_Y_LPARAM (lParam) * _mHwnd ()[hwnd]->_cyCanvas / _mHwnd ()[hwnd]->_cyClient);
 			return 0;
 
 		case WM_CHAR:
-			if (_mHwnd[hwnd]->_fnOnPress)
-				_mHwnd[hwnd]->_fnOnPress ((char) wParam);
+			if (_mHwnd ()[hwnd]->_fnOnPress)
+				_mHwnd ()[hwnd]->_fnOnPress ((char) wParam);
 			return 0;
 
 		case WM_SIZE:
-			_mHwnd[hwnd]->_cxClient = LOWORD (lParam);
-			_mHwnd[hwnd]->_cyClient = HIWORD (lParam);
+			_mHwnd ()[hwnd]->_cxClient = LOWORD (lParam);
+			_mHwnd ()[hwnd]->_cyClient = HIWORD (lParam);
 			return 0;
 
 		case WM_PAINT:
-			_mHwnd[hwnd]->Refresh ();
+			_mHwnd ()[hwnd]->Refresh ();
 			return 0;
 
 		case WM_DESTROY:
-			_mHwnd[hwnd]->_fClosed = true;
-			_mHwnd.erase (hwnd);
-			_mHwnd[NULL] = nullptr;		// _mHwnd.empty == false
+			_mHwnd ()[hwnd]->_fClosed = true;
+			_mHwnd ().erase (hwnd);
+			_mHwnd ()[NULL] = nullptr;		// _mHwnd ().empty == false
 
 			PostQuitMessage (0);
 			return 0;
@@ -160,8 +170,8 @@ namespace EggAche					// _DrawContext
 		hdcWnd = GetDC (NULL);
 		this->_hdc = CreateCompatibleDC (hdcWnd);
 
-		auto cxBmp = (int) (this->_w * _dRatio);
-		auto cyBmp = (int) (this->_h * _dRatio);
+		auto cxBmp = (int) (this->_w * _dRatio ());
+		auto cyBmp = (int) (this->_h * _dRatio ());
 
 		_hBitmap = CreateCompatibleBitmap (hdcWnd, cxBmp, cyBmp);
 
@@ -174,7 +184,7 @@ namespace EggAche					// _DrawContext
 			if (this->_hBitmap) DeleteObject (this->_hBitmap);
 			if (this->_hdc) DeleteDC (this->_hdc);
 			ReleaseDC (NULL, hdcWnd);
-			throw std::exception ("Err_DC_#0_Bitmap");
+			throw std::runtime_error ("Err_DC_#0_Bitmap");
 		}
 		SelectObject (this->_hdc, this->_hBitmap);
 
@@ -201,8 +211,8 @@ namespace EggAche					// _DrawContext
 		hdcWnd = GetDC (NULL);
 		this->_hdc = CreateCompatibleDC (hdcWnd);
 
-		auto cxBmp = (int) (this->_w * _dRatio);
-		auto cyBmp = (int) (this->_h * _dRatio);
+		auto cxBmp = (int) (this->_w * _dRatio ());
+		auto cyBmp = (int) (this->_h * _dRatio ());
 
 		this->_hBitmap = CreateCompatibleBitmap (hdcWnd, cxBmp, cyBmp);
 
@@ -215,7 +225,7 @@ namespace EggAche					// _DrawContext
 			if (this->_hBitmap) DeleteObject (this->_hBitmap);
 			if (this->_hdc) DeleteDC (this->_hdc);
 			ReleaseDC (NULL, hdcWnd);
-			throw std::exception ("Err_DC_#0_Bitmap");
+			throw std::runtime_error ("Err_DC_#0_Bitmap");
 		}
 		SelectObject (this->_hdc, this->_hBitmap);
 
