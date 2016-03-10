@@ -6,7 +6,7 @@ In this version, Egg and Window are encapsulated as Classes.
 ![alt text](/EggAche GL/Egg.bmp "EggBmp")
 
 ## Platform
-At least Windows 98; but still Windows only...
+Windows (MSVC / MinGW are both supported);
 
 Require C++ 11 support;
 
