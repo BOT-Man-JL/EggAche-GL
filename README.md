@@ -15,6 +15,3 @@ Require C++ 11 support;
 1. Copy *EggAche.h*, *EggAche.cpp*, *EggAche_impl.h*, *EggAche_impl.cpp* to your project path.
 2. Add the 4 files to your project.
 3. #include **"EggAche.h"** when you want to use EggAche Library.
-
-## Contact Me
-Email to 359710062@qq.com
