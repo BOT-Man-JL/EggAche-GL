@@ -7,26 +7,20 @@
 #define EGGACHE_GL
 
 #include <list>
-#include <exception>
 #include "EggAche_impl.h"
 
 namespace EggAche
 {
 	class Egg;
 
-	typedef void (*ONCLICK)(int, int);
-	typedef void (*ONPRESS)(char);
-
 	//===================EggAche Window========================
 
-	class Window : private _Window
+	class Window
 	{
 	public:
 		Window (
-			int width = 1000, int height = 750,				// Size at least 240 * 120
-			const char *cap_string = "Hello EggAche",		// Caption String
-			ONCLICK fnClick = nullptr,						// Callback void fnClick (int, int)
-			ONPRESS fnPress = nullptr);						// Callback void fnPress (char)
+			size_t width = 1000, size_t height = 750,		// Size at least 240 * 120
+			const char *cap_string = "Hello EggAche");		// Caption String
 		// Remarks:
 		// 1. Create a Window of Logic Size width * height with Caption cap_string;
 		// 2. If you click or press a key on Window, back-end will call fnClick or fnPress;
@@ -34,30 +28,32 @@ namespace EggAche
 		//    Calling fnPress with (char ch) means character ch is Inputed;
 		// 3. When an error occurs, throw std::runtime_error
 
-		Window (const Window &);
 		~Window ();
-		
-		void AddEgg (Egg& e);								// Add Egg to Window
-		std::list<Egg *> &GetLayer ();						// Get Egg layer list
 
-		bool Refresh () override;							// Refresh the Window
+		Egg *GetEgg ();										// Get Background Egg
+		void Refresh ();									// Refresh the Window
 		bool IsClosed () const;								// Is Window closed
-		void operator = (const Window &) = delete;			// Not allow to copy
-	protected:
-		std::list<Egg *> ly;								// Egg layer data
+		
+		Window (const Window &) = delete;					// Not allow to copy
+		void operator= (const Window &) = delete;			// Not allow to copy
+
+	private:
+		void DrawEgg (const Egg *);							// Helper Function of Refresh
+		WindowImpl *windowImpl;								// Window Impl Bridge
+		Egg *bgEgg;											// Background Egg
 	};
 
 	//===========================Egg===========================
 
-	class Egg : protected _DrawContext
+	class Egg
 	{
 	public:
-		friend class Window;
-
 		Egg (unsigned int width, unsigned int height,		// Egg's size
 			 int pos_x = 0, int pos_y = 0);					// Egg's initial postion
 		// Remarks:
 		// When an error occurs, throw std::runtime_error
+
+		~Egg ();
 
 		int GetX () const;									// Get Egg's coordinate x
 		int GetY () const;									// Get Egg's coordinate y
@@ -66,6 +62,9 @@ namespace EggAche
 		// Remarks:
 		// If scale_x > 0, Egg will be moved right scale_x units; else moved left -scale_x;
 		// Similarly move scale_y;
+
+		void AddEgg (const Egg &egg);								// Add Sub Eggs
+		void RemoveEgg (const Egg &egg);							// Remove Sub Eggs
 
 		bool SetPen (unsigned int width,					// Pen width
 					 unsigned int r = 0,					// Pen color
@@ -132,9 +131,11 @@ namespace EggAche
 		// Remarks:
 		// Draw the szText with a upper left point (xBeg, yBeg)
 
+		bool DrawBmp (const char *szPath);					// Source: "path/name.bmp"
+
 		bool DrawBmp (const char *szPath,					// Source: "path/name.bmp"
 					  int x = 0, int y = 0,					// Position to paste in Egg
-					  int width = -1, int height = -1,		// Size to paste (-1 as default)
+					  int width = -1, int height = -1,		// Size to paste in Egg (-1 as default)
 					  int r = -1,							// Red color of mask (-1 is not used)
 					  int g = -1,							// Green color of mask
 					  int b = -1);							// Blue color of mask
@@ -147,16 +148,20 @@ namespace EggAche
 		// Remarks:
 		// Erase all the content in Egg
 
-		void operator = (const Egg &) = delete;				// Not allow to copy
+		Egg (const Egg &) = delete;							// Not allow to copy
+		void operator= (const Egg &) = delete;				// Not allow to copy
+		friend class Window;
 	private:
-		int x, y;											// Postion data
+		int x, y;											// Postion
+		std::list<const Egg *> subEggs;						// Sub Eggs
+		GUIContext *context;								// GUI Impl Bridge
 	};
 
 	//======================Message Box========================
 
 	void MsgBox (
-		const char *szTxt,				// Text String
-		const char *szCap);				// Caption String
+		const char *szTxt,						// Text String
+		const char *szCap = "Hello EggAche");	// Caption String
 	// Remarks:
 	// Pop up a Message Box;
 }

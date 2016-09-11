@@ -6,57 +6,68 @@
 #ifndef EGGACHE_GL_IMPL
 #define EGGACHE_GL_IMPL
 
-#include <windows.h>
-#include <string>
-
 namespace EggAche
 {
-	typedef void (*ONCLICK)(int, int);
-	typedef void (*ONPRESS)(char);
+	class GUIContext;
 
-	double _dRatio ();
-	
-	class _Window
+	class WindowImpl
 	{
 	public:
-		_Window (ONCLICK fnClick, ONPRESS fnPress,
-				 const char * cap_string, int width, int height);
-		_Window (const _Window &origin);
-		~_Window ();
-
-		HWND	_hwnd;
-		HANDLE	_hEvent;
-		bool	_fFailed;
-
-		int		_cxClient, _cyClient;
-		int		_cxCanvas, _cyCanvas;
-
-		std::string		_szCap;
-		ONCLICK			_fnOnClick;
-		ONPRESS			_fnOnPress;
-		bool			_fClosed;
-		virtual bool	Refresh ();
-
-		static void WINAPI _NewWindow_Thread (_Window *pew);
-		static LRESULT CALLBACK _WndProc (HWND, UINT, WPARAM, LPARAM);
+		virtual void Draw (const GUIContext *context, size_t x, size_t y) = 0;
+		virtual bool IsClosed () const = 0;
 	};
 
-	class _DrawContext
+	class GUIContext
 	{
 	public:
-		HDC _hdc;
-		HBITMAP _hBitmap;
-		unsigned int _w, _h;
+		virtual bool SetPen (unsigned int width,
+							 unsigned int r = 0,
+							 unsigned int g = 0,
+							 unsigned int b = 0) = 0;
 
-		_DrawContext (unsigned int width, unsigned int height);
-		_DrawContext (const _DrawContext &origin);
-		~_DrawContext ();
+		virtual bool SetBrush (unsigned int r,
+							   unsigned int g,
+							   unsigned int b) = 0;
 
-		const bool _PaintOn (HDC hdcWnd, int x, int y);
+		virtual bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd) = 0;
 
-		static const COLORREF _colorMask;
-		static const COLORREF _GetColor (int r, int g, int b);
+		virtual bool DrawRect (int xBeg, int yBeg, int xEnd, int yEnd) = 0;
+
+		virtual bool DrawElps (int xBeg, int yBeg, int xEnd, int yEnd) = 0;
+
+		virtual bool DrawRdRt (int xBeg, int yBeg,
+							   int xEnd, int yEnd, int wElps, int hElps) = 0;
+
+		virtual bool DrawArc (int xLeft, int yTop, int xRight, int yBottom,
+							  int xBeg, int yBeg, int xEnd, int yEnd) = 0;
+
+		virtual bool DrawChord (int xLeft, int yTop, int xRight, int yBottom,
+								int xBeg, int yBeg, int xEnd, int yEnd) = 0;
+
+		virtual bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
+							  int xBeg, int yBeg, int xEnd, int yEnd) = 0;
+
+		virtual bool DrawTxt (int xBeg, int yBeg, const char *szText) = 0;
+
+		virtual bool DrawBmp (const char *szPath,
+							  int x = 0, int y = 0,
+							  int width = -1, int height = -1,
+							  int r = -1,
+							  int g = -1,
+							  int b = -1) = 0;
+
+		virtual void Clear () = 0;
 	};
+
+	class GUIFactory
+	{
+	public:
+		virtual WindowImpl *NewWindow (size_t width, size_t height,
+									   const char *cap_string) = 0;
+		virtual GUIContext *NewGUIContext (size_t width, size_t height) = 0;
+	};
+
+	void MsgBox_Impl (const char *szTxt, const char *szCap);
 }
 
 #endif  //EGGACHE_GL_IMPL

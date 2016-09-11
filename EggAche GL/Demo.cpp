@@ -1,84 +1,109 @@
+ï»¿////
+//// A demo of EggAche Graphics Library
+//// By BOT Man, 2016
+////
 //
-// A demo of EggAche Graphics Library
-// By BOT Man, 2016
+//#include "EggAche.h"	// å¼•ç”¨EggAche.hç”»å›¾
+//#include <thread>		// ç”¨äºè°ƒç”¨std::this_thread::sleep_foræ¥å»¶æ—¶
 //
+//void fnClick (int x, int y);	// é¼ æ ‡ç‚¹å‡»å‡½æ•°
+//void fnPress (char ch);			// é”®ç›˜æ•²å‡»å‡½æ•°
+//
+//EggAche::Window g_window (1000, 750, "Demo", fnClick, fnPress);
+//	// æ–°å»ºä¸€ä¸ª1000 * 750çš„çª—å£ï¼Œæ ‡é¢˜ä¸ºâ€œDemoâ€
+//	// å¦‚æœè¢«ç‚¹å‡»ï¼Œè°ƒç”¨fnClickï¼Œå¹¶ä¼ å…¥ç‚¹å‡»åæ ‡
+//	// å¦‚æœæœ‰é”®ç›˜è¾“å…¥ï¼Œè°ƒç”¨fnPressï¼Œå¹¶ä¼ å…¥è¾“å…¥å­—ç¬¦
+//
+//EggAche::Egg g_egg (1000, 750);		// æ–°å»ºä¸€ä¸ªå’Œçª—å£ä¸€æ ·å¤§çš„egg
+//
+//int main ()
+//{
+//	EggAche::Egg background (1000, 750), egg (60, 80);		// æ–°å»ºä¸¤ä¸ªegg
+//
+//	// åœ¨backgroundä¸Šå†™å­—
+//	background.DrawTxt (0, 0, "Adapted and Responsive design.");
+//	background.DrawTxt (0, 50, "You can resize the window, and everything will be stretched.");
+//	background.DrawTxt (0, 100, "You can click and press a key on the window.");
+//
+//	// åœ¨eggä¸Šé‡‡ç”¨å¹³é“ºæ–¹å¼è´´å›¾ï¼Œå¹¶å°†ç™½è‰²(255,255,255)å˜æˆé€æ˜
+//	egg.DrawBmp ("Egg.bmp", 0, 0, -1, -1, 255, 255, 255);
+//
+//	// å°†eggç§»åˆ°åˆ°(470, 355)
+//	egg.MoveTo (470, 355);
+//
+//	// å°†ä¸‰ä¸ªEggæŒ‰é¡ºåºå…³è”åˆ°g_window
+//	g_window.AddEgg (background);
+//	g_window.AddEgg (g_egg);
+//	g_window.AddEgg (egg);
+//
+//	// g_windowè‡ªåŠ¨åˆ·æ–°å…³è”çš„Egg
+//	g_window.Refresh ();
+//
+//	// åˆ¤æ–­çª—å£æ˜¯å¦å…³é—­
+//	while (!g_window.IsClosed ())
+//	{
+//		// eggå‘å³ç§»åŠ¨4ä¸ªå•ä½ï¼Œå‘ä¸‹3ä¸ªå•ä½
+//		egg.Move (4, 3);
+//
+//		// å¦‚æœç§»è¿‡å¤´äº†å°±æ”¾å›æ¥
+//		if (egg.GetX () >= 940 || egg.GetY () >= 670)
+//			egg.MoveTo (470, 355);
+//
+//		// åˆ·æ–°ä¸€ä¸‹g_window
+//		g_window.Refresh ();
+//
+//		// å»¶æ—¶50æ¯«ç§’
+//		std::this_thread::sleep_for (std::chrono::milliseconds (50));
+//	}
+//
+//	return 0;
+//}
+//
+//// å½“ç‚¹å‡»g_windowåï¼Œä¼ å…¥ç‚¹å‡»åæ ‡(x, y)
+//void fnClick (int x, int y)
+//{
+//	// å°†ä¹‹å‰çš„g_eggæ¸…ç©º
+//	g_egg.Clear ();
+//
+//	// åœ¨g_eggç”»ä¸€æ¡ä»(0, 0)åˆ°(x, y)çš„ç›´çº¿
+//	g_egg.DrawLine (0, 0, x, y);
+//
+//	// ç«‹å³åˆ·æ–°g_window
+//	g_window.Refresh ();
+//}
+//
+//// å½“é”®ç›˜è¾“å…¥åˆ°g_windowåï¼Œä¼ å…¥è¾“å…¥å­—ç¬¦ch
+//void fnPress (char ch)
+//{
+//	char str[2];
+//	
+//	// å°†é”®ç›˜è¾“å…¥Asciiè½¬ä¸ºä¸´æ—¶å­—ç¬¦ä¸²æ¥å¯¹è¯æ¡†è¾“å‡º
+//	str[0] = ch;
+//	str[1] = 0;
+//	EggAche::MsgBox (str, "ASCII Value");
+//}
 
-#include "EggAche.h"	// ÒıÓÃEggAche.h»­Í¼
-#include <thread>		// ÓÃÓÚµ÷ÓÃstd::this_thread::sleep_forÀ´ÑÓÊ±
+#include "EggAche.h"
+#include <thread>
 
-void fnClick (int x, int y);	// Êó±êµã»÷º¯Êı
-void fnPress (char ch);			// ¼üÅÌÇÃ»÷º¯Êı
-
-EggAche::Window g_window (1000, 750, "Demo", fnClick, fnPress);
-	// ĞÂ½¨Ò»¸ö1000 * 750µÄ´°¿Ú£¬±êÌâÎª¡°Demo¡±
-	// Èç¹û±»µã»÷£¬µ÷ÓÃfnClick£¬²¢´«Èëµã»÷×ø±ê
-	// Èç¹ûÓĞ¼üÅÌÊäÈë£¬µ÷ÓÃfnPress£¬²¢´«ÈëÊäÈë×Ö·û
-
-EggAche::Egg g_egg (1000, 750);		// ĞÂ½¨Ò»¸öºÍ´°¿ÚÒ»Ñù´óµÄegg
-
-int main ()
+int main (int argc, char *argv[])
 {
-	EggAche::Egg background (1000, 750), egg (60, 80);		// ĞÂ½¨Á½¸öegg
+	using namespace EggAche;
+	Window wnd (1000, 750);
 
-	// ÔÚbackgroundÉÏĞ´×Ö
-	background.DrawTxt (0, 0, "Adapted and Responsive design.");
-	background.DrawTxt (0, 50, "You can resize the window, and everything will be stretched.");
-	background.DrawTxt (0, 100, "You can click and press a key on the window.");
+	auto egg = wnd.GetEgg ();
 
-	// ÔÚeggÉÏ²ÉÓÃÆ½ÆÌ·½Ê½ÌùÍ¼£¬²¢½«°×É«(255,255,255)±ä³ÉÍ¸Ã÷
-	egg.DrawBmp ("Egg.bmp", 0, 0, -1, -1, 255, 255, 255);
+	egg->DrawTxt (0, 0, "haha");
+	egg->DrawLine (0, 0, 1000, 750);
 
-	// ½«eggÒÆµ½µ½(470, 355)
-	egg.MoveTo (470, 355);
+	//MsgBox ("haha");
 
-	// ½«Èı¸öEgg°´Ë³Ğò¹ØÁªµ½g_window
-	g_window.AddEgg (background);
-	g_window.AddEgg (g_egg);
-	g_window.AddEgg (egg);
-
-	// g_window×Ô¶¯Ë¢ĞÂ¹ØÁªµÄEgg
-	g_window.Refresh ();
-
-	// ÅĞ¶Ï´°¿ÚÊÇ·ñ¹Ø±Õ
-	while (!g_window.IsClosed ())
+	while (!wnd.IsClosed ())
 	{
-		// eggÏòÓÒÒÆ¶¯4¸öµ¥Î»£¬ÏòÏÂ3¸öµ¥Î»
-		egg.Move (4, 3);
-
-		// Èç¹ûÒÆ¹ıÍ·ÁË¾Í·Å»ØÀ´
-		if (egg.GetX () >= 940 || egg.GetY () >= 670)
-			egg.MoveTo (470, 355);
-
-		// Ë¢ĞÂÒ»ÏÂg_window
-		g_window.Refresh ();
-
-		// ÑÓÊ±50ºÁÃë
-		std::this_thread::sleep_for (std::chrono::milliseconds (50));
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for (500ms);
+		wnd.Refresh ();
 	}
 
 	return 0;
-}
-
-// µ±µã»÷g_windowºó£¬´«Èëµã»÷×ø±ê(x, y)
-void fnClick (int x, int y)
-{
-	// ½«Ö®Ç°µÄg_eggÇå¿Õ
-	g_egg.Clear ();
-
-	// ÔÚg_egg»­Ò»Ìõ´Ó(0, 0)µ½(x, y)µÄÖ±Ïß
-	g_egg.DrawLine (0, 0, x, y);
-
-	// Á¢¼´Ë¢ĞÂg_window
-	g_window.Refresh ();
-}
-
-// µ±¼üÅÌÊäÈëµ½g_windowºó£¬´«ÈëÊäÈë×Ö·ûch
-void fnPress (char ch)
-{
-	char str[2];
-	
-	// ½«¼üÅÌÊäÈëAscii×ªÎªÁÙÊ±×Ö·û´®À´¶Ô»°¿òÊä³ö
-	str[0] = ch;
-	str[1] = 0;
-	EggAche::MsgBox (str, "ASCII Value");
 }

@@ -147,11 +147,12 @@
   <ItemGroup>
     <ClCompile Include="Demo.cpp" />
     <ClCompile Include="EggAche.cpp" />
-    <ClCompile Include="EggAche_impl.cpp" />
+    <ClCompile Include="Windows_Impl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EggAche.h" />
     <ClInclude Include="EggAche_impl.h" />
+    <ClInclude Include="Windows_Impl.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
