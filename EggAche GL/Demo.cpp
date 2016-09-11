@@ -89,11 +89,11 @@
 int main (int argc, char *argv[])
 {
 	using namespace EggAche;
-	Window wnd (1000, 750);
+	Window wnd;
 
 	auto egg = wnd.GetEgg ();
 
-	egg->DrawTxt (0, 0, "haha");
+	egg->DrawTxt (0, 0, "Chinese Chars ~");
 	egg->DrawLine (0, 0, 1000, 750);
 
 	//MsgBox ("haha");

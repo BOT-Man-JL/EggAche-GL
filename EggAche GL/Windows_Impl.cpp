@@ -105,36 +105,9 @@ namespace EggAche
 
 		RECT	rect;
 		HDC		hdcWnd;
-		//HDC		hdc;
-		//HBITMAP	hBitmap;
 
 		hdcWnd = GetDC (this->_hwnd);
 		if (!hdcWnd) throw std::runtime_error ("Draw Failed at GetDC");
-
-		//hdc = CreateCompatibleDC (hdcWnd);
-		////hBitmap = CreateCompatibleBitmap (hdcWnd, this->_cxClient, this->_cyClient);
-		//hBitmap = CreateCompatibleBitmap (hdcWnd, this->_cxCanvas, this->_cyCanvas);
-
-		//if (!hdc || !hBitmap)
-		//{
-		//	if (hBitmap) DeleteObject (hBitmap);
-		//	if (hdc) DeleteDC (hdc);
-		//	ReleaseDC (this->_hwnd, hdcWnd);
-		//	throw std::runtime_error ("Draw Failed at CreateCompatibleDC/CreateCompatibleBitmap");
-		//}
-		//SelectObject (hdc, hBitmap);
-
-		//rect.left = rect.top = 0;
-		////rect.right = this->_cxClient;
-		////rect.bottom = this->_cyClient;
-		//rect.right = this->_cxCanvas;
-		//rect.bottom = this->_cyCanvas;
-		//FillRect (hdc, &rect, (HBRUSH) GetStockObject (WHITE_BRUSH));
-
-		//SaveDC (hdc);
-		//SetMapMode (hdc, MM_ANISOTROPIC);
-		//SetWindowExtEx (hdc, this->_cxCanvas, this->_cyCanvas, NULL);
-		//SetViewportExtEx (hdc, this->_cxClient, this->_cyClient, NULL);
 
 		// Assume that context is GUIContext_Windows
 		auto _context = static_cast<const GUIContext_Windows *> (context);
@@ -142,25 +115,10 @@ namespace EggAche
 							 _context->_hdc, 0, 0, _context->_w, _context->_h,
 							 GUIContext_Windows::_colorMask))
 		{
-			//DeleteObject (hBitmap);
-			//DeleteDC (hdc);
 			ReleaseDC (this->_hwnd, hdcWnd);
 			throw std::runtime_error ("Draw Failed at BitBlt");
 		}
 
-		//RestoreDC (hdc, -1);
-
-		//if (!BitBlt (hdcWnd, 0, 0, this->_cxClient, this->_cyClient,
-		//			 hdc, 0, 0, SRCCOPY))
-		//{
-		//	DeleteObject (hBitmap);
-		//	DeleteDC (hdc);
-		//	ReleaseDC (this->_hwnd, hdcWnd);
-		//	throw std::runtime_error ("Draw Failed at BitBlt");
-		//}
-
-		//DeleteObject (hBitmap);
-		//DeleteDC (hdc);
 		ReleaseDC (this->_hwnd, hdcWnd);
 	}
 
@@ -397,9 +355,18 @@ namespace EggAche
 		return !!Pie (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool GUIContext_Windows::DrawTxt (int xBeg, int yBeg, const char * szText)
+	bool GUIContext_Windows::DrawTxt (int xBeg, int yBeg, const char * szText,
+									  size_t fontSize, const char *fontFamily)
 	{
+		HFONT hFont, hFontPre;
+		hFont = CreateFontA (fontSize, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+							 CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, fontFamily);
+		hFontPre = (HFONT) SelectObject (this->_hdc, hFont);
+
 		return !!TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
+
+		SelectObject (this->_hdc, hFontPre);
+		DeleteObject (hFont);
 	}
 
 	bool GUIContext_Windows::DrawBmp (const char * szPath, int x, int y, int width, int height, int r, int g, int b)

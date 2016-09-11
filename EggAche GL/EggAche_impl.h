@@ -47,7 +47,8 @@ namespace EggAche
 		virtual bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
 							  int xBeg, int yBeg, int xEnd, int yEnd) = 0;
 
-		virtual bool DrawTxt (int xBeg, int yBeg, const char *szText) = 0;
+		virtual bool DrawTxt (int xBeg, int yBeg, const char *szText,
+							  size_t fontSize, const char *fontFamily) = 0;
 
 		virtual bool DrawBmp (const char *szPath,
 							  int x = 0, int y = 0,

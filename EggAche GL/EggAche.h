@@ -127,7 +127,8 @@ namespace EggAche
 		// The curve begins at the point where the Ellipse intersects the first radial
 		// and extends counterclockwise to the point where the second radial intersects;
 
-		bool DrawTxt (int xBeg, int yBeg, const char *szText);
+		bool DrawTxt (int xBeg, int yBeg, const char *szText,
+					  size_t fontSize = 18, const char *fontFamily = "Consolas");
 		// Remarks:
 		// Draw the szText with a upper left point (xBeg, yBeg)
 

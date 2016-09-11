@@ -161,9 +161,10 @@ namespace EggAche
 		return context->DrawPie (xLeft, yTop, xLeft, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool Egg::DrawTxt (int xBeg, int yBeg, const char *szText)
+	bool Egg::DrawTxt (int xBeg, int yBeg, const char *szText,
+					   size_t fontSize, const char *fontFamily)
 	{
-		return context->DrawTxt (xBeg, yBeg, szText);
+		return context->DrawTxt (xBeg, yBeg, szText, fontSize, fontFamily);
 	}
 
 	bool Egg::DrawBmp (const char * szPath)
