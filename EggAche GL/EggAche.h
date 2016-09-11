@@ -6,6 +6,7 @@
 #ifndef EGGACHE_GL
 #define EGGACHE_GL
 
+#include <functional>
 #include <list>
 #include "EggAche_impl.h"
 
@@ -22,10 +23,7 @@ namespace EggAche
 				const char *cap_string = "Hello EggAche");		// Caption String
 		// Remarks:
 		// 1. Create a Window of Logic Size width * height with Caption cap_string;
-		// 2. If you click or press a key on Window, back-end will call fnClick or fnPress;
-		//    Calling fnClick with (int x, int y) means point (x, y) is Clicked;
-		//    Calling fnPress with (char ch) means character ch is Inputed;
-		// 3. When an error occurs, throw std::runtime_error
+		// 2. When an error occurs, throw std::runtime_error
 
 		~Window ();
 		// Remarks:
@@ -44,6 +42,15 @@ namespace EggAche
 		bool IsClosed () const;								// Is Window closed
 		// Remarks:
 		// If the Window has been Closed by User, it will return false
+
+		void OnClick (std::function<void (int, int)> fn);
+		void OnPress (std::function<void (char)> fn);
+		void OnResized (std::function<void (int, int)> fn);
+		// Remarks:
+		// If you click or press a key on Window, back-end will callback fn;
+		// 1. Calling fnClick with (int x, int y) means point (x, y) is Clicked;
+		// 2. Calling fnPress with (char ch) means character 'ch' is Inputted;
+		// 3. Calling fnResized with (int x, int y) means Currently Window Size is x * y;
 
 	private:
 		void DrawEgg (const Egg *, size_t, size_t);			// Helper Function of Refresh

@@ -57,6 +57,21 @@ namespace EggAche
 		return windowImpl->IsClosed ();
 	}
 
+	void Window::OnClick (std::function<void (int, int)> fn)
+	{
+		windowImpl->OnClick (std::move (fn));
+	}
+
+	void Window::OnPress (std::function<void (char)> fn)
+	{
+		windowImpl->OnPress (std::move (fn));
+	}
+
+	void Window::OnResized (std::function<void (int, int)> fn)
+	{
+		windowImpl->OnResized (std::move (fn));
+	}
+
 	Egg::Egg (unsigned int width, unsigned int height, int pos_x, int pos_y)
 		: context (nullptr), x (pos_x), y (pos_y)
 	{
@@ -101,7 +116,10 @@ namespace EggAche
 	void Egg::AddEgg (Egg *egg)
 	{
 		if (egg != this)
+		{
 			subEggs.push_back (egg);
+			subEggs.unique ();
+		}
 	}
 
 	void Egg::RemoveEgg (Egg *egg)

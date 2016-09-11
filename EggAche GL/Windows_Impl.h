@@ -19,6 +19,11 @@ namespace EggAche
 		void Draw (const GUIContext *context, size_t x, size_t y) override;
 		void Clear () override;
 		bool IsClosed () const override;
+
+		void OnClick (std::function<void (int, int)> fn) override;
+		void OnPress (std::function<void (char)> fn) override;
+		void OnResized (std::function<void (int, int)> fn) override;
+
 	protected:
 		int			_cxCanvas, _cyCanvas;
 		std::string	capStr;
@@ -26,6 +31,10 @@ namespace EggAche
 		HWND		_hwnd;
 		HANDLE		_hEvent;
 		bool		_fFailed;
+
+		std::function<void (int, int)> onClick;
+		std::function<void (char)> onPress;
+		std::function<void (int, int)> onResized;
 
 		static std::unordered_map<HWND, WindowImpl_Windows *> _mHwnd;
 		static void WINAPI _NewWindow_Thread (WindowImpl_Windows *pew);
@@ -79,6 +88,7 @@ namespace EggAche
 					  int b = -1) override;
 
 		void Clear () override;
+
 	protected:
 		HDC _hdc;
 		HBITMAP _hBitmap;

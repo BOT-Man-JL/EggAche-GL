@@ -6,6 +6,8 @@
 #ifndef EGGACHE_GL_IMPL
 #define EGGACHE_GL_IMPL
 
+#include <functional>
+
 namespace EggAche
 {
 	class GUIContext;
@@ -20,6 +22,10 @@ namespace EggAche
 						   size_t x, size_t y) = 0;
 		virtual void Clear () = 0;
 		virtual bool IsClosed () const = 0;
+
+		virtual void OnClick (std::function<void (int, int)> fn) = 0;
+		virtual void OnPress (std::function<void (char)> fn) = 0;
+		virtual void OnResized (std::function<void (int, int)> fn) = 0;
 	};
 
 	class GUIContext

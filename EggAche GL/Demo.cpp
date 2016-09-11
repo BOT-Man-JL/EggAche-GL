@@ -95,6 +95,14 @@
 
 #include "EggAche.h"
 #include <thread>
+#include <string>
+
+void hello (char ch)
+{
+	std::string promptStr ("You inputted: ");
+	promptStr += ch;
+	EggAche::MsgBox (promptStr.c_str ());
+}
 
 int main (int argc, char *argv[])
 {
@@ -113,6 +121,9 @@ int main (int argc, char *argv[])
 	egg->DrawLine (0, 0, 1000, 750);
 	egg->DrawBmp ("Egg.bmp", 100, 200);
 
+	auto egge = new Egg (1000, 750);
+
+
 	auto eggee = new Egg (200, 300, 200, 300);
 	eggee->DrawLine (0, 0, 200, 300);
 	eggee->DrawTxt (0, 0, "Chinese Chars ~");
@@ -121,10 +132,25 @@ int main (int argc, char *argv[])
 	eggeee->DrawTxt (0, 18, "Haha");
 	eggeee->DrawLine (200, 0, 0, 300);
 
+	egg->AddEgg (egge);
+	egg->AddEgg (eggee);
 	egg->AddEgg (eggee);
 	eggee->AddEgg (eggeee);
 
-	MsgBox ("haha");
+	wnd->OnClick ([&] (int x, int y)
+	{
+		egge->Clear ();
+		egge->DrawLine (0, 0, x, y);
+		wnd->Refresh ();
+	});
+
+	//wnd->OnPress ([] (char ch)
+	//{
+	//	std::string promptStr ("You inputted: ");
+	//	promptStr += ch;
+	//	MsgBox (promptStr.c_str ());
+	//});
+	wnd->OnPress (hello);
 
 	while (!wnd->IsClosed ())
 	{

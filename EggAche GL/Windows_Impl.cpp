@@ -1,5 +1,6 @@
 
 #include <Windows.h>
+#include <windowsx.h>
 #include <exception>
 #include "Windows_Impl.h"
 #pragma comment (lib, "Msimg32.lib")
@@ -80,7 +81,7 @@ namespace EggAche
 
 		auto hThread = CreateThread (NULL, 0,
 			(LPTHREAD_START_ROUTINE) _NewWindow_Thread,
-			(LPVOID) this, 0, NULL);
+									 (LPVOID) this, 0, NULL);
 
 		if (!hThread)
 		{
@@ -143,6 +144,21 @@ namespace EggAche
 		return this->_hwnd == NULL;
 	}
 
+	void WindowImpl_Windows::OnClick (std::function<void (int, int)> fn)
+	{
+		onClick = std::move (fn);
+	}
+
+	void WindowImpl_Windows::OnPress (std::function<void (char)> fn)
+	{
+		onPress = std::move (fn);
+	}
+
+	void WindowImpl_Windows::OnResized (std::function<void (int, int)> fn)
+	{
+		onResized = std::move (fn);
+	}
+
 	void WindowImpl_Windows::_NewWindow_Thread (WindowImpl_Windows *pew)
 	{
 		MSG msg;
@@ -174,27 +190,25 @@ namespace EggAche
 		}
 	}
 
-	LRESULT CALLBACK WindowImpl_Windows::_WndProc(
+	LRESULT CALLBACK WindowImpl_Windows::_WndProc (
 		HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
 		{
-			//case WM_LBUTTONUP:
-			//case WM_RBUTTONUP:
-			//	if (_mHwnd[hwnd]->_fnOnClick)
-			//		_mHwnd[hwnd]->_fnOnClick (
-			//			GET_X_LPARAM (lParam) * _mHwnd[hwnd]->_cxCanvas / _mHwnd[hwnd]->_cxClient,
-			//			GET_Y_LPARAM (lParam) * _mHwnd[hwnd]->_cyCanvas / _mHwnd[hwnd]->_cyClient);
-			//	return 0;
+		case WM_LBUTTONUP:
+		case WM_RBUTTONUP:
+			if (_mHwnd[hwnd]->onClick)
+				_mHwnd[hwnd]->onClick (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
+			return 0;
 
-			//case WM_CHAR:
-			//	if (_mHwnd[hwnd]->_fnOnPress)
-			//		_mHwnd[hwnd]->_fnOnPress ((char) wParam);
-			//	return 0;
+		case WM_CHAR:
+			if (_mHwnd[hwnd]->onPress)
+				_mHwnd[hwnd]->onPress ((char) wParam);
+			return 0;
 
 		case WM_SIZE:
-			//_mHwnd[hwnd]->_cxClient = LOWORD (lParam);
-			//_mHwnd[hwnd]->_cyClient = HIWORD (lParam);
+			if (_mHwnd[hwnd]->onResized)
+				_mHwnd[hwnd]->onResized (LOWORD (lParam), HIWORD (lParam));
 			return 0;
 
 		case WM_PAINT:
@@ -220,9 +234,9 @@ namespace EggAche
 	const COLORREF GUIContext_Windows::_colorMask = RGB (0, 0, 201);
 	const COLORREF GUIContext_Windows::_GetColor (int r, int g, int b)
 	{
-		const auto mMax = 
+		const auto mMax =
 			[] (const int &a, const int &b) { return a > b ? a : b; };
-		const auto mMin = 
+		const auto mMin =
 			[] (const int &a, const int &b) { return a < b ? a : b; };
 
 		r = mMax (0, mMin (255, r));
