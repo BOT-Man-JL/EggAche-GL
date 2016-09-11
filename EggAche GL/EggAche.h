@@ -38,7 +38,7 @@ namespace EggAche
 		void operator= (const Window &) = delete;			// Not allow to copy
 
 	private:
-		void DrawEgg (const Egg *);							// Helper Function of Refresh
+		void DrawEgg (const Egg *, size_t, size_t);			// Helper Function of Refresh
 		WindowImpl *windowImpl;								// Window Impl Bridge
 		Egg *bgEgg;											// Background Egg
 	};
@@ -63,8 +63,8 @@ namespace EggAche
 		// If scale_x > 0, Egg will be moved right scale_x units; else moved left -scale_x;
 		// Similarly move scale_y;
 
-		void AddEgg (const Egg &egg);								// Add Sub Eggs
-		void RemoveEgg (const Egg &egg);							// Remove Sub Eggs
+		void AddEgg (Egg *egg);								// Add Sub Eggs
+		void RemoveEgg (Egg *egg);							// Remove Sub Eggs
 
 		bool SetPen (unsigned int width,					// Pen width
 					 unsigned int r = 0,					// Pen color
@@ -132,11 +132,12 @@ namespace EggAche
 		// Remarks:
 		// Draw the szText with a upper left point (xBeg, yBeg)
 
-		bool DrawBmp (const char *szPath);					// Source: "path/name.bmp"
+		bool DrawBmp (const char *szPath,					// Source: "path/name.bmp"
+					  int x, int y);						// Position to paste in Egg
 
 		bool DrawBmp (const char *szPath,					// Source: "path/name.bmp"
-					  int x = 0, int y = 0,					// Position to paste in Egg
-					  int width = -1, int height = -1,		// Size to paste in Egg (-1 as default)
+					  int x, int y,							// Position to paste in Egg
+					  int width, int height,				// Size to paste in Egg
 					  int r = -1,							// Red color of mask (-1 is not used)
 					  int g = -1,							// Green color of mask
 					  int b = -1);							// Blue color of mask

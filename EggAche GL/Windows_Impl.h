@@ -3,7 +3,6 @@
 #define EGGACHE_GL_IMPL_WIN
 
 #include <unordered_map>
-#include <string>
 #include <Windows.h>
 #include "EggAche_impl.h"
 
@@ -14,7 +13,7 @@ namespace EggAche
 	public:
 		WindowImpl_Windows (size_t width, size_t height,
 							const char *cap_string);
-		~WindowImpl_Windows ();
+		~WindowImpl_Windows () override;
 
 		void Draw (const GUIContext *context, size_t x, size_t y) override;
 		bool IsClosed () const override;
@@ -23,7 +22,7 @@ namespace EggAche
 		void operator= (const WindowImpl_Windows &) = delete;			// Not allow to copy
 	protected:
 		int			_cxCanvas, _cyCanvas;
-		std::string	_szCap;
+		char		*_szCap;
 
 		HWND		_hwnd;
 		HANDLE		_hEvent;
@@ -38,7 +37,7 @@ namespace EggAche
 	{
 	public:
 		GUIContext_Windows (size_t width, size_t height);
-		~GUIContext_Windows ();
+		~GUIContext_Windows () override;
 
 		bool SetPen (unsigned int width,
 					 unsigned int r = 0,
@@ -71,7 +70,7 @@ namespace EggAche
 					  size_t fontSize, const char *fontFamily) override;
 
 		bool DrawBmp (const char *szPath,
-					  int x = 0, int y = 0,
+					  int x, int y,
 					  int width = -1, int height = -1,
 					  int r = -1,
 					  int g = -1,

@@ -24,9 +24,12 @@ namespace EggAche
 	std::unordered_map<HWND, WindowImpl_Windows *> WindowImpl_Windows::_mHwnd;
 
 	WindowImpl_Windows::WindowImpl_Windows (size_t width, size_t height, const char *cap_string)
-		: _cxCanvas (width), _cyCanvas (height), _szCap (cap_string),
-		_hwnd (NULL), _hEvent (NULL), _fFailed (false)
+		: _cxCanvas (width), _cyCanvas (height), _szCap (nullptr),
+		_hwnd (NULL), _hEvent (NULL), _fFailed (false), WindowImpl (width, height, cap_string)
 	{
+		_szCap = new char[strlen (cap_string) + 1];
+		strcpy (_szCap, cap_string);
+
 		if (width < 240 || height < 120)
 			throw std::runtime_error ("Err_Window_#1_Too_Small");
 
@@ -95,16 +98,18 @@ namespace EggAche
 
 	WindowImpl_Windows::~WindowImpl_Windows ()
 	{
-		SendMessage (this->_hwnd, WM_CLOSE, 0, 0);
+		delete[] _szCap;
+		if (this->_hwnd != NULL)
+			SendMessage (this->_hwnd, WM_CLOSE, 0, 0);
 	}
 
 	void WindowImpl_Windows::Draw (const GUIContext *context, size_t x, size_t y)
 	{
-		if (this->_hwnd == NULL)
-			throw std::runtime_error ("Window has been closed...");
-
 		RECT	rect;
 		HDC		hdcWnd;
+
+		if (this->_hwnd == NULL)
+			return;
 
 		hdcWnd = GetDC (this->_hwnd);
 		if (!hdcWnd) throw std::runtime_error ("Draw Failed at GetDC");
@@ -131,7 +136,7 @@ namespace EggAche
 	{
 		MSG msg;
 
-		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->_szCap.c_str (),
+		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->_szCap,
 									WS_OVERLAPPEDWINDOW,  // & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
 									CW_USEDEFAULT, CW_USEDEFAULT,  //CW_USEDEFAULT, CW_USEDEFAULT,
 									pew->_cxCanvas, pew->_cyCanvas,
@@ -214,7 +219,8 @@ namespace EggAche
 	}
 
 	GUIContext_Windows::GUIContext_Windows (size_t width, size_t height)
-		: _hdc (NULL), _hBitmap (NULL), _w (width), _h (height)
+		: _hdc (NULL), _hBitmap (NULL), _w (width), _h (height),
+		GUIContext (width, height)
 	{
 		HBRUSH	hBrush;
 		RECT	rect;
@@ -388,8 +394,8 @@ namespace EggAche
 		}
 		SelectObject (hdcMemImag, hBitmapImag);
 
-		if (width == -1) width = this->_w;
-		if (height == -1) height = this->_h;
+		if (width == -1) width = bitmap.bmWidth;
+		if (height == -1) height = bitmap.bmHeight;
 
 		if (r == -1 || g == -1 || b == -1)
 		{

@@ -83,27 +83,55 @@
 //	EggAche::MsgBox (str, "ASCII Value");
 //}
 
+
+// Memory Leaks Tracer
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC  // For *alloc()
+#include <stdlib.h>  //Should be before including <crtdbg.h>
+#include <crtdbg.h>
+#define new new(_NORMAL_BLOCK,__FILE__,__LINE__)  // For new
+#endif  // _DEBUG
+
+
 #include "EggAche.h"
 #include <thread>
 
 int main (int argc, char *argv[])
 {
+#ifdef _DEBUG
+	_CrtSetDbgFlag (_CrtSetDbgFlag (_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
+	// If Traced "{69} normal block at ...", Then Call to Break
+	//_CrtSetBreakAlloc (160);
+#endif  // _DEBUG
+
 	using namespace EggAche;
-	Window wnd;
+	auto wnd = new Window ();
 
-	auto egg = wnd.GetEgg ();
+	auto egg = wnd->GetEgg ();
 
-	egg->DrawTxt (0, 0, "Chinese Chars ~");
 	egg->DrawLine (0, 0, 1000, 750);
+	egg->DrawBmp ("Egg.bmp", 100, 200);
 
-	//MsgBox ("haha");
+	auto eggee = new Egg (200, 300, 200, 300);
+	eggee->DrawLine (0, 0, 200, 300);
+	eggee->DrawTxt (0, 0, "Chinese Chars ~");
 
-	while (!wnd.IsClosed ())
+	auto eggeee = new Egg (200, 300);
+	eggeee->DrawTxt (0, 18, "Haha");
+	eggeee->DrawLine (200, 0, 0, 300);
+
+	egg->AddEgg (eggee);
+	eggee->AddEgg (eggeee);
+
+	while (!wnd->IsClosed ())
 	{
 		using namespace std::chrono_literals;
 		std::this_thread::sleep_for (500ms);
-		wnd.Refresh ();
+		wnd->Refresh ();
 	}
 
+	delete eggee;
+	delete eggeee;
+	delete wnd;
 	return 0;
 }

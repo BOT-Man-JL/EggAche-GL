@@ -11,8 +11,10 @@ namespace EggAche
 	Window::Window (size_t width,
 					size_t height,
 					const char *cap_string)
-		: bgEgg (new Egg (width, height)), windowImpl (nullptr)
+		: bgEgg (nullptr), windowImpl (nullptr)
 	{
+		bgEgg = new Egg (width, height);
+
 		GUIFactory *guiFactory = nullptr;
 
 #ifdef WIN32
@@ -27,6 +29,7 @@ namespace EggAche
 	Window::~Window ()
 	{
 		delete windowImpl;
+		delete bgEgg;
 	}
 
 	Egg *Window::GetEgg ()
@@ -34,17 +37,18 @@ namespace EggAche
 		return bgEgg;
 	}
 
-	void Window::DrawEgg (const Egg *egg)
+	void Window::DrawEgg (const Egg *egg, size_t xPre, size_t yPre)
 	{
-		windowImpl->Draw (egg->context, egg->x, egg->y);
+		auto x = xPre + egg->x, y = yPre + egg->y;
+		windowImpl->Draw (egg->context, x, y);
 		for (auto subEgg : egg->subEggs)
-			DrawEgg (subEgg);
+			DrawEgg (subEgg, x, y);
 	}
 
 	void Window::Refresh ()
 	{
-		//if (!IsClosed ())
-			DrawEgg (bgEgg);
+		if (!IsClosed ())
+			DrawEgg (bgEgg, 0, 0);
 	}
 
 	bool Window::IsClosed () const
@@ -105,15 +109,15 @@ namespace EggAche
 		return y;
 	}
 
-	void Egg::AddEgg (const Egg &egg)
+	void Egg::AddEgg (Egg *egg)
 	{
-		subEggs.push_back (&egg);
-		subEggs.unique ();
+		if (egg != this)
+			subEggs.push_back (egg);
 	}
 
-	void Egg::RemoveEgg (const Egg &egg)
+	void Egg::RemoveEgg (Egg *egg)
 	{
-		subEggs.remove (&egg);
+		subEggs.remove (egg);
 	}
 
 	bool Egg::SetPen (unsigned int width, unsigned int r, unsigned int g, unsigned int b)
@@ -167,12 +171,12 @@ namespace EggAche
 		return context->DrawTxt (xBeg, yBeg, szText, fontSize, fontFamily);
 	}
 
-	bool Egg::DrawBmp (const char * szPath)
+	bool Egg::DrawBmp (const char *szPath, int x, int y)
 	{
-		return context->DrawBmp (szPath);
+		return context->DrawBmp (szPath, x, y);
 	}
 
-	bool Egg::DrawBmp (const char * szPath, int x, int y, int width, int height, int r, int g, int b)
+	bool Egg::DrawBmp (const char *szPath, int x, int y, int width, int height, int r, int g, int b)
 	{
 		return context->DrawBmp (szPath, x, y, width, height, r, g, b);
 	}
