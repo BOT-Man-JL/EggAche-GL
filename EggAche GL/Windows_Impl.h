@@ -3,6 +3,7 @@
 #define EGGACHE_GL_IMPL_WIN
 
 #include <unordered_map>
+#include <string>
 #include <Windows.h>
 #include "EggAche_impl.h"
 
@@ -16,13 +17,11 @@ namespace EggAche
 		~WindowImpl_Windows () override;
 
 		void Draw (const GUIContext *context, size_t x, size_t y) override;
+		void Clear () override;
 		bool IsClosed () const override;
-
-		WindowImpl_Windows (const WindowImpl_Windows &) = delete;		// Not allow to copy
-		void operator= (const WindowImpl_Windows &) = delete;			// Not allow to copy
 	protected:
 		int			_cxCanvas, _cyCanvas;
-		char		*_szCap;
+		std::string	capStr;
 
 		HWND		_hwnd;
 		HANDLE		_hEvent;
@@ -31,6 +30,9 @@ namespace EggAche
 		static std::unordered_map<HWND, WindowImpl_Windows *> _mHwnd;
 		static void WINAPI _NewWindow_Thread (WindowImpl_Windows *pew);
 		static LRESULT CALLBACK _WndProc (HWND, UINT, WPARAM, LPARAM);
+
+		WindowImpl_Windows (const WindowImpl_Windows &) = delete;		// Not allow to copy
+		void operator= (const WindowImpl_Windows &) = delete;			// Not allow to copy
 	};
 
 	class GUIContext_Windows : public GUIContext
@@ -77,10 +79,6 @@ namespace EggAche
 					  int b = -1) override;
 
 		void Clear () override;
-
-		friend class WindowImpl_Windows;
-		GUIContext_Windows (const GUIContext_Windows &) = delete;		// Not allow to copy
-		void operator= (const GUIContext_Windows &) = delete;			// Not allow to copy
 	protected:
 		HDC _hdc;
 		HBITMAP _hBitmap;
@@ -88,6 +86,10 @@ namespace EggAche
 
 		static const COLORREF _colorMask;
 		static const COLORREF _GetColor (int r, int g, int b);
+
+		GUIContext_Windows (const GUIContext_Windows &) = delete;		// Not allow to copy
+		void operator= (const GUIContext_Windows &) = delete;			// Not allow to copy
+		friend class WindowImpl_Windows;
 	};
 
 	class GUIFactory_Windows : public GUIFactory

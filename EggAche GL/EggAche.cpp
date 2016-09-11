@@ -47,6 +47,7 @@ namespace EggAche
 
 	void Window::Refresh ()
 	{
+		windowImpl->Clear ();
 		if (!IsClosed ())
 			DrawEgg (bgEgg, 0, 0);
 	}
@@ -54,18 +55,6 @@ namespace EggAche
 	bool Window::IsClosed () const
 	{
 		return windowImpl->IsClosed ();
-	}
-
-	template<typename ONCLICK>
-	inline void Window::OnClick (ONCLICK fn)
-	{
-		windowImpl->OnClick (fn);
-	}
-
-	template<typename ONPRESS>
-	inline void Window::OnPress (ONPRESS fn)
-	{
-		windowImpl->OnPress (fn);
 	}
 
 	Egg::Egg (unsigned int width, unsigned int height, int pos_x, int pos_y)

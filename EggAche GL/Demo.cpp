@@ -98,6 +98,7 @@
 
 int main (int argc, char *argv[])
 {
+
 #ifdef _DEBUG
 	_CrtSetDbgFlag (_CrtSetDbgFlag (_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
 	// If Traced "{69} normal block at ...", Then Call to Break
@@ -123,11 +124,13 @@ int main (int argc, char *argv[])
 	egg->AddEgg (eggee);
 	eggee->AddEgg (eggeee);
 
+	MsgBox ("haha");
+
 	while (!wnd->IsClosed ())
 	{
+		wnd->Refresh ();
 		using namespace std::chrono_literals;
 		std::this_thread::sleep_for (500ms);
-		wnd->Refresh ();
 	}
 
 	delete eggee;

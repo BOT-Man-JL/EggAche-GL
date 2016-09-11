@@ -18,9 +18,8 @@ namespace EggAche
 	class Window
 	{
 	public:
-		Window (
-			size_t width = 1000, size_t height = 750,		// Size at least 240 * 120
-			const char *cap_string = "Hello EggAche");		// Caption String
+		Window (size_t width = 1000, size_t height = 750,		// Size at least 240 * 120
+				const char *cap_string = "Hello EggAche");		// Caption String
 		// Remarks:
 		// 1. Create a Window of Logic Size width * height with Caption cap_string;
 		// 2. If you click or press a key on Window, back-end will call fnClick or fnPress;
@@ -29,18 +28,30 @@ namespace EggAche
 		// 3. When an error occurs, throw std::runtime_error
 
 		~Window ();
+		// Remarks:
+		// Destroy the Window
 
 		Egg *GetEgg ();										// Get Background Egg
+		// Remarks:
+		// DON'T MOVE this Egg...
+
 		void Refresh ();									// Refresh the Window
+		// Remarks:
+		// 1. Call this function everytime you want to Render
+		//    the Background Egg and its Sub Eggs
+		// 2. When an error occurs, throw std::runtime_error
+
 		bool IsClosed () const;								// Is Window closed
-		
-		Window (const Window &) = delete;					// Not allow to copy
-		void operator= (const Window &) = delete;			// Not allow to copy
+		// Remarks:
+		// If the Window has been Closed by User, it will return false
 
 	private:
 		void DrawEgg (const Egg *, size_t, size_t);			// Helper Function of Refresh
 		WindowImpl *windowImpl;								// Window Impl Bridge
 		Egg *bgEgg;											// Background Egg
+
+		Window (const Window &) = delete;					// Not allow to copy
+		void operator= (const Window &) = delete;			// Not allow to copy
 	};
 
 	//===========================Egg===========================
@@ -54,6 +65,7 @@ namespace EggAche
 		// When an error occurs, throw std::runtime_error
 
 		~Egg ();
+		// Destroy the Egg
 
 		int GetX () const;									// Get Egg's coordinate x
 		int GetY () const;									// Get Egg's coordinate y
@@ -65,6 +77,8 @@ namespace EggAche
 
 		void AddEgg (Egg *egg);								// Add Sub Eggs
 		void RemoveEgg (Egg *egg);							// Remove Sub Eggs
+		// Remarks:
+		// Associated Eggs will be rendered after this Egg
 
 		bool SetPen (unsigned int width,					// Pen width
 					 unsigned int r = 0,					// Pen color
@@ -75,6 +89,29 @@ namespace EggAche
 					   unsigned int b);
 		// Remarks:
 		// If one of r/g/b = -1, the Pen/Brush will be set Transparent;
+
+		void Clear ();										// Clear the Egg
+		// Remarks:
+		// Erase the content in Egg
+
+		bool DrawTxt (int xBeg, int yBeg, const char *szText,
+					  size_t fontSize = 18, const char *fontFamily = "Consolas");
+		// Remarks:
+		// Draw the szText with a upper left point (xBeg, yBeg)
+
+		bool DrawBmp (const char *szPath,					// Source: "path/name.bmp"
+					  int x, int y);						// Position to paste in Egg
+
+		bool DrawBmp (const char *szPath,					// Source: "path/name.bmp"
+					  int x, int y,							// Position to paste in Egg
+					  int width, int height,				// Size to paste in Egg
+					  int r = -1,							// Red color of mask (-1 is not used)
+					  int g = -1,							// Green color of mask
+					  int b = -1);							// Blue color of mask
+		// Remarks:
+		// 1. The bmp file will be stretched into width * height in Egg;
+		// 2. The color of colorMask will be set to Transparent;
+		//    If one of r/g/b is -1, the Egg will be set Opaque;
 
 		bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd);
 		// Remarks:
@@ -127,36 +164,14 @@ namespace EggAche
 		// The curve begins at the point where the Ellipse intersects the first radial
 		// and extends counterclockwise to the point where the second radial intersects;
 
-		bool DrawTxt (int xBeg, int yBeg, const char *szText,
-					  size_t fontSize = 18, const char *fontFamily = "Consolas");
-		// Remarks:
-		// Draw the szText with a upper left point (xBeg, yBeg)
-
-		bool DrawBmp (const char *szPath,					// Source: "path/name.bmp"
-					  int x, int y);						// Position to paste in Egg
-
-		bool DrawBmp (const char *szPath,					// Source: "path/name.bmp"
-					  int x, int y,							// Position to paste in Egg
-					  int width, int height,				// Size to paste in Egg
-					  int r = -1,							// Red color of mask (-1 is not used)
-					  int g = -1,							// Green color of mask
-					  int b = -1);							// Blue color of mask
-		// Remarks:
-		// 1. The bmp file will be stretched into width * height in Egg;
-		// 2. The color of colorMask will be set to Transparent;
-		//    If one of r/g/b is -1, the Egg will be set Opaque;
-
-		void Clear ();										// Clear the Egg
-		// Remarks:
-		// Erase all the content in Egg
-
-		Egg (const Egg &) = delete;							// Not allow to copy
-		void operator= (const Egg &) = delete;				// Not allow to copy
-		friend class Window;
 	private:
 		int x, y;											// Postion
 		std::list<const Egg *> subEggs;						// Sub Eggs
 		GUIContext *context;								// GUI Impl Bridge
+
+		Egg (const Egg &) = delete;							// Not allow to copy
+		void operator= (const Egg &) = delete;				// Not allow to copy
+		friend class Window;
 	};
 
 	//======================Message Box========================

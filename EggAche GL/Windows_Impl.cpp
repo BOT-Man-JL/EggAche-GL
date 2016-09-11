@@ -23,13 +23,12 @@ namespace EggAche
 
 	std::unordered_map<HWND, WindowImpl_Windows *> WindowImpl_Windows::_mHwnd;
 
-	WindowImpl_Windows::WindowImpl_Windows (size_t width, size_t height, const char *cap_string)
-		: _cxCanvas (width), _cyCanvas (height), _szCap (nullptr),
-		_hwnd (NULL), _hEvent (NULL), _fFailed (false), WindowImpl (width, height, cap_string)
+	WindowImpl_Windows::WindowImpl_Windows (size_t width, size_t height,
+											const char *cap_string)
+		: _cxCanvas (width), _cyCanvas (height), capStr (cap_string),
+		_hwnd (NULL), _hEvent (NULL), _fFailed (false),
+		WindowImpl (width, height, cap_string)
 	{
-		_szCap = new char[strlen (cap_string) + 1];
-		strcpy (_szCap, cap_string);
-
 		if (width < 240 || height < 120)
 			throw std::runtime_error ("Err_Window_#1_Too_Small");
 
@@ -79,7 +78,8 @@ namespace EggAche
 			throw std::runtime_error ("Err_Window_#2_Event");
 		}
 
-		auto hThread = CreateThread (NULL, 0, (LPTHREAD_START_ROUTINE) _NewWindow_Thread,
+		auto hThread = CreateThread (NULL, 0,
+			(LPTHREAD_START_ROUTINE) _NewWindow_Thread,
 			(LPVOID) this, 0, NULL);
 
 		if (!hThread)
@@ -98,20 +98,17 @@ namespace EggAche
 
 	WindowImpl_Windows::~WindowImpl_Windows ()
 	{
-		delete[] _szCap;
 		if (this->_hwnd != NULL)
 			SendMessage (this->_hwnd, WM_CLOSE, 0, 0);
 	}
 
-	void WindowImpl_Windows::Draw (const GUIContext *context, size_t x, size_t y)
+	void WindowImpl_Windows::Draw (const GUIContext *context,
+								   size_t x, size_t y)
 	{
-		RECT	rect;
-		HDC		hdcWnd;
-
 		if (this->_hwnd == NULL)
 			return;
 
-		hdcWnd = GetDC (this->_hwnd);
+		auto hdcWnd = GetDC (this->_hwnd);
 		if (!hdcWnd) throw std::runtime_error ("Draw Failed at GetDC");
 
 		// Assume that context is GUIContext_Windows
@@ -127,6 +124,20 @@ namespace EggAche
 		ReleaseDC (this->_hwnd, hdcWnd);
 	}
 
+	void WindowImpl_Windows::Clear ()
+	{
+		auto hdcWnd = GetDC (this->_hwnd);
+		if (!hdcWnd) throw std::runtime_error ("Draw Failed at GetDC");
+
+		RECT rect;
+		rect.top = rect.left = 0;
+		rect.right = this->_cxCanvas;
+		rect.bottom = this->_cyCanvas;
+
+		FillRect (hdcWnd, &rect, (HBRUSH) GetStockObject (WHITE_BRUSH));
+		ReleaseDC (this->_hwnd, hdcWnd);
+	}
+
 	bool WindowImpl_Windows::IsClosed () const
 	{
 		return this->_hwnd == NULL;
@@ -136,11 +147,14 @@ namespace EggAche
 	{
 		MSG msg;
 
-		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->_szCap,
-									WS_OVERLAPPEDWINDOW,  // & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
-									CW_USEDEFAULT, CW_USEDEFAULT,  //CW_USEDEFAULT, CW_USEDEFAULT,
+		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->capStr.c_str (),
+									WS_OVERLAPPEDWINDOW,
+									// & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
+									CW_USEDEFAULT, CW_USEDEFAULT,
+									//CW_USEDEFAULT, CW_USEDEFAULT,
 									pew->_cxCanvas, pew->_cyCanvas,
-									NULL, NULL, (HINSTANCE) GetCurrentProcess (), NULL);
+									NULL, NULL,
+									(HINSTANCE) GetCurrentProcess (), NULL);
 		if (!pew->_hwnd)
 		{
 			pew->_fFailed = true;
@@ -160,7 +174,8 @@ namespace EggAche
 		}
 	}
 
-	LRESULT CALLBACK WindowImpl_Windows::_WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+	LRESULT CALLBACK WindowImpl_Windows::_WndProc(
+		HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		switch (message)
 		{
@@ -205,8 +220,10 @@ namespace EggAche
 	const COLORREF GUIContext_Windows::_colorMask = RGB (0, 0, 201);
 	const COLORREF GUIContext_Windows::_GetColor (int r, int g, int b)
 	{
-		const auto mMax = [] (const int &a, const int &b) { return a > b ? a : b; };
-		const auto mMin = [] (const int &a, const int &b) { return a < b ? a : b; };
+		const auto mMax = 
+			[] (const int &a, const int &b) { return a > b ? a : b; };
+		const auto mMin = 
+			[] (const int &a, const int &b) { return a < b ? a : b; };
 
 		r = mMax (0, mMin (255, r));
 		g = mMax (0, mMin (255, g));
@@ -265,18 +282,25 @@ namespace EggAche
 	{
 		HGDIOBJ hObj;
 
-		hObj = SelectObject (this->_hdc, (HBRUSH) GetStockObject (NULL_BRUSH));
+		hObj = SelectObject (this->_hdc,
+			(HBRUSH) GetStockObject (NULL_BRUSH));
 		if (hObj != GetStockObject (NULL_BRUSH))
 			DeleteObject (hObj);
-		hObj = SelectObject (this->_hdc, (HPEN) GetStockObject (BLACK_PEN));
-		if (hObj != GetStockObject (BLACK_PEN) && hObj != GetStockObject (NULL_PEN))
+
+		hObj = SelectObject (this->_hdc,
+			(HPEN) GetStockObject (BLACK_PEN));
+		if (hObj != GetStockObject (BLACK_PEN) &&
+			hObj != GetStockObject (NULL_PEN))
 			DeleteObject (hObj);
 
 		DeleteObject (this->_hBitmap);
 		DeleteDC (this->_hdc);
 	}
 
-	bool GUIContext_Windows::SetPen (unsigned int width, unsigned int r, unsigned int g, unsigned int b)
+	bool GUIContext_Windows::SetPen (unsigned int width,
+									 unsigned int r,
+									 unsigned int g,
+									 unsigned int b)
 	{
 		HPEN		hPen;
 		HGDIOBJ		hObj;
@@ -284,8 +308,10 @@ namespace EggAche
 
 		if (r == -1 || g == -1 || b == -1 || width == 0)
 		{
-			hObj = SelectObject (this->_hdc, (HPEN) GetStockObject (NULL_PEN));
-			if (hObj != GetStockObject (BLACK_PEN) && hObj != GetStockObject (NULL_PEN))
+			hObj = SelectObject (this->_hdc,
+				(HPEN) GetStockObject (NULL_PEN));
+			if (hObj != GetStockObject (BLACK_PEN)
+				&& hObj != GetStockObject (NULL_PEN))
 				DeleteObject (hObj);
 			return true;
 		}
@@ -294,13 +320,16 @@ namespace EggAche
 		if (!hPen) return false;
 
 		hObj = SelectObject (this->_hdc, hPen);
-		if (hObj != GetStockObject (BLACK_PEN) && hObj != GetStockObject (NULL_PEN))
+		if (hObj != GetStockObject (BLACK_PEN) &&
+			hObj != GetStockObject (NULL_PEN))
 			DeleteObject (hObj);
 
 		return true;
 	}
 
-	bool GUIContext_Windows::SetBrush (unsigned int r, unsigned int g, unsigned int b)
+	bool GUIContext_Windows::SetBrush (unsigned int r,
+									   unsigned int g,
+									   unsigned int b)
 	{
 		HBRUSH		hBrush;
 		HGDIOBJ		hObj;
@@ -341,22 +370,26 @@ namespace EggAche
 		return !!Ellipse (this->_hdc, xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool GUIContext_Windows::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd, int wElps, int hElps)
+	bool GUIContext_Windows::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd,
+									   int wElps, int hElps)
 	{
 		return !!RoundRect (this->_hdc, xBeg, yBeg, xEnd, yEnd, wElps, hElps);
 	}
 
-	bool GUIContext_Windows::DrawArc (int xLeft, int yTop, int xRight, int yBottom, int xBeg, int yBeg, int xEnd, int yEnd)
+	bool GUIContext_Windows::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
+									  int xBeg, int yBeg, int xEnd, int yEnd)
 	{
 		return !!Arc (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool GUIContext_Windows::DrawChord (int xLeft, int yTop, int xRight, int yBottom, int xBeg, int yBeg, int xEnd, int yEnd)
+	bool GUIContext_Windows::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
+										int xBeg, int yBeg, int xEnd, int yEnd)
 	{
 		return !!Chord (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool GUIContext_Windows::DrawPie (int xLeft, int yTop, int xRight, int yBottom, int xBeg, int yBeg, int xEnd, int yEnd)
+	bool GUIContext_Windows::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
+									  int xBeg, int yBeg, int xEnd, int yEnd)
 	{
 		return !!Pie (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
@@ -365,8 +398,11 @@ namespace EggAche
 									  size_t fontSize, const char *fontFamily)
 	{
 		HFONT hFont, hFontPre;
-		hFont = CreateFontA (fontSize, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
-							 CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, fontFamily);
+		hFont = CreateFontA (fontSize, 0, 0, 0,
+							 FW_DONTCARE, FALSE, FALSE, FALSE,
+							 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+							 CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+							 DEFAULT_PITCH, fontFamily);
 		hFontPre = (HFONT) SelectObject (this->_hdc, hFont);
 
 		return !!TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
@@ -375,14 +411,16 @@ namespace EggAche
 		DeleteObject (hFont);
 	}
 
-	bool GUIContext_Windows::DrawBmp (const char * szPath, int x, int y, int width, int height, int r, int g, int b)
+	bool GUIContext_Windows::DrawBmp (const char * szPath, int x, int y,
+									  int width, int height, int r, int g, int b)
 	{
 		HDC			hdcMemImag;
 		HBITMAP		hBitmapImag;
 		BITMAP		bitmap;
 		COLORREF	colorMask;
 
-		hBitmapImag = (HBITMAP) LoadImageA (NULL, szPath, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+		hBitmapImag = (HBITMAP) LoadImageA (NULL, szPath, IMAGE_BITMAP,
+											0, 0, LR_LOADFROMFILE);
 		if (!hBitmapImag) return false;
 		GetObject (hBitmapImag, sizeof (BITMAP), &bitmap);
 
@@ -400,7 +438,8 @@ namespace EggAche
 		if (r == -1 || g == -1 || b == -1)
 		{
 			if (!StretchBlt (this->_hdc, x, y, width, height,
-							 hdcMemImag, 0, 0, bitmap.bmWidth, bitmap.bmHeight,
+							 hdcMemImag, 0, 0,
+							 bitmap.bmWidth, bitmap.bmHeight,
 							 SRCCOPY))
 			{
 				DeleteDC (hdcMemImag);
@@ -414,7 +453,8 @@ namespace EggAche
 							 max (0, min (255, g)),
 							 max (0, min (255, b)));
 			if (!TransparentBlt (this->_hdc, x, y, width, height,
-								 hdcMemImag, 0, 0, bitmap.bmWidth, bitmap.bmHeight,
+								 hdcMemImag, 0, 0,
+								 bitmap.bmWidth, bitmap.bmHeight,
 								 colorMask))
 			{
 				DeleteDC (hdcMemImag);

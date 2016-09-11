@@ -15,7 +15,10 @@ namespace EggAche
 	public:
 		WindowImpl (size_t, size_t, const char *) {}
 		virtual ~WindowImpl () {}
-		virtual void Draw (const GUIContext *context, size_t x, size_t y) = 0;
+
+		virtual void Draw (const GUIContext *context,
+						   size_t x, size_t y) = 0;
+		virtual void Clear () = 0;
 		virtual bool IsClosed () const = 0;
 	};
 
@@ -24,6 +27,7 @@ namespace EggAche
 	public:
 		GUIContext (size_t, size_t) {}
 		virtual ~GUIContext () {}
+
 		virtual bool SetPen (unsigned int width,
 							 unsigned int r = 0,
 							 unsigned int g = 0,
