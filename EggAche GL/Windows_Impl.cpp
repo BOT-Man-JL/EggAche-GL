@@ -1,3 +1,7 @@
+//
+// Windows Implementation of EggAche Graphics Library
+// By BOT Man, 2016
+//
 
 #include <Windows.h>
 #include <windowsx.h>
@@ -415,7 +419,7 @@ namespace EggAche
 		hFont = CreateFontA (fontSize, 0, 0, 0,
 							 FW_DONTCARE, FALSE, FALSE, FALSE,
 							 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
-							 CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+							 CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY,
 							 DEFAULT_PITCH, fontFamily);
 		hFontPre = (HFONT) SelectObject (this->_hdc, hFont);
 

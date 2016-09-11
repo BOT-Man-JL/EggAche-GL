@@ -31,7 +31,7 @@ namespace EggAche
 
 		Egg *GetEgg ();										// Get Background Egg
 		// Remarks:
-		// DON'T MOVE this Egg...
+		// DON'T MOVE or DELETE this Egg...
 
 		void Refresh ();									// Refresh the Window
 		// Remarks:

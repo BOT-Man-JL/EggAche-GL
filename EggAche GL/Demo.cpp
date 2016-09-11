@@ -1,117 +1,31 @@
-﻿////
-//// A demo of EggAche Graphics Library
-//// By BOT Man, 2016
-////
+﻿//
+// A demo of EggAche Graphics Library
+// By BOT Man, 2016
 //
-//#include "EggAche.h"	// 引用EggAche.h画图
-//#include <thread>		// 用于调用std::this_thread::sleep_for来延时
-//
-//void fnClick (int x, int y);	// 鼠标点击函数
-//void fnPress (char ch);			// 键盘敲击函数
-//
-//EggAche::Window g_window (1000, 750, "Demo", fnClick, fnPress);
-//	// 新建一个1000 * 750的窗口，标题为“Demo”
-//	// 如果被点击，调用fnClick，并传入点击坐标
-//	// 如果有键盘输入，调用fnPress，并传入输入字符
-//
-//EggAche::Egg g_egg (1000, 750);		// 新建一个和窗口一样大的egg
-//
-//int main ()
-//{
-//	EggAche::Egg background (1000, 750), egg (60, 80);		// 新建两个egg
-//
-//	// 在background上写字
-//	background.DrawTxt (0, 0, "Adapted and Responsive design.");
-//	background.DrawTxt (0, 50, "You can resize the window, and everything will be stretched.");
-//	background.DrawTxt (0, 100, "You can click and press a key on the window.");
-//
-//	// 在egg上采用平铺方式贴图，并将白色(255,255,255)变成透明
-//	egg.DrawBmp ("Egg.bmp", 0, 0, -1, -1, 255, 255, 255);
-//
-//	// 将egg移到到(470, 355)
-//	egg.MoveTo (470, 355);
-//
-//	// 将三个Egg按顺序关联到g_window
-//	g_window.AddEgg (background);
-//	g_window.AddEgg (g_egg);
-//	g_window.AddEgg (egg);
-//
-//	// g_window自动刷新关联的Egg
-//	g_window.Refresh ();
-//
-//	// 判断窗口是否关闭
-//	while (!g_window.IsClosed ())
-//	{
-//		// egg向右移动4个单位，向下3个单位
-//		egg.Move (4, 3);
-//
-//		// 如果移过头了就放回来
-//		if (egg.GetX () >= 940 || egg.GetY () >= 670)
-//			egg.MoveTo (470, 355);
-//
-//		// 刷新一下g_window
-//		g_window.Refresh ();
-//
-//		// 延时50毫秒
-//		std::this_thread::sleep_for (std::chrono::milliseconds (50));
-//	}
-//
-//	return 0;
-//}
-//
-//// 当点击g_window后，传入点击坐标(x, y)
-//void fnClick (int x, int y)
-//{
-//	// 将之前的g_egg清空
-//	g_egg.Clear ();
-//
-//	// 在g_egg画一条从(0, 0)到(x, y)的直线
-//	g_egg.DrawLine (0, 0, x, y);
-//
-//	// 立即刷新g_window
-//	g_window.Refresh ();
-//}
-//
-//// 当键盘输入到g_window后，传入输入字符ch
-//void fnPress (char ch)
-//{
-//	char str[2];
-//	
-//	// 将键盘输入Ascii转为临时字符串来对话框输出
-//	str[0] = ch;
-//	str[1] = 0;
-//	EggAche::MsgBox (str, "ASCII Value");
-//}
-
 
 // Memory Leaks Tracer
+#ifdef _MSC_VER
 #ifdef _DEBUG
 #define _CRTDBG_MAP_ALLOC  // For *alloc()
 #include <stdlib.h>  //Should be before including <crtdbg.h>
 #include <crtdbg.h>
 #define new new(_NORMAL_BLOCK,__FILE__,__LINE__)  // For new
 #endif  // _DEBUG
-
+#endif  // _MSC_VER
 
 #include "EggAche.h"
 #include <thread>
 #include <string>
 
-void hello (char ch)
-{
-	std::string promptStr ("You inputted: ");
-	promptStr += ch;
-	EggAche::MsgBox (promptStr.c_str ());
-}
-
 int main (int argc, char *argv[])
 {
-
+#ifdef _MSC_VER
 #ifdef _DEBUG
 	_CrtSetDbgFlag (_CrtSetDbgFlag (_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
 	// If Traced "{69} normal block at ...", Then Call to Break
-	//_CrtSetBreakAlloc (160);
+	//_CrtSetBreakAlloc (191);
 #endif  // _DEBUG
+#endif  // _MSC_VER
 
 	using namespace EggAche;
 	auto wnd = new Window ();
@@ -122,19 +36,16 @@ int main (int argc, char *argv[])
 	egg->DrawBmp ("Egg.bmp", 100, 200);
 
 	auto egge = new Egg (1000, 750);
-
+	egg->AddEgg (egge);
 
 	auto eggee = new Egg (200, 300, 200, 300);
 	eggee->DrawLine (0, 0, 200, 300);
-	eggee->DrawTxt (0, 0, "Chinese Chars ~");
+	eggee->DrawTxt (0, 0, "Detecting Key Press ~");
+	egg->AddEgg (eggee);
 
 	auto eggeee = new Egg (200, 300);
-	eggeee->DrawTxt (0, 18, "Haha");
+	eggeee->DrawTxt (0, 18, "Detecting Mouse Click");
 	eggeee->DrawLine (200, 0, 0, 300);
-
-	egg->AddEgg (egge);
-	egg->AddEgg (eggee);
-	egg->AddEgg (eggee);
 	eggee->AddEgg (eggeee);
 
 	wnd->OnClick ([&] (int x, int y)
@@ -144,21 +55,26 @@ int main (int argc, char *argv[])
 		wnd->Refresh ();
 	});
 
-	//wnd->OnPress ([] (char ch)
-	//{
-	//	std::string promptStr ("You inputted: ");
-	//	promptStr += ch;
-	//	MsgBox (promptStr.c_str ());
-	//});
-	wnd->OnPress (hello);
+	auto isQuit = false;
+	wnd->OnPress ([&] (char ch)
+	{
+		if (ch == 'Q' || ch == 'q')
+			isQuit = true;
+		// Todo:
+		// Mem Leak
+		std::string promptStr ("You inputted: ");
+		promptStr += ch;
+		MsgBox (promptStr.c_str ());
+	});
 
-	while (!wnd->IsClosed ())
+	while (!wnd->IsClosed () && !isQuit)
 	{
 		wnd->Refresh ();
 		using namespace std::chrono_literals;
 		std::this_thread::sleep_for (500ms);
 	}
 
+	delete egge;
 	delete eggee;
 	delete eggeee;
 	delete wnd;
