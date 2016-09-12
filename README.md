@@ -32,6 +32,13 @@ Enjoy it :smile:
 
 ### Basic
 
+This Sample Shows how to
+
+- Create Window
+- Draw on Background Egg
+- Refresh Window
+- Wait for User Closing the Window
+
 ``` c++
 #include <thread>    // For this_thread::sleep_for
 #include "EggAche.h"
@@ -62,6 +69,11 @@ int main ()
 
 ### Click Event Handler
 
+This Sample Shows how to
+
+- Bind Event Handler to a Window
+- Associate an Egg to another one
+
 ``` c++
     // ...
     //window.Refresh ();
@@ -83,6 +95,10 @@ int main ()
 ```
 
 ![Click](Demo/Click.png)
+
+### Simple Animation
+
+[Todo] :sweat_smile:
 
 ## Update History
 
