@@ -15,6 +15,7 @@ EggAche is a **Lightweight**, **Cross-Platform** C++ Graphics Library
 2. Add the **5 Files** in **_[src path](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/src)_** to your project
 3. **#include "EggAche.h"** where you want to use EggAche Library
 4. Using **#define** in **EggAche.h** to specify your target Platform
+
 ``` c++
 // Enable Windows Version
 #define EGGACHE_WINDOWS
@@ -22,7 +23,10 @@ EggAche is a **Lightweight**, **Cross-Platform** C++ Graphics Library
 //#define EGGACHE_LINUX
 //#define EGGACHE_MAC
 ```
-5. Enjoy it :smile:
+
+And...
+
+Enjoy it :smile:
 
 ## Sample
 
@@ -72,10 +76,10 @@ int main ()
         window.Refresh ();               // Refresh the Window to View Changes
     });
 
-    while (!window.IsClosed ())
+    //while (!window.IsClosed ())
     //...
     delete lineEgg;                      // Remember to delete this Egg
-    return 0;
+    //return 0;
 ```
 
 ![Click](Demo/Click.png)
