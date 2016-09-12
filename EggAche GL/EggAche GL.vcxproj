@@ -146,7 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Test.cpp" />
-    <ClCompile Include="EggAche.cpp" />
+    <ClCompile Include="EggAche_Impl.cpp" />
     <ClCompile Include="Windows_Impl.cpp" />
   </ItemGroup>
   <ItemGroup>

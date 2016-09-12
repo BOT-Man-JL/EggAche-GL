@@ -56,9 +56,8 @@ int main (int argc, char *argv[])
 		wnd->Refresh ();
 	});
 
-	auto wwwnd = Window ();
+	Window wwwnd;
 	auto bgEgg = wwwnd.GetBackground ();
-	//auto wwnd = Window (std::move (wwwnd));
 
 	bgEgg->DrawTxt (0, 0, "haha", 200);
 	//bgEgg->DrawLine (0, 0, 100, 100);

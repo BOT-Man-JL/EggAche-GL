@@ -20,13 +20,13 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EggAche.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Windows_Impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EggAche_Impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
