@@ -147,7 +147,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\EggAche_Impl.cpp" />
     <ClCompile Include="..\src\Windows_Impl.cpp" />
-    <ClCompile Include="Test.cpp" />
+    <ClCompile Include="Sample.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\EggAche.h" />

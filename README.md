@@ -7,9 +7,12 @@ EggAche is a **Lightweight**, **Cross-Platform** C++ Graphics Library
 ## Requirement
 
 - Currently only **Windows** (MSVC / MinGW are both supported)
+- Linux/Mac Version is on the way :sweat_smile:
 - **C++ 11** Support
 
 ## Get Started
+
+### Setup
 
 1. Download this Project's **_[zip](https://github.com/BOT-Man-JL/EggAche-GL/archive/master.zip)_**
 2. Add the **5 Files** in **_[src path](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/src)_** to your project
@@ -24,13 +27,7 @@ EggAche is a **Lightweight**, **Cross-Platform** C++ Graphics Library
 //#define EGGACHE_MAC
 ```
 
-And...
-
-Enjoy it :smile:
-
-## Sample
-
-### Basic
+### Basic Usage
 
 This Sample Shows how to
 
@@ -52,7 +49,7 @@ int main ()
 
     bgEgg->DrawTxt (0, 0, "Hello EggAche"); // Draw Text at (0, 0)
     bgEgg->DrawLine (0, 30, 100, 30);       // Draw Line From (0, 30) to (100, 30)
-    bgEgg->DrawBmp ("Egg.bmp", 20, 50);     // Draw Egg at (20, 50)
+    bgEgg->DrawBmp ("Egg.bmp", 20, 50);     // Draw Bmp at (20, 50)
 
     window.Refresh ();                      // Refresh the Window to View Changes
 
@@ -67,7 +64,7 @@ int main ()
 
 ![Basic](Demo/Basic.png)
 
-### Click Event Handler
+### Handling Click Event
 
 This Sample Shows how to
 
@@ -89,7 +86,7 @@ This Sample Shows how to
     });
 
     //while (!window.IsClosed ())
-    //...
+    // ...
     delete lineEgg;                      // Remember to delete this Egg
     //return 0;
 ```
@@ -98,7 +95,36 @@ This Sample Shows how to
 
 ### Simple Animation
 
-[Todo] :sweat_smile:
+``` c++
+    // ...
+    //window.OnClick (...);
+
+    auto aniEgg = new Egg (100, 100,        // Create a New Egg
+                           100, 100);       // at (100, 100) initially
+    bgEgg->AddEgg (aniEgg);                 // Associate this new Egg with Background Egg
+    aniEgg->DrawBmp ("Egg.bmp", 0, 0,       // Draw Bmp at (0, 0)
+                     100, 100,              // of size 100 * 100
+                     255, 255, 255);        // leave out White Color (FFFFFF)
+
+    auto offset = 0;
+    while (!window.IsClosed ())             // Rewrite this Part
+    {
+        if (offset < 10) offset++;          // Update offset
+        else offset = -10;
+        aniEgg->MoveTo (100 + offset * 10,  // Move aniEgg
+                        100 + offset * 10);
+        window.Refresh ();                  // Refresh Window
+
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for (50ms); // Sleep just 50ms
+    }
+
+    delete aniEgg;                          // Remember to delete this Egg
+    //delete lineEgg;
+    // ...
+```
+
+![Animation](Demo/Animation.png)
 
 ## Update History
 
@@ -110,5 +136,10 @@ This Sample Shows how to
   - This version is written in **C++**
   - Everything is encapsulated in **Classes**
 - [v3.0](https://github.com/BOT-Man-JL/EggAche-GL/archive/master.zip)
-  - Refactoring with **Design Patterns**
-  - Fully using **C++ 11 Features**
+  - **Decoupling** Platform Dependency
+  - Introducing **C++ 11 Features**
+  - Using **Bridge Pattern** to Separate the common Interface from Platform-specific Implementations
+  - Using **Abstract Factory** to Produce Implementations for various Platforms
+  - Using **Composite Pattern** to Manage the Layout of Canvases
+  - Using **Singleton Pattern** to Maintain the Window Manager
+  - Using **Observer Pattern** to Notify Window Events and Auto Refresh on Windows Platform

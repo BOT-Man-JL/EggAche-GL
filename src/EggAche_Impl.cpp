@@ -48,14 +48,14 @@ namespace EggAche
 	}
 
 	void Egg::DrawOnContext (GUIContext *parentContext,
-							 size_t xPre, size_t yPre) const
+							 size_t x, size_t y) const
 	{
 		// Actual Position of this Egg
-		auto x = xPre + this->x, y = yPre + this->y;
 		this->context->PaintOnContext (parentContext, x, y);
 
 		for (auto subEgg : this->subEggs)
-			subEgg->DrawOnContext (parentContext, x, y);
+			subEgg->DrawOnContext (parentContext,
+								   x + subEgg->x, y + subEgg->y);
 	}
 
 	void Window::Refresh ()

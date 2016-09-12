@@ -515,19 +515,17 @@ namespace EggAche
 		DeleteObject (hBrush);
 	}
 
-	void GUIContext_Windows::PaintOnContext (GUIContext *parentContext, 
+	void GUIContext_Windows::PaintOnContext (GUIContext *parentContext,
 											 size_t x, size_t y) const
 	{
 		// Assume that context is GUIContext_Windows
 		auto _context = static_cast<const GUIContext_Windows *> (parentContext);
-		if (!TransparentBlt (_context->_hdc, x, y, this->_w, this->_h,
-							 this->_hdc, 0, 0, this->_w, this->_h,
-							 GUIContext_Windows::_colorMask))
-		{
-			// Todo: Failed when user switched back from Task View
-			// https://msdn.microsoft.com/en-us/library/windows/desktop/dd145141(v=vs.85).aspx
-			throw std::runtime_error ("Draw Failed at TransparentBlt");
-		}
+		TransparentBlt (_context->_hdc, x, y, this->_w, this->_h,
+						this->_hdc, 0, 0, this->_w, this->_h,
+						GUIContext_Windows::_colorMask);
+
+		// Todo: Failed in some cases
+		// https://msdn.microsoft.com/en-us/library/windows/desktop/dd145141(v=vs.85).aspx
 	}
 
 	// MsgBox

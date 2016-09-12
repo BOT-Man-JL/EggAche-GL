@@ -37,13 +37,15 @@ namespace EggAche
 
 		Egg *GetBackground ();								// Get Background Egg
 		// Remarks:
-		// DON'T MOVE or DELETE this Egg...
+		// DON'T DELETE this Egg...
 
 		void Refresh ();									// Refresh the Window
 		// Remarks:
 		// 1. Call this function everytime you want to Render
 		//    the Background Egg and its Sub Eggs
-		// 2. When an error occurs, throw std::runtime_error
+		// 2. Why NO Auto Refresh?
+		//    Auto Refresh will cost much more resource if there are too many
+		//    drawing changes at a time...
 
 		bool IsClosed () const;								// Is Window closed
 		// Remarks:
