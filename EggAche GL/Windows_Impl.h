@@ -109,9 +109,10 @@ namespace EggAche
 		static const COLORREF _colorMask;
 		static const COLORREF _GetColor (int r, int g, int b);
 
+		friend void WindowImpl_Windows::Draw (const GUIContext *, size_t, size_t);
+
 		GUIContext_Windows (const GUIContext_Windows &) = delete;		// Not allow to copy
 		void operator= (const GUIContext_Windows &) = delete;			// Not allow to copy
-		friend class WindowImpl_Windows;
 	};
 
 	class GUIFactory_Windows : public GUIFactory

@@ -48,15 +48,15 @@ namespace EggAche
 		return bgEgg;
 	}
 
-	void Window::DrawEgg (GUIContext *parentContext, const Egg *egg,
-						  size_t xPre, size_t yPre)
+	void Egg::DrawOnContext (GUIContext *parentContext,
+							 size_t xPre, size_t yPre) const
 	{
 		// Actual Position of this Egg
-		auto x = xPre + egg->x, y = yPre + egg->y;
-		egg->context->PaintOnContext (parentContext, x, y);
+		auto x = xPre + this->x, y = yPre + this->y;
+		this->context->PaintOnContext (parentContext, x, y);
 
-		for (auto subEgg : egg->subEggs)
-			DrawEgg (parentContext, subEgg, x, y);
+		for (auto subEgg : this->subEggs)
+			subEgg->DrawOnContext (parentContext, x, y);
 	}
 
 	void Window::Refresh ()
@@ -82,7 +82,7 @@ namespace EggAche
 		context->SetBrush (255, 255, 255);
 		context->DrawRect (-10, -10, wndSize.first + 10, wndSize.second + 10);
 
-		DrawEgg (context, this->bgEgg, 0, 0);
+		this->bgEgg->DrawOnContext (context, 0, 0);
 		windowImpl->Draw (context, 0, 0);
 
 		delete context;
