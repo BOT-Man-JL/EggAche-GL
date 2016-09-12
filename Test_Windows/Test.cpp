@@ -13,7 +13,7 @@
 #endif  // _DEBUG
 #endif  // _MSC_VER
 
-#include "EggAche.h"
+#include "../src/EggAche.h"
 #include <thread>
 #include <string>
 
@@ -29,7 +29,6 @@ int main (int argc, char *argv[])
 
 	using namespace EggAche;
 	auto wnd = new Window ();
-
 	auto egg = wnd->GetBackground ();
 
 	egg->DrawTxt (0, 0, "Welcome", 30, "Arial");
@@ -56,8 +55,8 @@ int main (int argc, char *argv[])
 		wnd->Refresh ();
 	});
 
-	Window wwwnd;
-	auto bgEgg = wwwnd.GetBackground ();
+	Window window;
+	auto bgEgg = window.GetBackground ();
 
 	bgEgg->DrawTxt (0, 0, "haha", 200);
 	//bgEgg->DrawLine (0, 0, 100, 100);
@@ -78,7 +77,7 @@ int main (int argc, char *argv[])
 	});
 
 	wnd->Refresh ();
-	wwwnd.Refresh ();
+	window.Refresh ();
 	while (!wnd->IsClosed () && !isQuit)
 	{
 		using namespace std::chrono_literals;

@@ -145,14 +145,14 @@
     <Image Include="Egg.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\EggAche_Impl.cpp" />
+    <ClCompile Include="..\src\Windows_Impl.cpp" />
     <ClCompile Include="Test.cpp" />
-    <ClCompile Include="EggAche_Impl.cpp" />
-    <ClCompile Include="Windows_Impl.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EggAche.h" />
-    <ClInclude Include="EggAche_impl.h" />
-    <ClInclude Include="Windows_Impl.h" />
+    <ClInclude Include="..\src\EggAche.h" />
+    <ClInclude Include="..\src\EggAche_Impl.h" />
+    <ClInclude Include="..\src\Windows_Impl.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

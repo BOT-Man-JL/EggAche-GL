@@ -8,7 +8,7 @@
 #include <exception>
 #pragma comment (lib, "Msimg32.lib")
 
-#include "EggAche_impl.h"
+#include "EggAche_Impl.h"
 #include "Windows_Impl.h"
 
 namespace EggAche
@@ -438,7 +438,7 @@ namespace EggAche
 							 DEFAULT_PITCH, fontFamily);
 		hFontPre = (HFONT) SelectObject (this->_hdc, hFont);
 
-		auto ret = TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
+		auto ret = !!TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
 
 		SelectObject (this->_hdc, hFontPre);
 		DeleteObject (hFont);

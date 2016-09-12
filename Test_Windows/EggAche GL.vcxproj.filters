@@ -20,24 +20,24 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Windows_Impl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EggAche_Impl.cpp">
+    <ClCompile Include="..\src\EggAche_Impl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Windows_Impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EggAche.h">
+    <ClInclude Include="..\src\EggAche.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EggAche_impl.h">
+    <ClInclude Include="..\src\Windows_Impl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Windows_Impl.h">
+    <ClInclude Include="..\src\EggAche_Impl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -6,15 +6,15 @@
 #ifndef EGGACHE_GL
 #define EGGACHE_GL
 
-#include <functional>
-#include <list>
-#include "EggAche_impl.h"
-
-// To Enable Windows Version
+// Enable Windows Version
 #define EGGACHE_WINDOWS
 
 //#define EGGACHE_LINUX
 //#define EGGACHE_MAC
+
+#include <functional>
+#include <list>
+#include "EggAche_Impl.h"
 
 namespace EggAche
 {
