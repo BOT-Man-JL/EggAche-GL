@@ -436,10 +436,12 @@ namespace EggAche
 							 DEFAULT_PITCH, fontFamily);
 		hFontPre = (HFONT) SelectObject (this->_hdc, hFont);
 
-		return !!TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
+		auto ret = TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
 
 		SelectObject (this->_hdc, hFontPre);
 		DeleteObject (hFont);
+
+		return ret;
 	}
 
 	bool GUIContext_Windows::DrawBmp (const char * szPath, int x, int y,

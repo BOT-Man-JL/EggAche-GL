@@ -60,7 +60,6 @@ int main (int argc, char *argv[])
 	auto bgEgg = wwwnd.GetBackground ();
 	//auto wwnd = Window (std::move (wwwnd));
 
-	// Todo: Where is haha?
 	bgEgg->DrawTxt (0, 0, "haha", 200);
 	//bgEgg->DrawLine (0, 0, 100, 100);
 	bgEgg->AddEgg (eggee);
