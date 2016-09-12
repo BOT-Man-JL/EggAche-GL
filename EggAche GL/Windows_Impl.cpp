@@ -6,8 +6,10 @@
 #include <Windows.h>
 #include <windowsx.h>
 #include <exception>
-#include "Windows_Impl.h"
 #pragma comment (lib, "Msimg32.lib")
+
+#include "EggAche_impl.h"
+#include "Windows_Impl.h"
 
 namespace EggAche
 {

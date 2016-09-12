@@ -81,6 +81,8 @@ namespace EggAche
 									 size_t x, size_t y) const = 0;
 	};
 
+	void MsgBox_Impl (const char *szTxt, const char *szCap);
+
 	class GUIFactory
 	{
 	public:
@@ -89,7 +91,31 @@ namespace EggAche
 		virtual GUIContext *NewGUIContext (size_t width, size_t height) = 0;
 	};
 
-	void MsgBox_Impl (const char *szTxt, const char *szCap);
+	class GUIFactory_Windows : public GUIFactory
+	{
+	public:
+		WindowImpl *NewWindow (size_t width, size_t height,
+							   const char *cap_string) override;
+		GUIContext *NewGUIContext (size_t width, size_t height) override;
+	};
+
+	// Todo: Implementing Linux GUI
+	class GUIFactory_Linux : public GUIFactory
+	{
+	public:
+		WindowImpl *NewWindow (size_t width, size_t height,
+							   const char *cap_string) override;
+		GUIContext *NewGUIContext (size_t width, size_t height) override;
+	};
+
+	// Todo: Implementing Mac GUI
+	class GUIFactory_Mac : public GUIFactory
+	{
+	public:
+		WindowImpl *NewWindow (size_t width, size_t height,
+							   const char *cap_string) override;
+		GUIContext *NewGUIContext (size_t width, size_t height) override;
+	};
 }
 
 #endif  //EGGACHE_GL_IMPL

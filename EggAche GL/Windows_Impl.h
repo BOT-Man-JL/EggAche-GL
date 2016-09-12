@@ -6,9 +6,10 @@
 #ifndef EGGACHE_GL_IMPL_WIN
 #define EGGACHE_GL_IMPL_WIN
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 #include <Windows.h>
+
 #include "EggAche_impl.h"
 
 namespace EggAche
@@ -113,14 +114,6 @@ namespace EggAche
 
 		GUIContext_Windows (const GUIContext_Windows &) = delete;		// Not allow to copy
 		void operator= (const GUIContext_Windows &) = delete;			// Not allow to copy
-	};
-
-	class GUIFactory_Windows : public GUIFactory
-	{
-	public:
-		WindowImpl *NewWindow (size_t width, size_t height,
-							   const char *cap_string) override;
-		GUIContext *NewGUIContext (size_t width, size_t height) override;
 	};
 }
 

@@ -77,8 +77,8 @@ int main (int argc, char *argv[])
 		}
 	});
 
-	//wnd->Refresh ();
-	//wwnd.Refresh ();
+	wnd->Refresh ();
+	wwwnd.Refresh ();
 	while (!wnd->IsClosed () && !isQuit)
 	{
 		using namespace std::chrono_literals;

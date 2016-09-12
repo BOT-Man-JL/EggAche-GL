@@ -1,15 +1,26 @@
 //
-// Implementation of EggAche Graphics Library
+// Common Implementation of EggAche Graphics Library
 // By BOT Man, 2016
 //
 
 #include "EggAche.h"
-
-// Using Windows Impl
-#include "Windows_impl.h"
+#include "EggAche_impl.h"
 
 namespace EggAche
 {
+	GUIFactory *NewGUIFactory ()
+	{
+#ifdef EGGACHE_WINDOWS
+		return new GUIFactory_Windows ();
+#endif
+#ifdef EGGACHE_LINUX
+		return new GUIFactory_Linux ();
+#endif
+#ifdef EGGACHE_MAC
+		return new GUIFactory_Mac ();
+#endif
+	}
+
 	Window::Window (size_t width,
 					size_t height,
 					const char *cap_string)
@@ -17,15 +28,11 @@ namespace EggAche
 	{
 		bgEgg = new Egg (width, height);
 
-		GUIFactory *guiFactory = nullptr;
-
-#ifdef WIN32
-		// Windows Impl
-		guiFactory = new GUIFactory_Windows ();
-#endif
+		auto guiFactory = NewGUIFactory ();
 
 		windowImpl = guiFactory->NewWindow (width, height, cap_string);
 		windowImpl->OnRefresh (std::bind (&Window::Refresh, this));
+
 		delete guiFactory;
 	}
 
@@ -56,12 +63,7 @@ namespace EggAche
 		if (IsClosed ())
 			return;
 
-		GUIFactory *guiFactory = nullptr;
-
-#ifdef WIN32
-		// Windows Impl
-		guiFactory = new GUIFactory_Windows ();
-#endif
+		auto guiFactory = NewGUIFactory ();
 
 		// Remarks:
 		// Buffering the Drawing Content into a Context
@@ -105,13 +107,7 @@ namespace EggAche
 			  int pos_x, int pos_y)
 		: context (nullptr), x (pos_x), y (pos_y)
 	{
-		GUIFactory *guiFactory = nullptr;
-
-#ifdef WIN32
-		// Windows Impl
-		guiFactory = new GUIFactory_Windows ();
-#endif
-
+		auto guiFactory = NewGUIFactory ();
 		context = guiFactory->NewGUIContext (width, height);
 		delete guiFactory;
 	}

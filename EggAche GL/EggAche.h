@@ -10,6 +10,12 @@
 #include <list>
 #include "EggAche_impl.h"
 
+// To Enable Windows Version
+#define EGGACHE_WINDOWS
+
+//#define EGGACHE_LINUX
+//#define EGGACHE_MAC
+
 namespace EggAche
 {
 	class Egg;
