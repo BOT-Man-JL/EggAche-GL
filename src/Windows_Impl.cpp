@@ -28,7 +28,36 @@ namespace EggAche
 
 	// Window
 
-	std::unordered_map<HWND, WindowImpl_Windows *> WindowImpl_Windows::_mHwnd;
+	class HwndManager
+	{
+	private:
+		static std::unordered_map<HWND, WindowImpl_Windows *> *_mHwnd;
+	protected:
+		HwndManager ();
+	public:
+		static bool isRegClass;
+
+		static std::unordered_map<HWND, WindowImpl_Windows *> *Instance ()
+		{
+			if (_mHwnd == nullptr)
+				_mHwnd = new std::unordered_map<HWND, WindowImpl_Windows *> ();
+			return _mHwnd;
+		}
+
+		static bool IsRefed ()
+		{
+			return _mHwnd != nullptr && !_mHwnd->empty ();
+		}
+
+		static void Delete ()
+		{
+			delete _mHwnd;
+			_mHwnd = nullptr;
+		}
+	};
+
+	std::unordered_map<HWND, WindowImpl_Windows *> *HwndManager::_mHwnd = nullptr;
+	bool HwndManager::isRegClass = false;
 
 	WindowImpl_Windows::WindowImpl_Windows (size_t width, size_t height,
 											const char *cap_string)
@@ -41,7 +70,7 @@ namespace EggAche
 
 #ifdef _MSC_VER
 		// Windows SDK only support Unicode version Window Class
-		if (_mHwnd.empty ())
+		if (!HwndManager::isRegClass)
 		{
 			WNDCLASSW wndclass;
 			wndclass.style = CS_HREDRAW | CS_VREDRAW;
@@ -60,7 +89,7 @@ namespace EggAche
 		}
 #else
 		// MinGW only support ANSI version Window Class
-		if (_mHwnd.empty ())
+		if (!HwndManager::isRegClass)
 		{
 			WNDCLASSA wndclass;
 			wndclass.style = CS_HREDRAW | CS_VREDRAW;
@@ -78,6 +107,7 @@ namespace EggAche
 				throw std::runtime_error ("Err_Window_#2_RegClass");
 		}
 #endif
+		HwndManager::isRegClass = true;
 
 		this->_hEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
 		if (!this->_hEvent)
@@ -107,6 +137,9 @@ namespace EggAche
 	{
 		if (this->_hwnd != NULL)
 			SendMessage (this->_hwnd, WM_CLOSE, 0, 0);
+
+		if (!HwndManager::IsRefed ())
+			HwndManager::Delete ();
 	}
 
 	void WindowImpl_Windows::Draw (const GUIContext *context,
@@ -193,7 +226,7 @@ namespace EggAche
 			SetEvent (pew->_hEvent);
 		}
 
-		_mHwnd[pew->_hwnd] = pew;
+		(*HwndManager::Instance ())[pew->_hwnd] = pew;
 
 		ShowWindow (pew->_hwnd, SW_NORMAL);
 		UpdateWindow (pew->_hwnd);
@@ -209,42 +242,46 @@ namespace EggAche
 	LRESULT CALLBACK WindowImpl_Windows::_WndProc (
 		HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
+		if (HwndManager::IsRefed == nullptr)
+			goto tagRet;
+
+		auto mHwnd = HwndManager::Instance ();
 		switch (message)
 		{
 		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
-			if (_mHwnd[hwnd]->onClick)
-				_mHwnd[hwnd]->onClick (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
+			if ((*mHwnd)[hwnd]->onClick)
+				(*mHwnd)[hwnd]->onClick (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
 			return 0;
 
 		case WM_CHAR:
-			if (_mHwnd[hwnd]->onPress)
-				_mHwnd[hwnd]->onPress ((char) wParam);
+			if ((*mHwnd)[hwnd]->onPress)
+				(*mHwnd)[hwnd]->onPress ((char) wParam);
 			return 0;
 
 		case WM_SIZE:
-			_mHwnd[hwnd]->_cxClient = LOWORD (lParam);
-			_mHwnd[hwnd]->_cyClient = HIWORD (lParam);
-			if (_mHwnd[hwnd]->onResized)
-				_mHwnd[hwnd]->onResized (_mHwnd[hwnd]->_cxClient, _mHwnd[hwnd]->_cyClient);
+			(*mHwnd)[hwnd]->_cxClient = LOWORD (lParam);
+			(*mHwnd)[hwnd]->_cyClient = HIWORD (lParam);
+			if ((*mHwnd)[hwnd]->onResized)
+				(*mHwnd)[hwnd]->onResized ((*mHwnd)[hwnd]->_cxClient, (*mHwnd)[hwnd]->_cyClient);
 			return 0;
 
 		case WM_PAINT:
 			BeginPaint (hwnd, NULL);
-			if (_mHwnd[hwnd]->onRefresh)
-				_mHwnd[hwnd]->onRefresh ();
+			if ((*mHwnd)[hwnd]->onRefresh)
+				(*mHwnd)[hwnd]->onRefresh ();
 			EndPaint (hwnd, NULL);
 			return 0;
 
 		case WM_DESTROY:
-			_mHwnd[hwnd]->_hwnd = NULL;
-			_mHwnd.erase (hwnd);
-			_mHwnd[NULL] = nullptr;		// _mHwnd.empty == false
+			(*mHwnd)[hwnd]->_hwnd = NULL;
+			mHwnd->erase (hwnd);
 
 			PostQuitMessage (0);
 			return 0;
 		}
 
+	tagRet:
 		return DefWindowProc (hwnd, message, wParam, lParam);
 	}
 

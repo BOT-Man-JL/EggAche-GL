@@ -46,7 +46,6 @@ namespace EggAche
 		std::function<void (int, int)> onResized;
 		std::function<void ()> onRefresh;
 
-		static std::unordered_map<HWND, WindowImpl_Windows *> _mHwnd;
 		static void WINAPI _NewWindow_Thread (WindowImpl_Windows *pew);
 		static LRESULT CALLBACK _WndProc (HWND, UINT, WPARAM, LPARAM);
 
