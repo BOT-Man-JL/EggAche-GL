@@ -32,6 +32,7 @@ int main (int argc, char *argv[])
 
 	auto egg = wnd->GetBackground ();
 
+	egg->DrawTxt (0, 0, "Welcome", 30, "Arial");
 	egg->DrawLine (0, 0, 1000, 750);
 	egg->DrawBmp ("Egg.bmp", 100, 200);
 
@@ -57,9 +58,13 @@ int main (int argc, char *argv[])
 
 	auto wwwnd = Window ();
 	auto bgEgg = wwwnd.GetBackground ();
-	auto wwnd = Window (std::move (wwwnd));
-	bgEgg->DrawTxt (0, 0, "haha");
+	//auto wwnd = Window (std::move (wwwnd));
+
+	// Todo: Where is haha?
+	bgEgg->DrawTxt (0, 0, "haha", 200);
+	//bgEgg->DrawLine (0, 0, 100, 100);
 	bgEgg->AddEgg (eggee);
+	egg->AddEgg (bgEgg);
 
 	auto isQuit = false;
 	wnd->OnPress ([&] (char ch)
@@ -74,8 +79,8 @@ int main (int argc, char *argv[])
 		}
 	});
 
-	wnd->Refresh ();
-	wwnd.Refresh ();
+	//wnd->Refresh ();
+	//wwnd.Refresh ();
 	while (!wnd->IsClosed () && !isQuit)
 	{
 		using namespace std::chrono_literals;
