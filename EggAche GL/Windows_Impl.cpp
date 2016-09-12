@@ -123,7 +123,7 @@ namespace EggAche
 							 GUIContext_Windows::_colorMask))
 		{
 			ReleaseDC (this->_hwnd, hdcWnd);
-			throw std::runtime_error ("Draw Failed at BitBlt");
+			throw std::runtime_error ("Draw Failed at TransparentBlt");
 		}
 
 		ReleaseDC (this->_hwnd, hdcWnd);
@@ -522,7 +522,9 @@ namespace EggAche
 							 this->_hdc, 0, 0, this->_w, this->_h,
 							 GUIContext_Windows::_colorMask))
 		{
-			throw std::runtime_error ("Draw Failed at BitBlt");
+			// Todo: Failed when user switched back from Task View
+			// https://msdn.microsoft.com/en-us/library/windows/desktop/dd145141(v=vs.85).aspx
+			throw std::runtime_error ("Draw Failed at TransparentBlt");
 		}
 	}
 

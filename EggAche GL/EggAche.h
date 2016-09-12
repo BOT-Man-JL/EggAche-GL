@@ -25,10 +25,6 @@ namespace EggAche
 		// 1. Create a Window of Logic Size width * height with Caption cap_string;
 		// 2. When an error occurs, throw std::runtime_error
 
-		Window (Window &&);
-		// Remarks:
-		// Move Window Object
-
 		~Window ();
 		// Remarks:
 		// Destroy the Window
@@ -73,10 +69,6 @@ namespace EggAche
 			 int pos_x = 0, int pos_y = 0);					// Egg's initial postion
 		// Remarks:
 		// When an error occurs, throw std::runtime_error
-
-		Egg (Egg &&);
-		// Remarks:
-		// Move Egg Object
 
 		~Egg ();
 		// Remarks:

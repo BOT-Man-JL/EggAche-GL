@@ -29,14 +29,6 @@ namespace EggAche
 		delete guiFactory;
 	}
 
-	Window::Window (Window &&origin)
-		: bgEgg (origin.bgEgg), windowImpl (origin.windowImpl)
-	{
-		windowImpl->OnRefresh (std::bind (&Window::Refresh, this));
-		origin.bgEgg = nullptr;
-		origin.windowImpl = nullptr;
-	}
-
 	Window::~Window ()
 	{
 		delete windowImpl;
@@ -122,13 +114,6 @@ namespace EggAche
 
 		context = guiFactory->NewGUIContext (width, height);
 		delete guiFactory;
-	}
-
-	Egg::Egg (Egg &&origin)
-		: context (origin.context), x (origin.x), y (origin.y),
-		subEggs (std::move (origin.subEggs))
-	{
-		origin.context = nullptr;
 	}
 
 	Egg::~Egg ()
