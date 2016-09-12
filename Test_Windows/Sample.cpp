@@ -3,11 +3,26 @@
 // By BOT Man, 2016
 //
 
+// Memory Leaks Tracer
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC  // For *alloc()
+//#include <stdlib.h>  //Should be before including <crtdbg.h>
+#include <crtdbg.h>
+#define new new(_NORMAL_BLOCK,__FILE__,__LINE__)  // For new
+#endif  // _DEBUG
+
 #include "../src/EggAche.h"
 #include <thread>
 
 int main (int argc, char *argv[])
 {
+
+#ifdef _DEBUG
+	_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	// If Traced "{69} normal block at ...", Then Call to Break
+	//_CrtSetBreakAlloc (69);
+#endif  // _DEBUG
+
 	using namespace EggAche;
 
 	Window window;                          // Create a new Window
