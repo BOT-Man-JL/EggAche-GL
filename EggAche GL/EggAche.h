@@ -25,11 +25,15 @@ namespace EggAche
 		// 1. Create a Window of Logic Size width * height with Caption cap_string;
 		// 2. When an error occurs, throw std::runtime_error
 
+		Window (Window &&);
+		// Remarks:
+		// Move Window Object
+
 		~Window ();
 		// Remarks:
 		// Destroy the Window
 
-		Egg *GetEgg ();										// Get Background Egg
+		Egg *GetBackground ();								// Get Background Egg
 		// Remarks:
 		// DON'T MOVE or DELETE this Egg...
 
@@ -53,7 +57,8 @@ namespace EggAche
 		// 3. Calling fnResized with (int x, int y) means Currently Window Size is x * y;
 
 	private:
-		void DrawEgg (const Egg *, size_t, size_t);			// Helper Function of Refresh
+		void DrawEgg (GUIContext *, const Egg *,			// Helper Function of Refresh
+					  size_t, size_t);
 		WindowImpl *windowImpl;								// Window Impl Bridge
 		Egg *bgEgg;											// Background Egg
 
@@ -66,12 +71,17 @@ namespace EggAche
 	class Egg
 	{
 	public:
-		Egg (unsigned int width, unsigned int height,		// Egg's size
+		Egg (size_t width, size_t height,					// Egg's size
 			 int pos_x = 0, int pos_y = 0);					// Egg's initial postion
 		// Remarks:
 		// When an error occurs, throw std::runtime_error
 
+		Egg (Egg &&);
+		// Remarks:
+		// Move Egg Object
+
 		~Egg ();
+		// Remarks:
 		// Destroy the Egg
 
 		int GetX () const;									// Get Egg's coordinate x

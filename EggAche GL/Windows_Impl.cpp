@@ -30,8 +30,8 @@ namespace EggAche
 
 	WindowImpl_Windows::WindowImpl_Windows (size_t width, size_t height,
 											const char *cap_string)
-		: _cxCanvas (width), _cyCanvas (height), capStr (cap_string),
-		_hwnd (NULL), _hEvent (NULL), _fFailed (false),
+		: _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
+		capStr (cap_string), _hwnd (NULL), _hEvent (NULL), _fFailed (false),
 		WindowImpl (width, height, cap_string)
 	{
 		if (width < 240 || height < 120)
@@ -143,6 +143,11 @@ namespace EggAche
 		ReleaseDC (this->_hwnd, hdcWnd);
 	}
 
+	std::pair<size_t, size_t> WindowImpl_Windows::GetSize ()
+	{
+		return std::make_pair (this->_cxClient, this->_cyClient);
+	}
+
 	bool WindowImpl_Windows::IsClosed () const
 	{
 		return this->_hwnd == NULL;
@@ -161,6 +166,11 @@ namespace EggAche
 	void WindowImpl_Windows::OnResized (std::function<void (int, int)> fn)
 	{
 		onResized = std::move (fn);
+	}
+
+	void WindowImpl_Windows::OnRefresh (std::function<void ()> fn)
+	{
+		onRefresh = std::move (fn);
 	}
 
 	void WindowImpl_Windows::_NewWindow_Thread (WindowImpl_Windows *pew)
@@ -211,13 +221,16 @@ namespace EggAche
 			return 0;
 
 		case WM_SIZE:
+			_mHwnd[hwnd]->_cxClient = LOWORD (lParam);
+			_mHwnd[hwnd]->_cyClient = HIWORD (lParam);
 			if (_mHwnd[hwnd]->onResized)
-				_mHwnd[hwnd]->onResized (LOWORD (lParam), HIWORD (lParam));
+				_mHwnd[hwnd]->onResized (_mHwnd[hwnd]->_cxClient, _mHwnd[hwnd]->_cyClient);
 			return 0;
 
 		case WM_PAINT:
 			BeginPaint (hwnd, NULL);
-			//_mHwnd[hwnd]->Draw (context);
+			if (_mHwnd[hwnd]->onRefresh)
+				_mHwnd[hwnd]->onRefresh ();
 			EndPaint (hwnd, NULL);
 			return 0;
 
@@ -497,6 +510,21 @@ namespace EggAche
 		FillRect (this->_hdc, &rect, hBrush);
 		DeleteObject (hBrush);
 	}
+
+	void GUIContext_Windows::PaintOnContext (GUIContext *parentContext, 
+											 size_t x, size_t y) const
+	{
+		// Assume that context is GUIContext_Windows
+		auto _context = static_cast<const GUIContext_Windows *> (parentContext);
+		if (!TransparentBlt (_context->_hdc, x, y, this->_w, this->_h,
+							 this->_hdc, 0, 0, this->_w, this->_h,
+							 GUIContext_Windows::_colorMask))
+		{
+			throw std::runtime_error ("Draw Failed at BitBlt");
+		}
+	}
+
+	// MsgBox
 
 	void MsgBox_Impl (const char * szTxt, const char * szCap)
 	{

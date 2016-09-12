@@ -1,5 +1,5 @@
 ﻿//
-// A demo of EggAche Graphics Library
+// Test on EggAche Graphics Library
 // By BOT Man, 2016
 //
 
@@ -30,7 +30,7 @@ int main (int argc, char *argv[])
 	using namespace EggAche;
 	auto wnd = new Window ();
 
-	auto egg = wnd->GetEgg ();
+	auto egg = wnd->GetBackground ();
 
 	egg->DrawLine (0, 0, 1000, 750);
 	egg->DrawBmp ("Egg.bmp", 100, 200);
@@ -55,21 +55,29 @@ int main (int argc, char *argv[])
 		wnd->Refresh ();
 	});
 
+	auto wwwnd = Window ();
+	auto bgEgg = wwwnd.GetBackground ();
+	auto wwnd = Window (std::move (wwwnd));
+	bgEgg->DrawTxt (0, 0, "haha");
+	bgEgg->AddEgg (eggee);
+
 	auto isQuit = false;
 	wnd->OnPress ([&] (char ch)
 	{
 		if (ch == 'Q' || ch == 'q')
 			isQuit = true;
-		// Todo:
-		// Mem Leak
-		std::string promptStr ("You inputted: ");
-		promptStr += ch;
-		MsgBox (promptStr.c_str ());
+		else
+		{
+			std::string promptStr ("You inputted: ");
+			promptStr += ch;
+			MsgBox (promptStr.c_str ());
+		}
 	});
 
+	wnd->Refresh ();
+	wwnd.Refresh ();
 	while (!wnd->IsClosed () && !isQuit)
 	{
-		wnd->Refresh ();
 		using namespace std::chrono_literals;
 		std::this_thread::sleep_for (500ms);
 	}

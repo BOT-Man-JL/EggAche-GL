@@ -7,6 +7,7 @@
 #define EGGACHE_GL_IMPL
 
 #include <functional>
+#include <utility>
 
 namespace EggAche
 {
@@ -21,11 +22,14 @@ namespace EggAche
 		virtual void Draw (const GUIContext *context,
 						   size_t x, size_t y) = 0;
 		virtual void Clear () = 0;
+
+		virtual std::pair<size_t, size_t> GetSize () = 0;
 		virtual bool IsClosed () const = 0;
 
 		virtual void OnClick (std::function<void (int, int)> fn) = 0;
 		virtual void OnPress (std::function<void (char)> fn) = 0;
 		virtual void OnResized (std::function<void (int, int)> fn) = 0;
+		virtual void OnRefresh (std::function<void ()> fn) = 0;
 	};
 
 	class GUIContext
@@ -72,6 +76,9 @@ namespace EggAche
 							  int b = -1) = 0;
 
 		virtual void Clear () = 0;
+
+		virtual void PaintOnContext (GUIContext *,
+									 size_t x, size_t y) const = 0;
 	};
 
 	class GUIFactory

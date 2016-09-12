@@ -4,6 +4,8 @@
 //
 
 #include "EggAche.h"
+
+// Using Windows Impl
 #include "Windows_impl.h"
 
 namespace EggAche
@@ -23,7 +25,16 @@ namespace EggAche
 #endif
 
 		windowImpl = guiFactory->NewWindow (width, height, cap_string);
+		windowImpl->OnRefresh (std::bind (&Window::Refresh, this));
 		delete guiFactory;
+	}
+
+	Window::Window (Window &&origin)
+		: bgEgg (origin.bgEgg), windowImpl (origin.windowImpl)
+	{
+		windowImpl->OnRefresh (std::bind (&Window::Refresh, this));
+		origin.bgEgg = nullptr;
+		origin.windowImpl = nullptr;
 	}
 
 	Window::~Window ()
@@ -32,24 +43,50 @@ namespace EggAche
 		delete bgEgg;
 	}
 
-	Egg *Window::GetEgg ()
+	Egg *Window::GetBackground ()
 	{
 		return bgEgg;
 	}
 
-	void Window::DrawEgg (const Egg *egg, size_t xPre, size_t yPre)
+	void Window::DrawEgg (GUIContext *parentContext, const Egg *egg,
+						  size_t xPre, size_t yPre)
 	{
+		// Actual Position of this Egg
 		auto x = xPre + egg->x, y = yPre + egg->y;
-		windowImpl->Draw (egg->context, x, y);
+		egg->context->PaintOnContext (parentContext, x, y);
+
 		for (auto subEgg : egg->subEggs)
-			DrawEgg (subEgg, x, y);
+			DrawEgg (parentContext, subEgg, x, y);
 	}
 
 	void Window::Refresh ()
 	{
-		windowImpl->Clear ();
-		if (!IsClosed ())
-			DrawEgg (bgEgg, 0, 0);
+		if (IsClosed ())
+			return;
+
+		GUIFactory *guiFactory = nullptr;
+
+#ifdef WIN32
+		// Windows Impl
+		guiFactory = new GUIFactory_Windows ();
+#endif
+
+		// Remarks:
+		// Buffering the Drawing Content into a Context
+		// to avoid flash Screen
+
+		auto wndSize = windowImpl->GetSize ();
+		auto context = 
+			guiFactory->NewGUIContext (wndSize.first, wndSize.second);
+
+		context->SetBrush (255, 255, 255);
+		context->DrawRect (-10, -10, wndSize.first + 10, wndSize.second + 10);
+
+		DrawEgg (context, this->bgEgg, 0, 0);
+		windowImpl->Draw (context, 0, 0);
+
+		delete context;
+		delete guiFactory;
 	}
 
 	bool Window::IsClosed () const
@@ -72,7 +109,8 @@ namespace EggAche
 		windowImpl->OnResized (std::move (fn));
 	}
 
-	Egg::Egg (unsigned int width, unsigned int height, int pos_x, int pos_y)
+	Egg::Egg (size_t width, size_t height,
+			  int pos_x, int pos_y)
 		: context (nullptr), x (pos_x), y (pos_y)
 	{
 		GUIFactory *guiFactory = nullptr;
@@ -84,6 +122,13 @@ namespace EggAche
 
 		context = guiFactory->NewGUIContext (width, height);
 		delete guiFactory;
+	}
+
+	Egg::Egg (Egg &&origin)
+		: context (origin.context), x (origin.x), y (origin.y),
+		subEggs (std::move (origin.subEggs))
+	{
+		origin.context = nullptr;
 	}
 
 	Egg::~Egg ()
@@ -127,7 +172,8 @@ namespace EggAche
 		subEggs.remove (egg);
 	}
 
-	bool Egg::SetPen (unsigned int width, unsigned int r, unsigned int g, unsigned int b)
+	bool Egg::SetPen (unsigned int width,
+					  unsigned int r, unsigned int g, unsigned int b)
 	{
 		return context->SetPen (width, r, g, b);
 	}
@@ -152,30 +198,39 @@ namespace EggAche
 		return context->DrawElps (xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool Egg::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd, int wElps, int hElps)
+	bool Egg::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd,
+						int wElps, int hElps)
 	{
-		return context->DrawRdRt (xBeg, yBeg, xEnd, yEnd, wElps, hElps);
+		return context->DrawRdRt (xBeg, yBeg, xEnd, yEnd,
+								  wElps, hElps);
 	}
 
-	bool Egg::DrawArc (int xLeft, int yTop, int xRight, int yBottom, int xBeg, int yBeg, int xEnd, int yEnd)
+	bool Egg::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
+					   int xBeg, int yBeg, int xEnd, int yEnd)
 	{
-		return context->DrawArc (xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
+		return context->DrawArc (xLeft, yTop, xRight, yBottom,
+								 xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool Egg::DrawChord (int xLeft, int yTop, int xRight, int yBottom, int xBeg, int yBeg, int xEnd, int yEnd)
+	bool Egg::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
+						 int xBeg, int yBeg, int xEnd, int yEnd)
 	{
-		return context->DrawChord (xLeft, yTop, xLeft, yBottom, xBeg, yBeg, xEnd, yEnd);
+		return context->DrawChord (xLeft, yTop, xLeft, yBottom,
+								   xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool Egg::DrawPie (int xLeft, int yTop, int xRight, int yBottom, int xBeg, int yBeg, int xEnd, int yEnd)
+	bool Egg::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
+					   int xBeg, int yBeg, int xEnd, int yEnd)
 	{
-		return context->DrawPie (xLeft, yTop, xLeft, yBottom, xBeg, yBeg, xEnd, yEnd);
+		return context->DrawPie (xLeft, yTop, xLeft, yBottom,
+								 xBeg, yBeg, xEnd, yEnd);
 	}
 
 	bool Egg::DrawTxt (int xBeg, int yBeg, const char *szText,
 					   size_t fontSize, const char *fontFamily)
 	{
-		return context->DrawTxt (xBeg, yBeg, szText, fontSize, fontFamily);
+		return context->DrawTxt (xBeg, yBeg, szText,
+								 fontSize, fontFamily);
 	}
 
 	bool Egg::DrawBmp (const char *szPath, int x, int y)
@@ -183,7 +238,8 @@ namespace EggAche
 		return context->DrawBmp (szPath, x, y);
 	}
 
-	bool Egg::DrawBmp (const char *szPath, int x, int y, int width, int height, int r, int g, int b)
+	bool Egg::DrawBmp (const char *szPath, int x, int y,
+					   int width, int height, int r, int g, int b)
 	{
 		return context->DrawBmp (szPath, x, y, width, height, r, g, b);
 	}
