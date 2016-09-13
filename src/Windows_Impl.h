@@ -68,6 +68,12 @@ namespace EggAche
 					   unsigned int g,
 					   unsigned int b) override;
 
+		bool SetFont (unsigned int size = 18,
+					  const char *family = "Consolas",
+					  unsigned int r = 0,
+					  unsigned int g = 0,
+					  unsigned int b = 0) override;
+
 		bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd) override;
 
 		bool DrawRect (int xBeg, int yBeg, int xEnd, int yEnd) override;
@@ -86,8 +92,7 @@ namespace EggAche
 		bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
 					  int xBeg, int yBeg, int xEnd, int yEnd) override;
 
-		bool DrawTxt (int xBeg, int yBeg, const char *szText,
-					  size_t fontSize, const char *fontFamily) override;
+		bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
 
 		bool DrawBmp (const char *szPath,
 					  int x, int y,

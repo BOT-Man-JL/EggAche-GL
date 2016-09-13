@@ -45,6 +45,12 @@ namespace EggAche
 							   unsigned int g,
 							   unsigned int b) = 0;
 
+		virtual bool SetFont (unsigned int size = 18,
+							  const char *family = "Consolas",
+							  unsigned int r = 0,
+							  unsigned int g = 0,
+							  unsigned int b = 0) = 0;
+
 		virtual bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd) = 0;
 
 		virtual bool DrawRect (int xBeg, int yBeg, int xEnd, int yEnd) = 0;
@@ -63,8 +69,7 @@ namespace EggAche
 		virtual bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
 							  int xBeg, int yBeg, int xEnd, int yEnd) = 0;
 
-		virtual bool DrawTxt (int xBeg, int yBeg, const char *szText,
-							  size_t fontSize, const char *fontFamily) = 0;
+		virtual bool DrawTxt (int xBeg, int yBeg, const char *szText) = 0;
 
 		virtual bool DrawBmp (const char *szPath,
 							  int x = 0, int y = 0,

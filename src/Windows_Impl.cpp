@@ -361,6 +361,11 @@ namespace EggAche
 			hObj != GetStockObject (NULL_PEN))
 			DeleteObject (hObj);
 
+		hObj = SelectObject (this->_hdc,
+			(HPEN) GetStockObject (SYSTEM_FONT));
+		if (hObj != GetStockObject (SYSTEM_FONT))
+			DeleteObject (hObj);
+
 		DeleteObject (this->_hBitmap);
 		DeleteDC (this->_hdc);
 	}
@@ -370,13 +375,9 @@ namespace EggAche
 									 unsigned int g,
 									 unsigned int b)
 	{
-		HPEN		hPen;
-		HGDIOBJ		hObj;
-		COLORREF	color = _GetColor (r, g, b);
-
 		if (r == -1 || g == -1 || b == -1 || width == 0)
 		{
-			hObj = SelectObject (this->_hdc,
+			auto hObj = SelectObject (this->_hdc,
 				(HPEN) GetStockObject (NULL_PEN));
 			if (hObj != GetStockObject (BLACK_PEN)
 				&& hObj != GetStockObject (NULL_PEN))
@@ -384,10 +385,11 @@ namespace EggAche
 			return true;
 		}
 
-		hPen = CreatePen (PS_SOLID, max (0, width), color);
+		auto hPen = CreatePen (PS_SOLID, max (0, width),
+							   _GetColor (r, g, b));
 		if (!hPen) return false;
 
-		hObj = SelectObject (this->_hdc, hPen);
+		auto hObj = SelectObject (this->_hdc, hPen);
 		if (hObj != GetStockObject (BLACK_PEN) &&
 			hObj != GetStockObject (NULL_PEN))
 			DeleteObject (hObj);
@@ -399,23 +401,38 @@ namespace EggAche
 									   unsigned int g,
 									   unsigned int b)
 	{
-		HBRUSH		hBrush;
-		HGDIOBJ		hObj;
-		COLORREF	color = _GetColor (r, g, b);
-
 		if (r == -1 || g == -1 || b == -1)
 		{
-			hObj = SelectObject (this->_hdc, (HPEN) GetStockObject (NULL_BRUSH));
+			auto hObj = SelectObject (this->_hdc, (HPEN) GetStockObject (NULL_BRUSH));
 			if (hObj != GetStockObject (NULL_BRUSH))
 				DeleteObject (hObj);
 			return true;
 		}
 
-		hBrush = CreateSolidBrush (color);
+		auto hBrush = CreateSolidBrush (_GetColor (r, g, b));
 		if (!hBrush) return false;
 
-		hObj = SelectObject (this->_hdc, hBrush);
+		auto hObj = SelectObject (this->_hdc, hBrush);
 		if (hObj != GetStockObject (NULL_BRUSH))
+			DeleteObject (hObj);
+
+		return true;
+	}
+
+	bool GUIContext_Windows::SetFont (unsigned int size, const char *family,
+									  unsigned int r, unsigned int g, unsigned int b)
+	{
+		SetTextColor (this->_hdc, _GetColor (r, g, b));
+
+		auto hFont = CreateFontA (size, 0, 0, 0,
+								  FW_DONTCARE, FALSE, FALSE, FALSE,
+								  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+								  CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY,
+								  DEFAULT_PITCH, family);
+		if (!hFont) return false;
+
+		auto hObj = SelectObject (this->_hdc, hFont);
+		if (hObj != GetStockObject (SYSTEM_FONT))
 			DeleteObject (hObj);
 
 		return true;
@@ -462,23 +479,9 @@ namespace EggAche
 		return !!Pie (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool GUIContext_Windows::DrawTxt (int xBeg, int yBeg, const char * szText,
-									  size_t fontSize, const char *fontFamily)
+	bool GUIContext_Windows::DrawTxt (int xBeg, int yBeg, const char * szText)
 	{
-		HFONT hFont, hFontPre;
-		hFont = CreateFontA (fontSize, 0, 0, 0,
-							 FW_DONTCARE, FALSE, FALSE, FALSE,
-							 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
-							 CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY,
-							 DEFAULT_PITCH, fontFamily);
-		hFontPre = (HFONT) SelectObject (this->_hdc, hFont);
-
-		auto ret = !!TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
-
-		SelectObject (this->_hdc, hFontPre);
-		DeleteObject (hFont);
-
-		return ret;
+		return !!TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
 	}
 
 	bool GUIContext_Windows::DrawBmp (const char * szPath, int x, int y,

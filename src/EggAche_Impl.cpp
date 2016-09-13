@@ -164,6 +164,11 @@ namespace EggAche
 		return context->SetBrush (r, g, b);
 	}
 
+	bool Egg::SetFont (unsigned int size, const char *family, unsigned int r, unsigned int g, unsigned int b)
+	{
+		return context->SetFont (size, family, r, g, b);
+	}
+
 	bool Egg::DrawLine (int xBeg, int yBeg, int xEnd, int yEnd)
 	{
 		return context->DrawLine (xBeg, yBeg, xEnd, yEnd);
@@ -207,11 +212,9 @@ namespace EggAche
 								 xBeg, yBeg, xEnd, yEnd);
 	}
 
-	bool Egg::DrawTxt (int xBeg, int yBeg, const char *szText,
-					   size_t fontSize, const char *fontFamily)
+	bool Egg::DrawTxt (int xBeg, int yBeg, const char *szText)
 	{
-		return context->DrawTxt (xBeg, yBeg, szText,
-								 fontSize, fontFamily);
+		return context->DrawTxt (xBeg, yBeg, szText);
 	}
 
 	bool Egg::DrawBmp (const char *szPath, int x, int y)

@@ -95,13 +95,18 @@ namespace EggAche
 		// Remarks:
 		// Associated Eggs will be rendered after this Egg
 
-		bool SetPen (unsigned int width,					// Pen width
-					 unsigned int r = 0,					// Pen color
+		bool SetPen (unsigned int width,					// Pen Width
+					 unsigned int r = 0,					// Pen Color
 					 unsigned int g = 0,
 					 unsigned int b = 0);
-		bool SetBrush (unsigned int r,						// Brush color
+		bool SetBrush (unsigned int r,						// Brush Color
 					   unsigned int g,
 					   unsigned int b);
+		bool SetFont (unsigned int size = 18,				// Font Size
+					  const char *family = "Consolas",		// Font Family
+					  unsigned int r = 0,					// Font Color
+					  unsigned int g = 0,
+					  unsigned int b = 0);
 		// Remarks:
 		// If one of r/g/b = -1, the Pen/Brush will be set Transparent;
 
@@ -109,8 +114,7 @@ namespace EggAche
 		// Remarks:
 		// Erase the content in Egg
 
-		bool DrawTxt (int xBeg, int yBeg, const char *szText,
-					  size_t fontSize = 18, const char *fontFamily = "Consolas");
+		bool DrawTxt (int xBeg, int yBeg, const char *szText);
 		// Remarks:
 		// Draw the szText with a upper left point (xBeg, yBeg)
 
