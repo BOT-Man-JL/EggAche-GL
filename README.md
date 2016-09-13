@@ -124,7 +124,7 @@ This Sample Shows how to
     // ...
 ```
 
-![Animation](Demo/Animation.png)
+![Animation](Demo/Animation.gif)
 
 ## Update History
 
