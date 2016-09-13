@@ -64,7 +64,8 @@ namespace EggAche
 					 unsigned int g = 0,
 					 unsigned int b = 0) override;
 
-		bool SetBrush (unsigned int r,
+		bool SetBrush (bool isTransparent,
+					   unsigned int r,
 					   unsigned int g,
 					   unsigned int b) override;
 

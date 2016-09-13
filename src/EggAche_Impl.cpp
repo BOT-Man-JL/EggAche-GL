@@ -73,7 +73,7 @@ namespace EggAche
 		auto context = 
 			guiFactory->NewGUIContext (wndSize.first, wndSize.second);
 
-		context->SetBrush (255, 255, 255);
+		context->SetBrush (false, 255, 255, 255);
 		context->DrawRect (-10, -10, wndSize.first + 10, wndSize.second + 10);
 
 		this->bgEgg->DrawOnContext (context, 0, 0);
@@ -159,12 +159,14 @@ namespace EggAche
 		return context->SetPen (width, r, g, b);
 	}
 
-	bool Egg::SetBrush (unsigned int r, unsigned int g, unsigned int b)
+	bool Egg::SetBrush (bool isTransparent,
+						unsigned int r, unsigned int g, unsigned int b)
 	{
-		return context->SetBrush (r, g, b);
+		return context->SetBrush (isTransparent, r, g, b);
 	}
 
-	bool Egg::SetFont (unsigned int size, const char *family, unsigned int r, unsigned int g, unsigned int b)
+	bool Egg::SetFont (unsigned int size, const char *family,
+					   unsigned int r, unsigned int g, unsigned int b)
 	{
 		return context->SetFont (size, family, r, g, b);
 	}

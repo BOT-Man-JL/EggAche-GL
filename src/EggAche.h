@@ -99,7 +99,8 @@ namespace EggAche
 					 unsigned int r = 0,					// Pen Color
 					 unsigned int g = 0,
 					 unsigned int b = 0);
-		bool SetBrush (unsigned int r,						// Brush Color
+		bool SetBrush (bool isTransparent,					// Is Transparent
+					   unsigned int r,						// Brush Color
 					   unsigned int g,
 					   unsigned int b);
 		bool SetFont (unsigned int size = 18,				// Font Size
@@ -108,7 +109,7 @@ namespace EggAche
 					  unsigned int g = 0,
 					  unsigned int b = 0);
 		// Remarks:
-		// If one of r/g/b = -1, the Pen/Brush will be set Transparent;
+		// If SetBrush's isTransparent is set, the Color will be ignored
 
 		void Clear ();										// Clear the Egg
 		// Remarks:

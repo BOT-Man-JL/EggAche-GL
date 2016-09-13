@@ -41,7 +41,8 @@ namespace EggAche
 							 unsigned int g = 0,
 							 unsigned int b = 0) = 0;
 
-		virtual bool SetBrush (unsigned int r,
+		virtual bool SetBrush (bool isTransparent,
+							   unsigned int r,
 							   unsigned int g,
 							   unsigned int b) = 0;
 

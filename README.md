@@ -47,7 +47,6 @@ int main ()
     Window window;                          // Create a new Window
     auto bgEgg = window.GetBackground ();   // Get Background Egg of this Window
 
-    bgEgg->SetFont (18, "Consolas");        // Set Font of size 18 in "Consolas"
     bgEgg->DrawTxt (0, 0, "Hello EggAche"); // Draw Text at (0, 0)
     bgEgg->DrawLine (0, 30, 100, 30);       // Draw Line From (0, 30) to (100, 30)
     bgEgg->DrawBmp ("Egg.bmp", 20, 50);     // Draw Bmp at (20, 50)

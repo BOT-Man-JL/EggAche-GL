@@ -342,6 +342,9 @@ namespace EggAche
 		SelectObject (this->_hdc, (HPEN) GetStockObject (BLACK_PEN));
 		SetBkMode (this->_hdc, TRANSPARENT);
 
+		// Set default Font to Consolas :-)
+		SetFont ();
+
 		ReleaseDC (NULL, hdcWnd);
 		DeleteObject (hBrush);
 	}
@@ -375,12 +378,12 @@ namespace EggAche
 									 unsigned int g,
 									 unsigned int b)
 	{
-		if (r == -1 || g == -1 || b == -1 || width == 0)
+		if (width == 0)
 		{
 			auto hObj = SelectObject (this->_hdc,
 				(HPEN) GetStockObject (NULL_PEN));
-			if (hObj != GetStockObject (BLACK_PEN)
-				&& hObj != GetStockObject (NULL_PEN))
+			if (hObj != GetStockObject (BLACK_PEN) &&
+				hObj != GetStockObject (NULL_PEN))
 				DeleteObject (hObj);
 			return true;
 		}
@@ -397,13 +400,15 @@ namespace EggAche
 		return true;
 	}
 
-	bool GUIContext_Windows::SetBrush (unsigned int r,
+	bool GUIContext_Windows::SetBrush (bool isTransparent,
+									   unsigned int r,
 									   unsigned int g,
 									   unsigned int b)
 	{
-		if (r == -1 || g == -1 || b == -1)
+		if (isTransparent)
 		{
-			auto hObj = SelectObject (this->_hdc, (HPEN) GetStockObject (NULL_BRUSH));
+			auto hObj = SelectObject (this->_hdc,
+				(HPEN) GetStockObject (NULL_BRUSH));
 			if (hObj != GetStockObject (NULL_BRUSH))
 				DeleteObject (hObj);
 			return true;
@@ -419,8 +424,11 @@ namespace EggAche
 		return true;
 	}
 
-	bool GUIContext_Windows::SetFont (unsigned int size, const char *family,
-									  unsigned int r, unsigned int g, unsigned int b)
+	bool GUIContext_Windows::SetFont (unsigned int size,
+									  const char *family,
+									  unsigned int r,
+									  unsigned int g,
+									  unsigned int b)
 	{
 		SetTextColor (this->_hdc, _GetColor (r, g, b));
 
