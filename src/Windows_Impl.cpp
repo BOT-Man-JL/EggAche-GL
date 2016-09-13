@@ -31,39 +31,38 @@ namespace EggAche
 	class HwndManager
 	{
 	private:
-		static std::unordered_map<HWND, WindowImpl_Windows *> *_mHwnd;
+		static std::unordered_map<HWND, WindowImpl_Windows *> *_hwndMapper;
 	protected:
-		HwndManager ();
+		HwndManager () {}
 	public:
 		static bool isRegClass;
 
 		static std::unordered_map<HWND, WindowImpl_Windows *> *Instance ()
 		{
-			if (_mHwnd == nullptr)
-				_mHwnd = new std::unordered_map<HWND, WindowImpl_Windows *> ();
-			return _mHwnd;
+			if (_hwndMapper == nullptr)
+				_hwndMapper = new std::unordered_map<HWND, WindowImpl_Windows *> ();
+			return _hwndMapper;
 		}
 
 		static bool IsRefed ()
 		{
-			return _mHwnd != nullptr && !_mHwnd->empty ();
+			return _hwndMapper != nullptr && !_hwndMapper->empty ();
 		}
 
 		static void Delete ()
 		{
-			delete _mHwnd;
-			_mHwnd = nullptr;
+			delete _hwndMapper;
+			_hwndMapper = nullptr;
 		}
 	};
 
-	std::unordered_map<HWND, WindowImpl_Windows *> *HwndManager::_mHwnd = nullptr;
+	std::unordered_map<HWND, WindowImpl_Windows *> *HwndManager::_hwndMapper = nullptr;
 	bool HwndManager::isRegClass = false;
 
 	WindowImpl_Windows::WindowImpl_Windows (size_t width, size_t height,
 											const char *cap_string)
 		: _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
-		capStr (cap_string), _hwnd (NULL), _hEvent (NULL), _fFailed (false),
-		WindowImpl (width, height, cap_string)
+		capStr (cap_string), _hwnd (NULL), _hEvent (NULL), _fFailed (false)
 	{
 		if (width < 240 || height < 120)
 			throw std::runtime_error ("Err_Window_#1_Too_Small");
@@ -242,40 +241,40 @@ namespace EggAche
 	LRESULT CALLBACK WindowImpl_Windows::_WndProc (
 		HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		if (HwndManager::IsRefed == nullptr)
+		if (!HwndManager::IsRefed ())
 			goto tagRet;
 
-		auto mHwnd = HwndManager::Instance ();
+		auto hwndMapper = HwndManager::Instance ();
 		switch (message)
 		{
 		case WM_LBUTTONUP:
 		case WM_RBUTTONUP:
-			if ((*mHwnd)[hwnd]->onClick)
-				(*mHwnd)[hwnd]->onClick (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
+			if ((*hwndMapper)[hwnd]->onClick)
+				(*hwndMapper)[hwnd]->onClick (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
 			return 0;
 
 		case WM_CHAR:
-			if ((*mHwnd)[hwnd]->onPress)
-				(*mHwnd)[hwnd]->onPress ((char) wParam);
+			if ((*hwndMapper)[hwnd]->onPress)
+				(*hwndMapper)[hwnd]->onPress ((char) wParam);
 			return 0;
 
 		case WM_SIZE:
-			(*mHwnd)[hwnd]->_cxClient = LOWORD (lParam);
-			(*mHwnd)[hwnd]->_cyClient = HIWORD (lParam);
-			if ((*mHwnd)[hwnd]->onResized)
-				(*mHwnd)[hwnd]->onResized ((*mHwnd)[hwnd]->_cxClient, (*mHwnd)[hwnd]->_cyClient);
+			(*hwndMapper)[hwnd]->_cxClient = LOWORD (lParam);
+			(*hwndMapper)[hwnd]->_cyClient = HIWORD (lParam);
+			if ((*hwndMapper)[hwnd]->onResized)
+				(*hwndMapper)[hwnd]->onResized ((*hwndMapper)[hwnd]->_cxClient, (*hwndMapper)[hwnd]->_cyClient);
 			return 0;
 
 		case WM_PAINT:
 			BeginPaint (hwnd, NULL);
-			if ((*mHwnd)[hwnd]->onRefresh)
-				(*mHwnd)[hwnd]->onRefresh ();
+			if ((*hwndMapper)[hwnd]->onRefresh)
+				(*hwndMapper)[hwnd]->onRefresh ();
 			EndPaint (hwnd, NULL);
 			return 0;
 
 		case WM_DESTROY:
-			(*mHwnd)[hwnd]->_hwnd = NULL;
-			mHwnd->erase (hwnd);
+			(*hwndMapper)[hwnd]->_hwnd = NULL;
+			hwndMapper->erase (hwnd);
 
 			PostQuitMessage (0);
 			return 0;
@@ -306,8 +305,7 @@ namespace EggAche
 	}
 
 	GUIContext_Windows::GUIContext_Windows (size_t width, size_t height)
-		: _hdc (NULL), _hBitmap (NULL), _w (width), _h (height),
-		GUIContext (width, height)
+		: _hdc (NULL), _hBitmap (NULL), _w (width), _h (height)
 	{
 		HBRUSH	hBrush;
 		RECT	rect;
