@@ -34,9 +34,6 @@
     <ClInclude Include="..\src\EggAche.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Windows_Impl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\EggAche_Impl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
