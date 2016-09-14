@@ -60,6 +60,10 @@ namespace EggAche
 		// 2. Calling fnPress with (char ch) means character 'ch' is Inputted;
 		// 3. Calling fnResized with (int x, int y) means Currently Window Size is x * y;
 
+		bool SaveAsBmp (const char *fileName);				// "path/name.bmp"
+		// Remarks:
+		// Save Egg's Content into Bmp
+
 	private:
 		EggAche_Impl::WindowImpl *windowImpl;				// Window Impl Bridge
 		Egg *bgEgg;											// Background Egg
@@ -119,10 +123,10 @@ namespace EggAche
 		// Remarks:
 		// Draw the szText with a upper left point (xBeg, yBeg)
 
-		bool DrawBmp (const char *szPath,					// Source: "path/name.bmp"
+		bool DrawBmp (const char *fileName,					// Source: "path/name.bmp"
 					  int x, int y);						// Position to paste in Egg
 
-		bool DrawBmp (const char *szPath,					// Source: "path/name.bmp"
+		bool DrawBmp (const char *fileName,					// Source: "path/name.bmp"
 					  int x, int y,							// Position to paste in Egg
 					  int width, int height,				// Size to paste in Egg
 					  int r = -1,							// Red color of mask (-1 is not used)
@@ -192,6 +196,7 @@ namespace EggAche
 		void DrawOnContext (EggAche_Impl::GUIContext *,		// Helper Function of
 							size_t, size_t) const;			// Window.Refresh
 		friend void Window::Refresh ();
+		friend bool Window::SaveAsBmp (const char *);
 
 		Egg (const Egg &) = delete;							// Not allow to copy
 		void operator= (const Egg &) = delete;				// Not allow to copy

@@ -1,4 +1,4 @@
-//
+﻿//
 // Windows Implementation of EggAche Graphics Library
 // By BOT Man, 2016
 //
@@ -95,12 +95,14 @@ namespace EggAche_Impl
 
 		bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
 
-		bool DrawBmp (const char *szPath,
+		bool DrawBmp (const char *fileName,
 					  int x, int y,
 					  int width = -1, int height = -1,
 					  int r = -1,
 					  int g = -1,
 					  int b = -1) override;
+
+		bool SaveAsBmp (const char *fileName) override;
 
 		void Clear () override;
 
@@ -416,10 +418,6 @@ namespace EggAche_Impl
 
 		_hBitmap = CreateCompatibleBitmap (hdcWnd, cxBmp, cyBmp);
 
-		SetMapMode (this->_hdc, MM_ANISOTROPIC);
-		SetWindowExtEx (this->_hdc, width, height, NULL);
-		SetViewportExtEx (this->_hdc, cxBmp, cyBmp, NULL);
-
 		if (!this->_hdc || !this->_hBitmap)
 		{
 			if (this->_hBitmap) DeleteObject (this->_hBitmap);
@@ -589,7 +587,7 @@ namespace EggAche_Impl
 		return !!TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
 	}
 
-	bool GUIContext_Windows::DrawBmp (const char * szPath, int x, int y,
+	bool GUIContext_Windows::DrawBmp (const char *fileName, int x, int y,
 									  int width, int height, int r, int g, int b)
 	{
 		HDC			hdcMemImag;
@@ -597,7 +595,7 @@ namespace EggAche_Impl
 		BITMAP		bitmap;
 		COLORREF	colorMask;
 
-		hBitmapImag = (HBITMAP) LoadImageA (NULL, szPath, IMAGE_BITMAP,
+		hBitmapImag = (HBITMAP) LoadImageA (NULL, fileName, IMAGE_BITMAP,
 											0, 0, LR_LOADFROMFILE);
 		if (!hBitmapImag) return false;
 		GetObject (hBitmapImag, sizeof (BITMAP), &bitmap);
@@ -644,6 +642,71 @@ namespace EggAche_Impl
 		DeleteDC (hdcMemImag);
 		DeleteObject (hBitmapImag);
 		return true;
+	}
+
+	bool GUIContext_Windows::SaveAsBmp (const char *fileName)
+	{
+		auto hdcMem = CreateCompatibleDC (this->_hdc);
+		if (!hdcMem)
+			return false;
+
+		BITMAPINFO bmpInfo = { 0 };
+		bmpInfo.bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
+		bmpInfo.bmiHeader.biWidth = this->_w;
+		bmpInfo.bmiHeader.biHeight = this->_h;
+		bmpInfo.bmiHeader.biPlanes = 1;
+		bmpInfo.bmiHeader.biBitCount = 24;
+		BYTE *pData = NULL;
+
+		auto hBmp = CreateDIBSection (hdcMem, &bmpInfo, DIB_RGB_COLORS,
+									  (VOID **)(&pData), NULL, 0);
+		if (!hBmp)
+		{
+			DeleteDC (hdcMem);
+			return false;
+		}
+		auto hObjOld = SelectObject (hdcMem, hBmp);
+
+		if (!BitBlt (hdcMem, 0, 0, this->_w, this->_h,
+					 this->_hdc, 0, 0, SRCCOPY))
+		{
+			DeleteObject (hBmp);
+			DeleteDC (hdcMem);
+			return false;
+		}
+
+		BITMAPINFOHEADER bmInfoHeader = { 0 };
+		bmInfoHeader.biSize = sizeof (BITMAPINFOHEADER);
+		bmInfoHeader.biWidth = this->_w;
+		bmInfoHeader.biHeight = this->_h;
+		bmInfoHeader.biPlanes = 1;
+		bmInfoHeader.biBitCount = 24;
+
+		auto bmpSize = (bmInfoHeader.biWidth * bmInfoHeader.biHeight) * (24 / 8);
+		BITMAPFILEHEADER bmFileHeader = { 0 };
+		bmFileHeader.bfType = 0x4d42;  // BMP
+		bmFileHeader.bfOffBits = sizeof (BITMAPFILEHEADER) +
+			sizeof (BITMAPINFOHEADER);
+		bmFileHeader.bfSize = bmFileHeader.bfOffBits + bmpSize;
+
+		HANDLE hFile = CreateFileA (fileName, GENERIC_WRITE, 0, NULL,
+									CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFile == INVALID_HANDLE_VALUE)
+		{
+			DeleteObject (hBmp);
+			DeleteDC (hdcMem);
+			return false;
+		}
+
+		DWORD dwWrite = 0;
+		WriteFile (hFile, &bmFileHeader, sizeof (BITMAPFILEHEADER), &dwWrite, NULL);
+		WriteFile (hFile, &bmInfoHeader, sizeof (BITMAPINFOHEADER), &dwWrite, NULL);
+		WriteFile (hFile, pData, bmpSize, &dwWrite, NULL);
+
+		CloseHandle (hFile);
+		SelectObject (hdcMem, hObjOld);
+		DeleteObject (hBmp);
+		DeleteDC (hdcMem);
 	}
 
 	void GUIContext_Windows::Clear ()

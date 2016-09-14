@@ -83,6 +83,32 @@ namespace EggAche
 		delete guiFactory;
 	}
 
+	bool Window::SaveAsBmp (const char *fileName)
+	{
+		if (IsClosed ())
+			return false;
+
+		auto guiFactory = NewGUIFactory ();
+
+		// Remarks:
+		// Buffering the Drawing Content into a Context
+		// to avoid flash Screen
+
+		auto wndSize = windowImpl->GetSize ();
+		auto context =
+			guiFactory->NewGUIContext (wndSize.first, wndSize.second);
+
+		context->SetBrush (false, 255, 255, 255);
+		context->DrawRect (-10, -10, wndSize.first + 10, wndSize.second + 10);
+
+		this->bgEgg->DrawOnContext (context, 0, 0);
+		auto ret = context->SaveAsBmp (fileName);
+
+		delete context;
+		delete guiFactory;
+		return ret;
+	}
+
 	bool Window::IsClosed () const
 	{
 		return windowImpl->IsClosed ();
@@ -219,15 +245,15 @@ namespace EggAche
 		return context->DrawTxt (xBeg, yBeg, szText);
 	}
 
-	bool Egg::DrawBmp (const char *szPath, int x, int y)
+	bool Egg::DrawBmp (const char *fileName, int x, int y)
 	{
-		return context->DrawBmp (szPath, x, y);
+		return context->DrawBmp (fileName, x, y);
 	}
 
-	bool Egg::DrawBmp (const char *szPath, int x, int y,
+	bool Egg::DrawBmp (const char *fileName, int x, int y,
 					   int width, int height, int r, int g, int b)
 	{
-		return context->DrawBmp (szPath, x, y, width, height, r, g, b);
+		return context->DrawBmp (fileName, x, y, width, height, r, g, b);
 	}
 
 	void Egg::Clear ()

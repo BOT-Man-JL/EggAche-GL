@@ -71,12 +71,14 @@ namespace EggAche_Impl
 
 		virtual bool DrawTxt (int xBeg, int yBeg, const char *szText) = 0;
 
-		virtual bool DrawBmp (const char *szPath,
+		virtual bool DrawBmp (const char *fileName,
 							  int x = 0, int y = 0,
 							  int width = -1, int height = -1,
 							  int r = -1,
 							  int g = -1,
 							  int b = -1) = 0;
+
+		virtual bool SaveAsBmp (const char *fileName) = 0;
 
 		virtual void Clear () = 0;
 
