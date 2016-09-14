@@ -6,21 +6,22 @@ EggAche is a **Lightweight**, **Cross-Platform** C++ Graphics Library
 
 ## Requirement
 
-- Currently only **Windows** (MSVC / MinGW are both supported)
-- Linux/Mac Version is on the way :sweat_smile:
 - **C++ 11** Support
+- Currently ONLY **Windows**
+  - **MSVC** (installed with Visual Studio) / **g++**
+  - **Windows SDK** (installed with Visual Studio) / **MinGW**
+- **Linux/Mac** Version is on the way :sweat_smile:
 
 ## Get Started
 
 ### Setup
 
 1. Download this Project's **_[zip](https://github.com/BOT-Man-JL/EggAche-GL/archive/master.zip)_**
-2. Add the **5 Files** in **_[src path](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/src)_** to your project
-3. **#include "EggAche.h"** where you want to use EggAche Library
-4. Using **#define** in **EggAche.h** to specify your target Platform
+2. Add the `EggAche.h`, `EggAche.cpp`, `EggAche_Impl.h` and `*_Impl.cpp` (* is your Target Platform) in **_[src path](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/src)_** to your project
+3. `#include "EggAche.h"` where you want to use EggAche Library
+4. Using `#define` in `EggAche.h` to specify your Target Platform, for example:
 
 ``` c++
-// Enable Windows Version
 #define EGGACHE_WINDOWS
 
 //#define EGGACHE_LINUX
@@ -28,8 +29,6 @@ EggAche is a **Lightweight**, **Cross-Platform** C++ Graphics Library
 ```
 
 ### Basic Usage
-
-This Sample Shows how to
 
 - Create Window
 - Draw on Background Egg
@@ -66,8 +65,6 @@ int main ()
 
 ### Handling Click Event
 
-This Sample Shows how to
-
 - Bind Event Handler to a Window
 - Associate an Egg to another one
 
@@ -94,6 +91,9 @@ This Sample Shows how to
 ![Click](Demo/Click.png)
 
 ### Simple Animation
+
+- Draw BMP File with a Color Mask
+- Add Animation into the Game Loop
 
 ``` c++
     // ...
