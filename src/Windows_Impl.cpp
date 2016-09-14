@@ -420,8 +420,7 @@ namespace EggAche_Impl
 
 		hdcWnd = GetDC (NULL);
 		this->_hdc = CreateCompatibleDC (hdcWnd);
-
-		_hBitmap = CreateCompatibleBitmap (hdcWnd, this->_w, this->_h);
+		this->_hBitmap = CreateCompatibleBitmap (hdcWnd, this->_w, this->_h);
 
 		if (!this->_hdc || !this->_hBitmap)
 		{
@@ -735,7 +734,7 @@ namespace EggAche_Impl
 						this->_hdc, 0, 0, this->_w, this->_h,
 						GUIContext_Windows::_colorMask);
 
-		// Todo: Failed in some cases
+		// Todo: Fail at multi-monitors
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/dd145141(v=vs.85).aspx
 	}
 
