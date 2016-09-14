@@ -11,7 +11,7 @@
 #include "EggAche_Impl.h"
 #include "Windows_Impl.h"
 
-namespace EggAche
+namespace EggAche_Impl
 {
 	// Factory
 
@@ -160,20 +160,6 @@ namespace EggAche
 			throw std::runtime_error ("Draw Failed at TransparentBlt");
 		}
 
-		ReleaseDC (this->_hwnd, hdcWnd);
-	}
-
-	void WindowImpl_Windows::Clear ()
-	{
-		auto hdcWnd = GetDC (this->_hwnd);
-		if (!hdcWnd) throw std::runtime_error ("Draw Failed at GetDC");
-
-		RECT rect;
-		rect.top = rect.left = 0;
-		rect.right = this->_cxCanvas;
-		rect.bottom = this->_cyCanvas;
-
-		FillRect (hdcWnd, &rect, (HBRUSH) GetStockObject (WHITE_BRUSH));
 		ReleaseDC (this->_hwnd, hdcWnd);
 	}
 

@@ -12,7 +12,7 @@
 
 #include "EggAche_Impl.h"
 
-namespace EggAche
+namespace EggAche_Impl
 {
 	class WindowImpl_Windows : public WindowImpl
 	{
@@ -22,7 +22,6 @@ namespace EggAche
 		~WindowImpl_Windows () override;
 
 		void Draw (const GUIContext *context, size_t x, size_t y) override;
-		void Clear () override;
 
 		std::pair<size_t, size_t> GetSize () override;
 		bool IsClosed () const override;

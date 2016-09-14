@@ -9,7 +9,7 @@
 #include <functional>
 #include <utility>
 
-namespace EggAche
+namespace EggAche_Impl
 {
 	class GUIContext;
 
@@ -20,7 +20,6 @@ namespace EggAche
 
 		virtual void Draw (const GUIContext *context,
 						   size_t x, size_t y) = 0;
-		virtual void Clear () = 0;
 
 		virtual std::pair<size_t, size_t> GetSize () = 0;
 		virtual bool IsClosed () const = 0;

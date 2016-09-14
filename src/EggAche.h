@@ -61,7 +61,7 @@ namespace EggAche
 		// 3. Calling fnResized with (int x, int y) means Currently Window Size is x * y;
 
 	private:
-		WindowImpl *windowImpl;								// Window Impl Bridge
+		EggAche_Impl::WindowImpl *windowImpl;				// Window Impl Bridge
 		Egg *bgEgg;											// Background Egg
 
 		Window (const Window &) = delete;					// Not allow to copy
@@ -187,9 +187,9 @@ namespace EggAche
 	private:
 		int x, y;											// Postion
 		std::list<const Egg *> subEggs;						// Sub Eggs
-		GUIContext *context;								// GUI Impl Bridge
+		EggAche_Impl::GUIContext *context;					// GUI Impl Bridge
 
-		void DrawOnContext (GUIContext *,					// Helper Function of
+		void DrawOnContext (EggAche_Impl::GUIContext *,		// Helper Function of
 							size_t, size_t) const;			// Window.Refresh
 		friend void Window::Refresh ();
 

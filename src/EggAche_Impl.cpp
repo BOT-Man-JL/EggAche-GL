@@ -8,16 +8,16 @@
 
 namespace EggAche
 {
-	GUIFactory *NewGUIFactory ()
+	EggAche_Impl::GUIFactory *NewGUIFactory ()
 	{
 #ifdef EGGACHE_WINDOWS
-		return new GUIFactory_Windows ();
+		return new EggAche_Impl::GUIFactory_Windows ();
 #endif
 #ifdef EGGACHE_LINUX
-		return new GUIFactory_Linux ();
+		return new EggAche_Impl::GUIFactory_Linux ();
 #endif
 #ifdef EGGACHE_MAC
-		return new GUIFactory_Mac ();
+		return new EggAche_Impl::GUIFactory_Mac ();
 #endif
 	}
 
@@ -47,7 +47,7 @@ namespace EggAche
 		return bgEgg;
 	}
 
-	void Egg::DrawOnContext (GUIContext *parentContext,
+	void Egg::DrawOnContext (EggAche_Impl::GUIContext *parentContext,
 							 size_t x, size_t y) const
 	{
 		// Actual Position of this Egg
@@ -237,6 +237,6 @@ namespace EggAche
 
 	void MsgBox (const char *szTxt, const char *szCap)
 	{
-		MsgBox_Impl (szTxt, szCap);
+		EggAche_Impl::MsgBox_Impl (szTxt, szCap);
 	}
 }
