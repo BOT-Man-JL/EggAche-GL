@@ -2,9 +2,14 @@
 
 EggAche is a **Lightweight**, **Cross-Platform** C++ Graphics Library
 
+- You can easily embed the code **WHEREVER** there needs a GUI
+- You can take **Snapshot** of the Window (if there should be a **Graphical Log**)
+
+Welcome to Join :wink:
+
 ![Egg](Test_Windows/Egg.bmp)
 
-## Requirement
+## Requirements
 
 - **C++ 11** Support
 - **Windows** Version is Done :blush: :tada:
@@ -68,28 +73,32 @@ int main ()
 
 - Bind Event Handler to a Window
 - Associate an Egg to another one
+- Take a Snapshot of the Window
 
 ``` c++
     // ...
     //window.Refresh ();
     
-    auto lineEgg = new Egg (1000, 750);  // Create a New Egg
-    bgEgg->AddEgg (lineEgg);             // Associate this new Egg with Background Egg
+    auto lineEgg = new Egg (1000, 750);    // Create a New Egg
+    bgEgg->AddEgg (lineEgg);               // Associate this new Egg with Background Egg
 
-    window.OnClick ([&] (int x, int y)   // Register OnClick Event
+    window.OnClick ([&] (int x, int y)     // Register OnClick Event
     {
-        lineEgg->Clear ();               // Clear Previous Content
-        lineEgg->DrawLine (0, 0, x, y);  // Draw Line from (0, 0) to the Point you Clicked
-        window.Refresh ();               // Refresh the Window to View Changes
+        lineEgg->Clear ();                 // Clear Previous Content
+        lineEgg->DrawLine (0, 0, x, y);    // Draw Line from (0, 0) to the Point you Clicked
+        window.Refresh ();                 // Refresh the Window to View Changes
+        window.SaveAsBmp ("Snapshot.bmp"); // Take a Snapshot :-)
     });
 
     //while (!window.IsClosed ())
     // ...
-    delete lineEgg;                      // Remember to delete this Egg
+    delete lineEgg;                        // Remember to delete this Egg
     //return 0;
 ```
 
 ![Click](Demo/Click.png)
+
+And you will notice that `Snapshot.bmp` has been saved :wink:
 
 ### Simple Animation
 
