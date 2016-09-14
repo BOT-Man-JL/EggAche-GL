@@ -62,7 +62,7 @@ namespace EggAche
 
 		bool SaveAsBmp (const char *fileName);				// "path/name.bmp"
 		// Remarks:
-		// Save Egg's Content into Bmp
+		// Save Window's Content into a BITMAP File
 
 	private:
 		EggAche_Impl::WindowImpl *windowImpl;				// Window Impl Bridge
