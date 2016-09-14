@@ -308,14 +308,21 @@ namespace EggAche_Impl
 
 	void WindowImpl_Windows::_NewWindow_Thread (WindowImpl_Windows *pew)
 	{
-		MSG msg;
+		RECT rect { 0 };
+		rect.right = pew->_cxCanvas;
+		rect.bottom = pew->_cyCanvas;
+		if (!AdjustWindowRect (&rect, WS_OVERLAPPEDWINDOW, FALSE))
+		{
+			pew->_fFailed = true;
+			SetEvent (pew->_hEvent);
+		}
 
 		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->capStr.c_str (),
 									WS_OVERLAPPEDWINDOW,
 									// & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
 									CW_USEDEFAULT, CW_USEDEFAULT,
-									//CW_USEDEFAULT, CW_USEDEFAULT,
-									pew->_cxCanvas, pew->_cyCanvas,
+									rect.right - rect.left,
+									rect.bottom - rect.top,
 									NULL, NULL,
 									(HINSTANCE) GetCurrentProcess (), NULL);
 		if (!pew->_hwnd)
@@ -330,6 +337,7 @@ namespace EggAche_Impl
 		UpdateWindow (pew->_hwnd);
 		SetEvent (pew->_hEvent);
 
+		MSG msg;
 		while (GetMessage (&msg, NULL, 0, 0))
 		{
 			TranslateMessage (&msg);
@@ -656,7 +664,7 @@ namespace EggAche_Impl
 		BYTE *pData = NULL;
 
 		auto hBmp = CreateDIBSection (hdcMem, &bmpInfo, DIB_RGB_COLORS,
-									  (VOID **)(&pData), NULL, 0);
+			(VOID **) (&pData), NULL, 0);
 		if (!hBmp)
 		{
 			DeleteDC (hdcMem);
