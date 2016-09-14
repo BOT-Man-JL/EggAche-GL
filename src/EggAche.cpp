@@ -47,14 +47,14 @@ namespace EggAche
 		return bgEgg;
 	}
 
-	void Egg::DrawOnContext (EggAche_Impl::GUIContext *parentContext,
+	void Egg::RecursiveDraw (EggAche_Impl::GUIContext *parentContext,
 							 size_t x, size_t y) const
 	{
 		// Actual Position of this Egg
 		this->context->PaintOnContext (parentContext, x, y);
 
 		for (auto subEgg : this->subEggs)
-			subEgg->DrawOnContext (parentContext,
+			subEgg->RecursiveDraw (parentContext,
 								   x + subEgg->x, y + subEgg->y);
 	}
 
@@ -76,32 +76,23 @@ namespace EggAche
 		context->SetBrush (false, 255, 255, 255);
 		context->DrawRect (-10, -10, wndSize.first + 10, wndSize.second + 10);
 
-		this->bgEgg->DrawOnContext (context, 0, 0);
+		this->bgEgg->RecursiveDraw (context, 0, 0);
 		windowImpl->Draw (context, 0, 0);
 
 		delete context;
 		delete guiFactory;
 	}
 
-	bool Window::SaveAsBmp (const char *fileName)
+	bool Egg::SaveAsBmp (const char *fileName)
 	{
-		if (IsClosed ())
-			return false;
-
 		auto guiFactory = NewGUIFactory ();
-
-		// Remarks:
-		// Buffering the Drawing Content into a Context
-		// to avoid flash Screen
-
-		auto wndSize = windowImpl->GetSize ();
 		auto context =
-			guiFactory->NewGUIContext (wndSize.first, wndSize.second);
+			guiFactory->NewGUIContext (this->w, this->h);
 
 		context->SetBrush (false, 255, 255, 255);
-		context->DrawRect (-10, -10, wndSize.first + 10, wndSize.second + 10);
+		context->DrawRect (-10, -10, this->w + 10, this->h + 10);
 
-		this->bgEgg->DrawOnContext (context, 0, 0);
+		this->RecursiveDraw (context, 0, 0);
 		auto ret = context->SaveAsBmp (fileName);
 
 		delete context;
@@ -131,7 +122,7 @@ namespace EggAche
 
 	Egg::Egg (size_t width, size_t height,
 			  int pos_x, int pos_y)
-		: context (nullptr), x (pos_x), y (pos_y)
+		: context (nullptr), x (pos_x), y (pos_y), w (width), h (height)
 	{
 		auto guiFactory = NewGUIFactory ();
 		context = guiFactory->NewGUIContext (width, height);

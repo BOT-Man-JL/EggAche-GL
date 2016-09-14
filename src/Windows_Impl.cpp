@@ -413,10 +413,7 @@ namespace EggAche_Impl
 		hdcWnd = GetDC (NULL);
 		this->_hdc = CreateCompatibleDC (hdcWnd);
 
-		auto cxBmp = (int) (this->_w);
-		auto cyBmp = (int) (this->_h);
-
-		_hBitmap = CreateCompatibleBitmap (hdcWnd, cxBmp, cyBmp);
+		_hBitmap = CreateCompatibleBitmap (hdcWnd, this->_w, this->_h);
 
 		if (!this->_hdc || !this->_hBitmap)
 		{

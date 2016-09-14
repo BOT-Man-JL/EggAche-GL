@@ -60,10 +60,6 @@ namespace EggAche
 		// 2. Calling fnPress with (char ch) means character 'ch' is Inputted;
 		// 3. Calling fnResized with (int x, int y) means Currently Window Size is x * y;
 
-		bool SaveAsBmp (const char *fileName);				// "path/name.bmp"
-		// Remarks:
-		// Save Window's Content into a BITMAP File
-
 	private:
 		EggAche_Impl::WindowImpl *windowImpl;				// Window Impl Bridge
 		Egg *bgEgg;											// Background Egg
@@ -188,15 +184,18 @@ namespace EggAche
 		// The curve begins at the point where the Ellipse intersects the first radial
 		// and extends counterclockwise to the point where the second radial intersects;
 
+		bool SaveAsBmp (const char *fileName);				// "path/name.bmp"
+															// Remarks:
+															// Save Window's Content into a BITMAP File
+
 	private:
-		int x, y;											// Postion
+		int x, y, w, h;										// Postion and Size
 		std::list<const Egg *> subEggs;						// Sub Eggs
 		EggAche_Impl::GUIContext *context;					// GUI Impl Bridge
 
-		void DrawOnContext (EggAche_Impl::GUIContext *,		// Helper Function of
+		void RecursiveDraw (EggAche_Impl::GUIContext *,		// Helper Function of
 							size_t, size_t) const;			// Window.Refresh
 		friend void Window::Refresh ();
-		friend bool Window::SaveAsBmp (const char *);
 
 		Egg (const Egg &) = delete;							// Not allow to copy
 		void operator= (const Egg &) = delete;				// Not allow to copy

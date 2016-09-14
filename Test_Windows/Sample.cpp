@@ -41,7 +41,8 @@ int main (int argc, char *argv[])
 		lineEgg->Clear ();                  // Clear Previous Content
 		lineEgg->DrawLine (0, 0, x, y);     // Draw Line from (0, 0) to the Point you Clicked
 		window.Refresh ();                  // Refresh the Window to View Changes
-		window.SaveAsBmp ("Snapshot.bmp");  // Take a Snapshot :-)
+
+		bgEgg->SaveAsBmp ("Snapshot.bmp");  // Take a Snapshot :-)
 	});
 
 	auto aniEgg = new Egg (100, 100,        // Create a New Egg
