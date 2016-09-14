@@ -6,6 +6,7 @@
 #include <exception>
 #include <string>
 #include <unordered_map>
+#include <fstream>
 
 #include <Windows.h>
 #include <windowsx.h>
@@ -669,11 +670,12 @@ namespace EggAche_Impl
 			DeleteDC (hdcMem);
 			return false;
 		}
-		auto hObjOld = SelectObject (hdcMem, hBmp);
+		auto hBmpOld = SelectObject (hdcMem, hBmp);
 
 		if (!BitBlt (hdcMem, 0, 0, this->_w, this->_h,
 					 this->_hdc, 0, 0, SRCCOPY))
 		{
+			SelectObject (hdcMem, hBmpOld);
 			DeleteObject (hBmp);
 			DeleteDC (hdcMem);
 			return false;
@@ -692,25 +694,25 @@ namespace EggAche_Impl
 		bmFileHeader.bfOffBits = sizeof (BITMAPFILEHEADER) +
 			sizeof (BITMAPINFOHEADER);
 		bmFileHeader.bfSize = bmFileHeader.bfOffBits + bmpSize;
-
-		HANDLE hFile = CreateFileA (fileName, GENERIC_WRITE, 0, NULL,
-									CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (hFile == INVALID_HANDLE_VALUE)
+		
+		std::ofstream ofs (fileName,
+						   std::ios_base::out | std::ios_base::binary);
+		if (!ofs.is_open ())
 		{
+			SelectObject (hdcMem, hBmpOld);
 			DeleteObject (hBmp);
 			DeleteDC (hdcMem);
 			return false;
 		}
 
-		DWORD dwWrite = 0;
-		WriteFile (hFile, &bmFileHeader, sizeof (BITMAPFILEHEADER), &dwWrite, NULL);
-		WriteFile (hFile, &bmInfoHeader, sizeof (BITMAPINFOHEADER), &dwWrite, NULL);
-		WriteFile (hFile, pData, bmpSize, &dwWrite, NULL);
+		ofs.write ((const char *) &bmFileHeader, sizeof (BITMAPFILEHEADER));
+		ofs.write ((const char *) &bmInfoHeader, sizeof (BITMAPINFOHEADER));
+		ofs.write ((const char *) pData, bmpSize);
 
-		CloseHandle (hFile);
-		SelectObject (hdcMem, hObjOld);
+		SelectObject (hdcMem, hBmpOld);
 		DeleteObject (hBmp);
 		DeleteDC (hdcMem);
+		return true;
 	}
 
 	void GUIContext_Windows::Clear ()
@@ -733,9 +735,6 @@ namespace EggAche_Impl
 		TransparentBlt (_context->_hdc, x, y, this->_w, this->_h,
 						this->_hdc, 0, 0, this->_w, this->_h,
 						GUIContext_Windows::_colorMask);
-
-		// Todo: Fail at multi-monitors
-		// https://msdn.microsoft.com/en-us/library/windows/desktop/dd145141(v=vs.85).aspx
 	}
 
 	// MsgBox

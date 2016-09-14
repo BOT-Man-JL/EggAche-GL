@@ -187,8 +187,6 @@ namespace EggAche
 		bool SaveAsBmp (const char *fileName);				// "path/name.bmp"
 		// Remarks:
 		// Save Window's Content into a BITMAP File
-		// Issue on Windows:
-		// Can not Create new Folders
 
 	private:
 		int x, y, w, h;										// Postion and Size
