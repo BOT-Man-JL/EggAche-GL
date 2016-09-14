@@ -651,67 +651,52 @@ namespace EggAche_Impl
 
 	bool GUIContext_Windows::SaveAsBmp (const char *fileName)
 	{
-		auto hdcMem = CreateCompatibleDC (this->_hdc);
-		if (!hdcMem)
-			return false;
+		// Ref:
+		// http://stackoverflow.com/questions/11705844/
+		// win32-create-bitmap-from-device-context-to-file-and-or-blob
+
+		BITMAP bitmap = { 0 };
+		GetObject (this->_hBitmap, sizeof (BITMAP), &bitmap);
+		auto dwBmpSize =
+			((bitmap.bmWidth * bitmap.bmBitsPixel +
+			  bitmap.bmBitsPixel - 1) / bitmap.bmBitsPixel)
+			* (bitmap.bmBitsPixel / 8) * bitmap.bmHeight;
 
 		BITMAPINFO bmpInfo = { 0 };
 		bmpInfo.bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
-		bmpInfo.bmiHeader.biWidth = this->_w;
-		bmpInfo.bmiHeader.biHeight = this->_h;
-		bmpInfo.bmiHeader.biPlanes = 1;
-		bmpInfo.bmiHeader.biBitCount = 24;
-		BYTE *pData = NULL;
+		bmpInfo.bmiHeader.biWidth = bitmap.bmWidth;
+		bmpInfo.bmiHeader.biHeight = bitmap.bmHeight;
+		bmpInfo.bmiHeader.biPlanes = bitmap.bmPlanes;
+		bmpInfo.bmiHeader.biBitCount = bitmap.bmBitsPixel;
+		bmpInfo.bmiHeader.biCompression = BI_RGB;
 
-		auto hBmp = CreateDIBSection (hdcMem, &bmpInfo, DIB_RGB_COLORS,
-			(VOID **) (&pData), NULL, 0);
-		if (!hBmp)
-		{
-			DeleteDC (hdcMem);
-			return false;
-		}
-		auto hBmpOld = SelectObject (hdcMem, hBmp);
+		auto hDIB = GlobalAlloc (GHND, dwBmpSize);
+		auto pData = (BYTE *) GlobalLock (hDIB);
 
-		if (!BitBlt (hdcMem, 0, 0, this->_w, this->_h,
-					 this->_hdc, 0, 0, SRCCOPY))
-		{
-			SelectObject (hdcMem, hBmpOld);
-			DeleteObject (hBmp);
-			DeleteDC (hdcMem);
-			return false;
-		}
+		GetDIBits (this->_hdc, this->_hBitmap, 0,
+			(WORD) this->_h, pData, &bmpInfo, DIB_RGB_COLORS);
 
-		BITMAPINFOHEADER bmInfoHeader = { 0 };
-		bmInfoHeader.biSize = sizeof (BITMAPINFOHEADER);
-		bmInfoHeader.biWidth = this->_w;
-		bmInfoHeader.biHeight = this->_h;
-		bmInfoHeader.biPlanes = 1;
-		bmInfoHeader.biBitCount = 24;
-
-		auto bmpSize = (bmInfoHeader.biWidth * bmInfoHeader.biHeight) * (24 / 8);
 		BITMAPFILEHEADER bmFileHeader = { 0 };
 		bmFileHeader.bfType = 0x4d42;  // BMP
 		bmFileHeader.bfOffBits = sizeof (BITMAPFILEHEADER) +
 			sizeof (BITMAPINFOHEADER);
-		bmFileHeader.bfSize = bmFileHeader.bfOffBits + bmpSize;
-		
+		bmFileHeader.bfSize = bmFileHeader.bfOffBits + dwBmpSize;
+
 		std::ofstream ofs (fileName,
 						   std::ios_base::out | std::ios_base::binary);
 		if (!ofs.is_open ())
 		{
-			SelectObject (hdcMem, hBmpOld);
-			DeleteObject (hBmp);
-			DeleteDC (hdcMem);
+			GlobalUnlock (hDIB);
+			GlobalFree (hDIB);
 			return false;
 		}
 
 		ofs.write ((const char *) &bmFileHeader, sizeof (BITMAPFILEHEADER));
-		ofs.write ((const char *) &bmInfoHeader, sizeof (BITMAPINFOHEADER));
-		ofs.write ((const char *) pData, bmpSize);
+		ofs.write ((const char *) &bmpInfo.bmiHeader, sizeof (BITMAPINFOHEADER));
+		ofs.write ((const char *) pData, dwBmpSize);
 
-		SelectObject (hdcMem, hBmpOld);
-		DeleteObject (hBmp);
-		DeleteDC (hdcMem);
+		GlobalUnlock (hDIB);
+		GlobalFree (hDIB);
 		return true;
 	}
 
