@@ -7,10 +7,11 @@ EggAche is a **Lightweight**, **Cross-Platform** C++ Graphics Library
 ## Requirement
 
 - **C++ 11** Support
-- Currently ONLY **Windows**
+- **Windows** Version is Done :blush: :tada:
   - **MSVC** (installed with Visual Studio) / **g++**
   - **Windows SDK** (installed with Visual Studio) / **MinGW**
-- **Linux/Mac** Version is on the way :sweat_smile:
+- **Linux** Version is on the way :innocent:
+- **Mac** Version is under consideration... (since I've no money to Buy a Mac) :sweat_smile:
 
 ## Get Started
 
