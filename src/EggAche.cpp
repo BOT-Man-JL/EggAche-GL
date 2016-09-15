@@ -236,15 +236,22 @@ namespace EggAche
 		return context->DrawTxt (xBeg, yBeg, szText);
 	}
 
-	bool Egg::DrawBmp (const char *fileName, int x, int y)
+	bool Egg::DrawImg (const char *fileName, int x, int y)
 	{
-		return context->DrawBmp (fileName, x, y);
+		return context->DrawImg (fileName, x, y);
 	}
 
-	bool Egg::DrawBmp (const char *fileName, int x, int y,
-					   int width, int height, int r, int g, int b)
+	bool Egg::DrawImg (const char *fileName, int x, int y,
+					   int width, int height)
 	{
-		return context->DrawBmp (fileName, x, y, width, height, r, g, b);
+		return context->DrawImg (fileName, x, y, width, height);
+	}
+
+	bool Egg::DrawImg (const char *fileName, int x, int y,
+					   int width, int height,
+					   unsigned int r, unsigned int g, unsigned int b)
+	{
+		return context->DrawImg (fileName, x, y, width, height, r, g, b);
 	}
 
 	void Egg::Clear ()

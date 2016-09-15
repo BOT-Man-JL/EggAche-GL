@@ -10,7 +10,15 @@
 
 #include <Windows.h>
 #include <windowsx.h>
+
+#ifdef _MSC_VER
+// Only Windows SDK support GDI+
+#include <gdiplus.h>
+#pragma comment (lib, "Gdiplus.lib")
+
+// Only MSVC support #pragma link
 #pragma comment (lib, "Msimg32.lib")
+#endif
 
 #include "EggAche_Impl.h"
 
@@ -96,7 +104,7 @@ namespace EggAche_Impl
 
 		bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
 
-		bool DrawBmp (const char *fileName,
+		bool DrawImg (const char *fileName,
 					  int x, int y,
 					  int width = -1, int height = -1,
 					  int r = -1,
@@ -592,7 +600,57 @@ namespace EggAche_Impl
 		return !!TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
 	}
 
-	bool GUIContext_Windows::DrawBmp (const char *fileName, int x, int y,
+#ifdef _MSC_VER_TODO
+	// Todo: Edge Smoothing
+	// Using GDI+ to Decode Bmp/Jpeg/Png/Gif...
+	bool GUIContext_Windows::DrawImg (const char *fileName, int x, int y,
+									  int width, int height,
+									  int r, int g, int b)  // r, g, b are obmitted
+	{
+		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+		ULONG_PTR gdiplusToken;
+		auto ret = false;
+
+		Gdiplus::GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
+		{
+			Gdiplus::Graphics graphics (this->_hdc);
+			//graphics.SetSmoothingMode (Gdiplus::SmoothingModeHighQuality);
+
+			auto cchW = MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
+											 fileName, -1, NULL, 0);
+			wchar_t *fileNameW = new wchar_t[cchW];
+			MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
+								 fileName, -1, fileNameW, cchW);
+			Gdiplus::Image image (fileNameW);
+			delete[] fileNameW;
+
+			if (width == -1) width = image.GetWidth ();
+			if (height == -1) height = image.GetHeight ();
+
+			Gdiplus::ImageAttributes imAtt;
+			if (!(r == -1 || g == -1 || b == -1))
+				imAtt.SetColorKey (Gdiplus::Color (r, g, b),
+								   Gdiplus::Color (r, g, b),
+								   Gdiplus::ColorAdjustTypeBitmap);
+
+			auto status = graphics.DrawImage (&image,
+											  Gdiplus::Rect (x, y, width, height),
+											  0, 0,
+											  image.GetWidth (),
+											  image.GetHeight (),
+											  Gdiplus::UnitPixel,
+											  &imAtt);
+
+			if (status == Gdiplus::Ok)
+				ret = true;
+		}
+		Gdiplus::GdiplusShutdown (gdiplusToken);
+		return ret;
+	}
+
+#else
+	// MinGW doesn't support GDI+
+	bool GUIContext_Windows::DrawImg (const char *fileName, int x, int y,
 									  int width, int height, int r, int g, int b)
 	{
 		HDC			hdcMemImag;
@@ -649,52 +707,108 @@ namespace EggAche_Impl
 		return true;
 	}
 
+#endif
+
 	bool GUIContext_Windows::SaveAsBmp (const char *fileName)
 	{
 		// Ref:
-		// http://stackoverflow.com/questions/11705844/
-		// win32-create-bitmap-from-device-context-to-file-and-or-blob
+		// https://msdn.microsoft.com/en-us/library/dd145119(v=vs.85).aspx
 
+		// Retrieve the bitmap color format, width, and height.
 		BITMAP bitmap = { 0 };
 		GetObject (this->_hBitmap, sizeof (BITMAP), &bitmap);
-		auto dwBmpSize =
-			((bitmap.bmWidth * bitmap.bmBitsPixel +
-			  bitmap.bmBitsPixel - 1) / bitmap.bmBitsPixel)
-			* (bitmap.bmBitsPixel / 8) * bitmap.bmHeight;
 
-		BITMAPINFO bmpInfo = { 0 };
-		bmpInfo.bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
-		bmpInfo.bmiHeader.biWidth = bitmap.bmWidth;
-		bmpInfo.bmiHeader.biHeight = bitmap.bmHeight;
-		bmpInfo.bmiHeader.biPlanes = bitmap.bmPlanes;
-		bmpInfo.bmiHeader.biBitCount = bitmap.bmBitsPixel;
-		bmpInfo.bmiHeader.biCompression = BI_RGB;
+		// Convert the color format to a count of bits.
+		auto cClrBits = (WORD) (bitmap.bmPlanes * bitmap.bmBitsPixel);
+		if (cClrBits == 1)
+			cClrBits = 1;
+		else if (cClrBits <= 4)
+			cClrBits = 4;
+		else if (cClrBits <= 8)
+			cClrBits = 8;
+		else if (cClrBits <= 16)
+			cClrBits = 16;
+		else if (cClrBits <= 24)
+			cClrBits = 24;
+		else cClrBits = 32;
 
-		auto hDIB = GlobalAlloc (GHND, dwBmpSize);
+		PBITMAPINFO pbmi;
+
+		// Allocate memory for the BITMAPINFO structure. (This structure
+		// contains a BITMAPINFOHEADER structure and an array of RGBQUAD
+		// data structures.)
+		if (cClrBits < 24)
+			pbmi = (PBITMAPINFO) LocalAlloc (LPTR,
+											 sizeof (BITMAPINFOHEADER) +
+											 sizeof (RGBQUAD) * (1 << cClrBits));
+
+		// There is no RGBQUAD array for these formats:
+		// 24-bit-per-pixel or 32-bit-per-pixel
+		else
+			pbmi = (PBITMAPINFO) LocalAlloc (LPTR,
+											 sizeof (BITMAPINFOHEADER));
+
+		// Initialize the fields in the BITMAPINFO structure.
+		pbmi->bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
+		pbmi->bmiHeader.biWidth = bitmap.bmWidth;
+		pbmi->bmiHeader.biHeight = bitmap.bmHeight;
+		pbmi->bmiHeader.biPlanes = bitmap.bmPlanes;
+		pbmi->bmiHeader.biBitCount = bitmap.bmBitsPixel;
+		if (cClrBits < 24)
+			pbmi->bmiHeader.biClrUsed = (1 << cClrBits);
+
+		// If the bitmap is not compressed, set the BI_RGB flag.
+		pbmi->bmiHeader.biCompression = BI_RGB;
+
+		// Compute the number of bytes in the array of color
+		// indices and store the result in biSizeImage.
+		// The width must be DWORD aligned unless the bitmap is RLE
+		// compressed.
+		pbmi->bmiHeader.biSizeImage =
+			((pbmi->bmiHeader.biWidth * cClrBits + 31) & ~31) / 8
+			* pbmi->bmiHeader.biHeight;
+
+		// Set biClrImportant to 0, indicating that all of the
+		// device colors are important.
+		pbmi->bmiHeader.biClrImportant = 0;
+
+		// Fill Unused Fields.
+		pbmi->bmiHeader.biXPelsPerMeter
+			= pbmi->bmiHeader.biYPelsPerMeter = 0;
+
+		// Allocate Memory for DIB Data.
+		auto hDIB = GlobalAlloc (GHND, pbmi->bmiHeader.biSizeImage);
 		auto pData = (BYTE *) GlobalLock (hDIB);
 
+		// Get DIB.
 		GetDIBits (this->_hdc, this->_hBitmap, 0,
-			(WORD) this->_h, pData, &bmpInfo, DIB_RGB_COLORS);
+			(WORD) this->_h, pData, pbmi, DIB_RGB_COLORS);
 
+		// Initialize BITMAPFILEHEADER.
 		BITMAPFILEHEADER bmFileHeader = { 0 };
-		bmFileHeader.bfType = 0x4d42;  // BMP
+		bmFileHeader.bfType = 0x4d42;			// 0x42 = "B" 0x4d = "M"
 		bmFileHeader.bfOffBits = sizeof (BITMAPFILEHEADER) +
 			sizeof (BITMAPINFOHEADER);
-		bmFileHeader.bfSize = bmFileHeader.bfOffBits + dwBmpSize;
+		bmFileHeader.bfSize = bmFileHeader.bfOffBits
+			+ pbmi->bmiHeader.biSizeImage;
 
+		// Save to File.
 		std::ofstream ofs (fileName,
 						   std::ios_base::out | std::ios_base::binary);
 		if (!ofs.is_open ())
 		{
+			LocalFree (pbmi);
 			GlobalUnlock (hDIB);
 			GlobalFree (hDIB);
 			return false;
 		}
 
 		ofs.write ((const char *) &bmFileHeader, sizeof (BITMAPFILEHEADER));
-		ofs.write ((const char *) &bmpInfo.bmiHeader, sizeof (BITMAPINFOHEADER));
-		ofs.write ((const char *) pData, dwBmpSize);
+		ofs.write ((const char *) &pbmi->bmiHeader, sizeof (BITMAPINFOHEADER));
+		ofs.write ((const char *) pData, pbmi->bmiHeader.biSizeImage);
 
+		// Free Memory.
+		LocalFree (pbmi);
 		GlobalUnlock (hDIB);
 		GlobalFree (hDIB);
 		return true;

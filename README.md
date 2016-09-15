@@ -54,7 +54,7 @@ int main ()
 
     bgEgg->DrawTxt (0, 0, "Hello EggAche"); // Draw Text at (0, 0)
     bgEgg->DrawLine (0, 30, 100, 30);       // Draw Line From (0, 30) to (100, 30)
-    bgEgg->DrawBmp ("Egg.bmp", 20, 50);     // Draw Bmp at (20, 50)
+    bgEgg->DrawImg ("Egg.bmp", 20, 50);     // Draw Bmp at (20, 50)
 
     window.Refresh ();                      // Refresh the Window to View Changes
 
@@ -113,7 +113,7 @@ And you will notice that `Snapshot.bmp` has been saved :wink:
     auto aniEgg = new Egg (100, 100,        // Create a New Egg
                            100, 100);       // at (100, 100) initially
     bgEgg->AddEgg (aniEgg);                 // Associate this new Egg with Background Egg
-    aniEgg->DrawBmp ("Egg.bmp", 0, 0,       // Draw Bmp at (0, 0)
+    aniEgg->DrawImg ("Egg.bmp", 0, 0,       // Draw Bmp at (0, 0)
                      100, 100,              // of size 100 * 100
                      255, 255, 255);        // leave out White Color (FFFFFF)
 

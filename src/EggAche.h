@@ -119,19 +119,24 @@ namespace EggAche
 		// Remarks:
 		// Draw the szText with a upper left point (xBeg, yBeg)
 
-		bool DrawBmp (const char *fileName,					// Source: "path/name.bmp"
+		bool DrawImg (const char *fileName,					// Source: "path/name.*"
 					  int x, int y);						// Position to paste in Egg
 
-		bool DrawBmp (const char *fileName,					// Source: "path/name.bmp"
+		bool DrawImg (const char *fileName,					// Source: "path/name.*"
+					  int x, int y,							// Position to paste in Egg
+					  int width, int height);				// Size to paste in Egg
+
+		bool DrawImg (const char *fileName,					// Source: "path/name.bmp"
 					  int x, int y,							// Position to paste in Egg
 					  int width, int height,				// Size to paste in Egg
-					  int r = -1,							// Red color of mask (-1 is not used)
-					  int g = -1,							// Green color of mask
-					  int b = -1);							// Blue color of mask
+					  unsigned int r,						// Red color of mask
+					  unsigned int g,						// Green color of mask
+					  unsigned int b);						// Blue color of mask
 		// Remarks:
-		// 1. The bmp file will be stretched into width * height in Egg;
-		// 2. The color of colorMask will be set to Transparent;
-		//    If one of r/g/b is -1, the Egg will be set Opaque;
+		// 1. The Image file will be stretched into width * height in Egg;
+		// 2. Support Bitmap (.bmp), JPEG (.jpg/.jpeg), PNG (.png), GIF (.gif);
+		//    MinGW only Support Bitmap (.bmp) file... (Impl.ed by GDI)
+		// 3. For Opaque Images, you can set ColorMask to Draw Transparently;
 
 		bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd);
 		// Remarks:
@@ -186,7 +191,7 @@ namespace EggAche
 
 		bool SaveAsBmp (const char *fileName);				// "path/name.bmp"
 		// Remarks:
-		// Save Window's Content into a BITMAP File
+		// Save Window's Content into a Bitmap (.bmp) File;
 
 	private:
 		int x, y, w, h;										// Postion and Size
