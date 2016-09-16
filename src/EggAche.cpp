@@ -104,7 +104,7 @@ namespace EggAche
 
 	void Window::OnClick (std::function<void (Window *, int, int)> fn)
 	{
-		windowImpl->OnClick ([&] (int x, int y)
+		windowImpl->OnClick ([=] (int x, int y)
 		{
 			fn (this, x, y);
 		});
@@ -112,7 +112,7 @@ namespace EggAche
 
 	void Window::OnPress (std::function<void (Window *, char)> fn)
 	{
-		windowImpl->OnPress ([&] (char ch)
+		windowImpl->OnPress ([=] (char ch)
 		{
 			fn (this, ch);
 		});
@@ -120,7 +120,7 @@ namespace EggAche
 
 	void Window::OnResized (std::function<void (Window *, int, int)> fn)
 	{
-		windowImpl->OnResized ([&] (int x, int y)
+		windowImpl->OnResized ([=] (int x, int y)
 		{
 			fn (this, x, y);
 		});
