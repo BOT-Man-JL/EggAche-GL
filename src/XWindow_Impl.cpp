@@ -15,7 +15,7 @@ namespace EggAche_Impl
 	{
 	public:
 		WindowImpl_XWindow (size_t width, size_t height,
-						 const char *cap_string);
+							const char *cap_string);
 		~WindowImpl_XWindow () override;
 
 		void Draw (const GUIContext *context, size_t x, size_t y) override;
@@ -115,7 +115,7 @@ namespace EggAche_Impl
 	// Factory
 
 	WindowImpl *GUIFactory_XWindow::NewWindow (size_t width, size_t height,
-											const char *cap_string)
+											   const char *cap_string)
 	{
 		return new WindowImpl_XWindow (width, height, cap_string);
 	}
@@ -138,11 +138,11 @@ namespace EggAche_Impl
 
 		static Display *Instance ()
 		{
-			std::thread eventHandler (WindowImpl_XWindow::EventHandler);
-			eventHandler.detach ();
-
 			if (display == nullptr)
 			{
+				std::thread eventHandler (WindowImpl_XWindow::EventHandler);
+				eventHandler.detach ();
+
 				/* open connection with the server */
 				display = XOpenDisplay (NULL);
 				if (display == NULL)
@@ -167,8 +167,7 @@ namespace EggAche_Impl
 		auto screen = DefaultScreen (display);
 
 		XEvent event;
-
-		while (!wnd->_isClosed)
+		while (WindowManager::refCount)
 		{
 			XNextEvent (display, &event);
 			switch (event.type)
@@ -178,23 +177,23 @@ namespace EggAche_Impl
 			case ResizeRequest:
 
 			case Expose:
-				XFillRectangle (display, wnd->_window, DefaultGC (display, screen), 20, 20, 10, 10);
-				XDrawString (display, wnd->_window, DefaultGC (display, screen), 50, 50,
-							 "Hello, World!", strlen ("Hello, World!"));
+				XFillRectangle (display, event.xexpose.window, DefaultGC (display, screen), 20, 20, 10, 10);
+				XDrawString (display, event.xexpose.window, DefaultGC (display, screen), 50, 50, "Hello, World!", 14);
 				break;
 
 			case DestroyNotify:
-				wnd->_isClosed = true;
 				break;
 
 			default:
 				break;
 			}
 		}
+
+		WindowManager::Delete ();
 	}
 
 	WindowImpl_XWindow::WindowImpl_XWindow (size_t width, size_t height,
-									  const char *cap_string)
+											const char *cap_string)
 		: _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
 		_isClosed (false)
 	{
@@ -223,7 +222,7 @@ namespace EggAche_Impl
 		auto display = WindowManager::Instance ();
 		XEvent event;
 		event.type = DestroyNotify;
-		event.window = this->_window;
+		event.xdestroywindow.window = this->_window;
 
 		XSendEvent (display, this->_window, false,
 					SubstructureNotifyMask, &event);
@@ -231,22 +230,175 @@ namespace EggAche_Impl
 		WindowManager::refCount--;
 	}
 
+	void WindowImpl_XWindow::Draw (const GUIContext *context,
+								   size_t x, size_t y)
+	{
+		// Todo
+	}
+
+	std::pair<size_t, size_t> WindowImpl_XWindow::GetSize ()
+	{
+		return std::make_pair (this->_cxClient, this->_cyClient);
+	}
+
+	bool WindowImpl_XWindow::IsClosed () const
+	{
+		// Todo
+		return false;
+	}
+
+	void WindowImpl_XWindow::OnClick (std::function<void (int, int)> fn)
+	{
+		onClick = std::move (fn);
+	}
+
+	void WindowImpl_XWindow::OnPress (std::function<void (char)> fn)
+	{
+		onPress = std::move (fn);
+	}
+
+	void WindowImpl_XWindow::OnResized (std::function<void (int, int)> fn)
+	{
+		onResized = std::move (fn);
+	}
+
+	void WindowImpl_XWindow::OnRefresh (std::function<void ()> fn)
+	{
+		onRefresh = std::move (fn);
+	}
+
 	// Context
 
+	GUIContext_XWindow::GUIContext_XWindow (size_t width, size_t height)
+		: _w (width), _h (height)
+	{
+		// Todo
+	}
+
+	GUIContext_XWindow::~GUIContext_XWindow ()
+	{
+		// Todo
+	}
+
+	bool GUIContext_XWindow::SetPen (unsigned int width,
+									 unsigned int r,
+									 unsigned int g,
+									 unsigned int b)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::SetBrush (bool isTransparent,
+									   unsigned int r,
+									   unsigned int g,
+									   unsigned int b)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::SetFont (unsigned int size,
+									  const char *family,
+									  unsigned int r,
+									  unsigned int g,
+									  unsigned int b)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::DrawLine (int xBeg, int yBeg, int xEnd, int yEnd)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::DrawRect (int xBeg, int yBeg, int xEnd, int yEnd)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::DrawElps (int xBeg, int yBeg, int xEnd, int yEnd)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd,
+									   int wElps, int hElps)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
+									  int xBeg, int yBeg, int xEnd, int yEnd)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
+										int xBeg, int yBeg, int xEnd, int yEnd)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
+									  int xBeg, int yBeg, int xEnd, int yEnd)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::DrawTxt (int xBeg, int yBeg, const char * szText)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::DrawImg (const char *fileName, int x, int y,
+									  int width, int height, int r, int g, int b)
+	{
+		// Todo
+		return false;
+	}
+
+	bool GUIContext_XWindow::SaveAsBmp (const char *fileName)
+	{
+		// Todo
+		return false;
+	}
+
+	void GUIContext_XWindow::Clear ()
+	{
+		// Todo
+	}
+
+	void GUIContext_XWindow::PaintOnContext (GUIContext *parentContext,
+											 size_t x, size_t y) const
+	{
+		// Todo
+	}
+
 	// MsgBox
-/*
+
 	void MsgBox_Impl (const char * szTxt, const char * szCap)
 	{
-
-	}*/
+		// Todo
+	}
 }
 
-
+// Test Funcion
+// g++ XWindow_Impl.cpp -o test -std=c++11 -lX11
 int main (int argc, char *argv[])
 {
 	using namespace EggAche_Impl;
-	WindowImpl_XWindow wnd (200, 200);
-	
+	WindowImpl_XWindow wnd (200, 200, "Hello EggAche");
+
 	getchar ();
 	return 0;
 }
