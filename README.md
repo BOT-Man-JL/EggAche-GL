@@ -9,30 +9,25 @@ Welcome to Join :wink:
 
 ![Egg](Test_Windows/Egg.bmp)
 
-## Requirements
+## Setup
 
-- **C++ 11** Support
-- **Windows** Version is Done :blush: :tada:
-  - **MSVC** (installed with Visual Studio) / **g++**
-  - **Windows SDK** (installed with Visual Studio) / **MinGW**
-- **Linux** Version is on the way :innocent:
-- **Mac** Version is under consideration... (since I've no money to Buy a Mac) :sweat_smile:
+### Microsoft Windows
 
-## Get Started
+Requirements:
 
-### Setup
+- **MSVC** (installed with Visual Studio) / **g++**
+- **Windows SDK** (installed with Visual Studio) / **MinGW**
 
 1. Download this Project's **_[zip](https://github.com/BOT-Man-JL/EggAche-GL/archive/master.zip)_**
-2. Add the `EggAche.h`, `EggAche.cpp`, `EggAche_Impl.h` and `*_Impl.cpp` (* is your Target Platform) in **_[src path](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/src)_** to your project
+2. Add the `EggAche.h`, `EggAche.cpp`, `EggAche_Impl.h` and `Windows_Impl.cpp` (* is your Target Platform) in **_[src path](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/src)_** to your project
 3. `#include "EggAche.h"` where you want to use EggAche Library
-4. Using `#define` in `EggAche.h` to specify your Target Platform, for example:
+4. Add `#define EGGACHE_WINDOWS` in `EggAche.h` to specify that you are on Windows
 
-``` c++
-#define EGGACHE_WINDOWS
+### UNIX / X Window System
 
-//#define EGGACHE_LINUX
-//#define EGGACHE_MAC
-```
+Still on the way :innocent:
+
+## Get Started
 
 ### Basic Usage
 
@@ -82,7 +77,8 @@ int main ()
     auto lineEgg = new Egg (1000, 750);    // Create a New Egg
     bgEgg->AddEgg (lineEgg);               // Associate this new Egg with Background Egg
 
-    window.OnClick ([&] (int x, int y)     // Register OnClick Event
+    window.OnClick ([&]
+    (Window *, int x, int y)               // Register OnClick Event
     {
         lineEgg->Clear ();                 // Clear Previous Content
         lineEgg->DrawLine (0, 0, x, y);    // Draw Line from (0, 0) to the Point you Clicked
@@ -148,9 +144,11 @@ And you will notice that `Snapshot.bmp` has been saved :wink:
   - Everything is encapsulated in **Classes**
 - [v3.0](https://github.com/BOT-Man-JL/EggAche-GL/archive/master.zip)
   - **Decoupling** Platform Dependency
-  - Introducing **C++ 11 Features**
-  - Using **Bridge Pattern** to Separate the common Interface from Platform-specific Implementations
-  - Using **Abstract Factory** to Produce Implementations for various Platforms
-  - Using **Composite Pattern** to Manage the Layout of Canvases
-  - Using **Singleton Pattern** to Maintain the Window Manager
-  - Using **Observer Pattern** to Notify Window Events and Auto Refresh on Windows Platform
+  - Introducing **C++ 11 Features** (*concept, lambda, stl...*)
+  - Using **Bridge Pattern** to Separate the Common Interface (`EggAche_Impl.h`) from Platform-specific Implementations (`*_Impl.h`)
+  - Using **Template Method** to Implement the Common Behaviors (`EggAche.cpp`)
+  - Using **Abstract Factory** to Produce Platform-specific Implementation Objects for diverse Platforms (`EggAche.cpp`)
+  - Using **Composite Pattern** to Define the Layout of Canvases (`EggAche.h`)
+  - Using **Singleton Pattern** to Maintain the Window Manager (`*_Impl.h`)
+  - Using **Observer Pattern** to Notify Window Events and Auto Redraw (`*_Impl.h`)
+  - Using **Adapter Pattern** to Convert the interface of `WindowImpl Events` into `Window Events` (`EggAche.cpp`)

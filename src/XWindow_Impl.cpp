@@ -11,12 +11,12 @@
 
 namespace EggAche_Impl
 {
-	class WindowImpl_Xlib : public WindowImpl
+	class WindowImpl_XWindow : public WindowImpl
 	{
 	public:
-		WindowImpl_Xlib (size_t width, size_t height,
+		WindowImpl_XWindow (size_t width, size_t height,
 						 const char *cap_string);
-		~WindowImpl_Xlib () override;
+		~WindowImpl_XWindow () override;
 
 		void Draw (const GUIContext *context, size_t x, size_t y) override;
 
@@ -42,15 +42,15 @@ namespace EggAche_Impl
 		std::function<void (int, int)> onResized;
 		std::function<void ()> onRefresh;
 
-		WindowImpl_Xlib (const WindowImpl_Xlib &) = delete;			// Not allow to copy
-		void operator= (const WindowImpl_Xlib &) = delete;			// Not allow to copy
+		WindowImpl_XWindow (const WindowImpl_XWindow &) = delete;			// Not allow to copy
+		void operator= (const WindowImpl_XWindow &) = delete;			// Not allow to copy
 	};
 
-	class GUIContext_Xlib : public GUIContext
+	class GUIContext_XWindow : public GUIContext
 	{
 	public:
-		GUIContext_Xlib (size_t width, size_t height);
-		~GUIContext_Xlib () override;
+		GUIContext_XWindow (size_t width, size_t height);
+		~GUIContext_XWindow () override;
 
 		bool SetPen (unsigned int width,
 					 unsigned int r = 0,
@@ -105,8 +105,8 @@ namespace EggAche_Impl
 	protected:
 		size_t _w, _h;
 
-		GUIContext_Xlib (const GUIContext_Xlib &) = delete;			// Not allow to copy
-		void operator= (const GUIContext_Xlib &) = delete;			// Not allow to copy
+		GUIContext_XWindow (const GUIContext_XWindow &) = delete;			// Not allow to copy
+		void operator= (const GUIContext_XWindow &) = delete;			// Not allow to copy
 	};
 }
 
@@ -114,15 +114,15 @@ namespace EggAche_Impl
 {
 	// Factory
 
-	WindowImpl *GUIFactory_Xlib::NewWindow (size_t width, size_t height,
+	WindowImpl *GUIFactory_XWindow::NewWindow (size_t width, size_t height,
 											const char *cap_string)
 	{
-		return new WindowImpl_Xlib (width, height, cap_string);
+		return new WindowImpl_XWindow (width, height, cap_string);
 	}
 
-	GUIContext *GUIFactory_Xlib::NewGUIContext (size_t width, size_t height)
+	GUIContext *GUIFactory_XWindow::NewGUIContext (size_t width, size_t height)
 	{
-		return new GUIContext_Xlib (width, height);
+		return new GUIContext_XWindow (width, height);
 	}
 
 	// Window
@@ -138,7 +138,7 @@ namespace EggAche_Impl
 
 		static Display *Instance ()
 		{
-			std::thread eventHandler (WindowImpl_Xlib::EventHandler);
+			std::thread eventHandler (WindowImpl_XWindow::EventHandler);
 			eventHandler.detach ();
 
 			if (display == nullptr)
@@ -161,7 +161,7 @@ namespace EggAche_Impl
 	Display *WindowManager::display = nullptr;
 	size_t WindowManager::refCount = 0;
 
-	void WindowImpl_Xlib::EventHandler ()
+	void WindowImpl_XWindow::EventHandler ()
 	{
 		auto display = WindowManager::Instance ();
 		auto screen = DefaultScreen (display);
@@ -193,7 +193,7 @@ namespace EggAche_Impl
 		}
 	}
 
-	WindowImpl_Xlib::WindowImpl_Xlib (size_t width, size_t height,
+	WindowImpl_XWindow::WindowImpl_XWindow (size_t width, size_t height,
 									  const char *cap_string)
 		: _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
 		_isClosed (false)
@@ -218,7 +218,7 @@ namespace EggAche_Impl
 		WindowManager::refCount++;
 	}
 
-	WindowImpl_Xlib::~WindowImpl_Xlib ()
+	WindowImpl_XWindow::~WindowImpl_XWindow ()
 	{
 		auto display = WindowManager::Instance ();
 		XEvent event;
@@ -245,7 +245,7 @@ namespace EggAche_Impl
 int main (int argc, char *argv[])
 {
 	using namespace EggAche_Impl;
-	WindowImpl_Xlib wnd (200, 200);
+	WindowImpl_XWindow wnd (200, 200);
 	
 	getchar ();
 	return 0;

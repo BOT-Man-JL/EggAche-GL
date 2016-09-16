@@ -6,11 +6,8 @@
 #ifndef EGGACHE_GL
 #define EGGACHE_GL
 
-// Enable Windows Version
 #define EGGACHE_WINDOWS
-
-//#define EGGACHE_LINUX
-//#define EGGACHE_MAC
+//#define EGGACHE_XWINDOW
 
 #include <functional>
 #include <list>
@@ -51,9 +48,9 @@ namespace EggAche
 		// Remarks:
 		// If the Window has been Closed by User, it will return false
 
-		void OnClick (std::function<void (int, int)> fn);
-		void OnPress (std::function<void (char)> fn);
-		void OnResized (std::function<void (int, int)> fn);
+		void OnClick (std::function<void (Window *, int, int)> fn);
+		void OnPress (std::function<void (Window *, char)> fn);
+		void OnResized (std::function<void (Window *, int, int)> fn);
 		// Remarks:
 		// If you click or press a key on Window, back-end will callback fn;
 		// 1. Calling fnClick with (int x, int y) means point (x, y) is Clicked;

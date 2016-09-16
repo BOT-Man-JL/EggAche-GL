@@ -36,7 +36,8 @@ int main (int argc, char *argv[])
 	auto lineEgg = new Egg (1000, 750);     // Create a New Egg
 	bgEgg->AddEgg (lineEgg);                // Associate this new Egg with Background Egg
 
-	window.OnClick ([&] (int x, int y)      // Register OnClick Event
+	window.OnClick ([&]
+	(Window *, int x, int y)                // Register OnClick Event
 	{
 		lineEgg->Clear ();                  // Clear Previous Content
 		lineEgg->DrawLine (0, 0, x, y);     // Draw Line from (0, 0) to the Point you Clicked

@@ -13,11 +13,8 @@ namespace EggAche
 #ifdef EGGACHE_WINDOWS
 		return new EggAche_Impl::GUIFactory_Windows ();
 #endif
-#ifdef EGGACHE_LINUX
-		return new EggAche_Impl::GUIFactory_Linux ();
-#endif
-#ifdef EGGACHE_MAC
-		return new EggAche_Impl::GUIFactory_Mac ();
+#ifdef EGGACHE_XWINDOW
+		return new EggAche_Impl::GUIFactory_XWindow ();
 #endif
 	}
 
@@ -105,19 +102,28 @@ namespace EggAche
 		return windowImpl->IsClosed ();
 	}
 
-	void Window::OnClick (std::function<void (int, int)> fn)
+	void Window::OnClick (std::function<void (Window *, int, int)> fn)
 	{
-		windowImpl->OnClick (std::move (fn));
+		windowImpl->OnClick ([&] (int x, int y)
+		{
+			fn (this, x, y);
+		});
 	}
 
-	void Window::OnPress (std::function<void (char)> fn)
+	void Window::OnPress (std::function<void (Window *, char)> fn)
 	{
-		windowImpl->OnPress (std::move (fn));
+		windowImpl->OnPress ([&] (char ch)
+		{
+			fn (this, ch);
+		});
 	}
 
-	void Window::OnResized (std::function<void (int, int)> fn)
+	void Window::OnResized (std::function<void (Window *, int, int)> fn)
 	{
-		windowImpl->OnResized (std::move (fn));
+		windowImpl->OnResized ([&] (int x, int y)
+		{
+			fn (this, x, y);
+		});
 	}
 
 	Egg::Egg (size_t width, size_t height,

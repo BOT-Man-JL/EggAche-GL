@@ -104,17 +104,7 @@ namespace EggAche_Impl
 		GUIContext *NewGUIContext (size_t width, size_t height) override;
 	};
 
-	// Todo: Implementing Linux GUI
-	class GUIFactory_Linux : public GUIFactory
-	{
-	public:
-		WindowImpl *NewWindow (size_t width, size_t height,
-							   const char *cap_string) override;
-		GUIContext *NewGUIContext (size_t width, size_t height) override;
-	};
-
-	// Todo: Implementing Mac GUI
-	class GUIFactory_Mac : public GUIFactory
+	class GUIFactory_XWindow : public GUIFactory
 	{
 	public:
 		WindowImpl *NewWindow (size_t width, size_t height,
