@@ -18,8 +18,10 @@ Requirements:
 - **MSVC** (installed with Visual Studio) / **g++**
 - **Windows SDK** (installed with Visual Studio) / **MinGW**
 
+Steps:
+
 1. Download this Project's **_[zip](https://github.com/BOT-Man-JL/EggAche-GL/archive/master.zip)_**
-2. Add the `EggAche.h`, `EggAche.cpp`, `EggAche_Impl.h` and `Windows_Impl.cpp` (* is your Target Platform) in **_[src path](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/src)_** to your project
+2. Add the `EggAche.h`, `EggAche.cpp`, `EggAche_Impl.h` and `Windows_Impl.cpp` in **_[src](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/src)_ directory** to your project
 3. `#include "EggAche.h"` where you want to use EggAche Library
 4. Add `#define EGGACHE_WINDOWS` in `EggAche.h` to specify that you are on Windows
 
