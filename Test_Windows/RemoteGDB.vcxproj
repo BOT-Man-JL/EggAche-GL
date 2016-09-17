@@ -60,6 +60,9 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(IncludePath);$(ISenseIncludePath);./X11/Include</IncludePath>
+  </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\src\EggAche.cpp" />
     <ClCompile Include="..\src\XWindow_Impl.cpp" />
@@ -68,9 +71,12 @@
     <ClInclude Include="..\src\EggAche.h" />
     <ClInclude Include="..\src\EggAche_Impl.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="Egg.bmp" />
+  </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <LibraryDependencies>X11</LibraryDependencies>
+      <LibraryDependencies>X11;pthread</LibraryDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

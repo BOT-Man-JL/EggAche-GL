@@ -5,6 +5,8 @@
 
 #include <exception>
 #include <thread>
+#include <cstring>
+#include <unordered_map>
 #include <X11/Xlib.h>
 
 #include "EggAche_Impl.h"
@@ -35,7 +37,6 @@ namespace EggAche_Impl
 		int			_cxClient, _cyClient;
 
 		Window		_window;
-		bool		_isClosed;
 
 		std::function<void (int, int)> onClick;
 		std::function<void (char)> onPress;
@@ -130,58 +131,101 @@ namespace EggAche_Impl
 	class WindowManager
 	{
 	private:
-		static Display *display;
+		static Display *_display;
+		static std::unordered_map<Window, WindowImpl_XWindow *> *_hwndMapper;
 	protected:
 		WindowManager () {}
 	public:
-		static size_t refCount;
+		static bool isEventHandlerRunning;
 
-		static Display *Instance ()
+		static Display *display ()
 		{
-			if (display == nullptr)
+			if (_display == nullptr)
+			{
+				/* open connection with the server */
+				_display = XOpenDisplay (NULL);
+				if (_display == NULL)
+					throw std::runtime_error ("Failed at XOpenDisplay");
+			}
+			return _display;
+		}
+
+		static void CloseDisplay ()
+		{
+			/* close connection to server */
+			XCloseDisplay (_display);
+		}
+
+		static std::unordered_map<Window, WindowImpl_XWindow *> *wndMapper ()
+		{
+			if (!isEventHandlerRunning)
+
 			{
 				std::thread eventHandler (WindowImpl_XWindow::EventHandler);
 				eventHandler.detach ();
-
-				/* open connection with the server */
-				display = XOpenDisplay (NULL);
-				if (display == NULL)
-					throw std::runtime_error ("Failed at XOpenDisplay");
+				isEventHandlerRunning = true;
 			}
-			return display;
+
+			if (_hwndMapper == nullptr)
+				_hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
+			return _hwndMapper;
 		}
 
-		static void Delete ()
+		static bool IsRefed ()
 		{
-			/* close connection to server */
-			XCloseDisplay (display);
+			return _hwndMapper != nullptr && !_hwndMapper->empty ();
+		}
+
+		static void DeleteMapper ()
+		{
+			delete _hwndMapper;
+			_hwndMapper = nullptr;
 		}
 	};
 
-	Display *WindowManager::display = nullptr;
-	size_t WindowManager::refCount = 0;
+	bool WindowManager::isEventHandlerRunning = false;
+	Display *WindowManager::_display = nullptr;
+	std::unordered_map<Window, WindowImpl_XWindow *> *WindowManager::_hwndMapper = nullptr;
 
 	void WindowImpl_XWindow::EventHandler ()
 	{
-		auto display = WindowManager::Instance ();
+		auto display = WindowManager::display ();
 		auto screen = DefaultScreen (display);
+		auto wndMapper = WindowManager::wndMapper ();
 
 		XEvent event;
-		while (WindowManager::refCount)
+		while (WindowManager::IsRefed ())
 		{
 			XNextEvent (display, &event);
 			switch (event.type)
 			{
 			case ButtonPress:
+				if ((*wndMapper)[event.xbutton.window]->onClick)
+					(*wndMapper)[event.xbutton.window]->onClick (event.xbutton.x, event.xbutton.y);
+				break;
+
 			case KeyPress:
+				if ((*wndMapper)[event.xkey.window]->onPress)
+					(*wndMapper)[event.xkey.window]->onPress (event.xkey.keycode);
+				break;
+
 			case ResizeRequest:
+				if ((*wndMapper)[event.xresizerequest.window]->onResized)
+					(*wndMapper)[event.xresizerequest.window]->onResized (event.xresizerequest.width, event.xresizerequest.height);
+				break;
 
 			case Expose:
+				// Todo
+				if ((*wndMapper)[event.xexpose.window]->onRefresh)
+					(*wndMapper)[event.xexpose.window]->onRefresh ();
+
 				XFillRectangle (display, event.xexpose.window, DefaultGC (display, screen), 20, 20, 10, 10);
 				XDrawString (display, event.xexpose.window, DefaultGC (display, screen), 50, 50, "Hello, World!", 14);
 				break;
 
 			case DestroyNotify:
+				(*wndMapper)[event.xdestroywindow.window]->_window = 0;
+				wndMapper->erase (event.xdestroywindow.window);
 				break;
 
 			default:
@@ -189,45 +233,47 @@ namespace EggAche_Impl
 			}
 		}
 
-		WindowManager::Delete ();
+		WindowManager::isEventHandlerRunning = false;
+		WindowManager::CloseDisplay ();
 	}
 
 	WindowImpl_XWindow::WindowImpl_XWindow (size_t width, size_t height,
 											const char *cap_string)
 		: _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
-		_isClosed (false)
+		_window (0)
 	{
-		auto display = WindowManager::Instance ();
+		auto display = WindowManager::display ();
 		auto screen = DefaultScreen (display);
 
 		auto initX = 10, initY = 10, initBorder = 1;
-		this->_window = XCreateSimpleWindow (display, RootWindow (display, screen),
+		_window = XCreateSimpleWindow (display, RootWindow (display, screen),
 											 initX, initY, width, height, initBorder,
 											 BlackPixel (display, screen),
 											 WhitePixel (display, screen));
 
+		auto cap_str = new char[strlen (cap_string) + 1];
+		strcpy (cap_str, cap_string);
+		XStoreName (display, _window, cap_string);
+		delete[] cap_str;
+
 		/* select kind of events we are interested in */
-		XSelectInput (display, this->_window,
+		XSelectInput (display, _window,
 					  ExposureMask | KeyPressMask | ButtonPressMask |
 					  ResizeRedirectMask | SubstructureNotifyMask);
 
 		/* map (show) the window */
-		XMapWindow (display, this->_window);
+		XMapWindow (display, _window);
 
-		WindowManager::refCount++;
+		(*WindowManager::wndMapper ())[_window] = this;
 	}
 
 	WindowImpl_XWindow::~WindowImpl_XWindow ()
 	{
-		auto display = WindowManager::Instance ();
-		XEvent event;
-		event.type = DestroyNotify;
-		event.xdestroywindow.window = this->_window;
+		auto display = WindowManager::display ();
+		XDestroyWindow (display, _window);
 
-		XSendEvent (display, this->_window, false,
-					SubstructureNotifyMask, &event);
-
-		WindowManager::refCount--;
+		if (!WindowManager::IsRefed ())
+			WindowManager::DeleteMapper ();
 	}
 
 	void WindowImpl_XWindow::Draw (const GUIContext *context,
@@ -243,8 +289,7 @@ namespace EggAche_Impl
 
 	bool WindowImpl_XWindow::IsClosed () const
 	{
-		// Todo
-		return false;
+		return _window == 0;
 	}
 
 	void WindowImpl_XWindow::OnClick (std::function<void (int, int)> fn)
@@ -393,11 +438,31 @@ namespace EggAche_Impl
 }
 
 // Test Funcion
-// g++ XWindow_Impl.cpp -o test -std=c++11 -lX11
+// g++ XWindow_Impl.cpp -o test -std=c++11 -lX11 -lpthread
 int main (int argc, char *argv[])
 {
 	using namespace EggAche_Impl;
-	WindowImpl_XWindow wnd (200, 200, "Hello EggAche");
+	WindowImpl_XWindow wnd (500, 300, "Hello EggAche");
+
+	wnd.OnClick ([] (int x, int y)
+	{
+		printf ("You Click %03d, %03d\n", x, y);
+	});
+
+	wnd.OnResized ([] (int x, int y)
+	{
+		printf ("You Resized to %03d, %03d\n", x, y);
+	});
+
+	wnd.OnPress ([] (char ch)
+	{
+		printf ("You Typed %c\n", ch);
+	});
+
+	wnd.OnRefresh ([] ()
+	{
+		printf ("Your Window Refreshed\n");
+	});
 
 	getchar ();
 	return 0;
