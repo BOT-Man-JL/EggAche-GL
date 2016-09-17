@@ -71,6 +71,9 @@
     <ClInclude Include="..\src\EggAche.h" />
     <ClInclude Include="..\src\EggAche_Impl.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="Egg.bmp" />
+  </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
       <LibraryDependencies>X11;pthread</LibraryDependencies>
