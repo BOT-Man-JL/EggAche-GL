@@ -30,20 +30,30 @@ int main (int argc, char *argv[])
 	auto bgEgg = window.GetBackground ();
 
 	const auto fontWidth = 8;
+	const auto fontHeight = 18;
 	auto chPerLine = width / fontWidth;
 	std::string bufStr;
 
 	auto drawScheme = [&] ()
 	{
 		bgEgg->Clear ();
-		for (size_t i = 0; i < bufStr.size () / chPerLine + 1; i++)
+
+		// Text
+		auto rowCount = bufStr.size () / chPerLine;
+		for (size_t i = 0; i < rowCount + 1; i++)
 		{
 			std::string strLine (bufStr, i * chPerLine, chPerLine);
-			bgEgg->DrawTxt (0, i * 18, strLine.c_str ());
+			bgEgg->DrawTxt (0, i * fontHeight, strLine.c_str ());
 		}
-		// Todo: Cursor
+
+		// Cursor
+		auto xPos = (bufStr.size () % chPerLine) * fontWidth;
+		auto yPos = rowCount * fontHeight;
+		bgEgg->DrawLine (xPos, yPos, xPos, yPos + fontHeight);
+
 		window.Refresh ();
 	};
+	drawScheme ();
 
 	window.OnResized ([&] (Window *, int w, int h)
 	{
