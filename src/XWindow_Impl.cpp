@@ -43,7 +43,7 @@ namespace EggAche_Impl
 		std::function<void (int, int)> onResized;
 		std::function<void ()> onRefresh;
 
-		WindowImpl_XWindow (const WindowImpl_XWindow &) = delete;			// Not allow to copy
+		WindowImpl_XWindow (const WindowImpl_XWindow &) = delete;		// Not allow to copy
 		void operator= (const WindowImpl_XWindow &) = delete;			// Not allow to copy
 	};
 
@@ -105,8 +105,12 @@ namespace EggAche_Impl
 
 	protected:
 		size_t _w, _h;
+		Pixmap _pixmap;
+		GC _gc;
 
-		GUIContext_XWindow (const GUIContext_XWindow &) = delete;			// Not allow to copy
+		friend void WindowImpl_XWindow::Draw (const GUIContext *context,
+											  size_t x, size_t y);
+		GUIContext_XWindow (const GUIContext_XWindow &) = delete;		// Not allow to copy
 		void operator= (const GUIContext_XWindow &) = delete;			// Not allow to copy
 	};
 }
@@ -158,14 +162,6 @@ namespace EggAche_Impl
 
 		static std::unordered_map<Window, WindowImpl_XWindow *> *wndMapper ()
 		{
-			if (!isEventHandlerRunning)
-
-			{
-				std::thread eventHandler (WindowImpl_XWindow::EventHandler);
-				eventHandler.detach ();
-				isEventHandlerRunning = true;
-			}
-
 			if (_hwndMapper == nullptr)
 				_hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
 			return _hwndMapper;
@@ -215,12 +211,8 @@ namespace EggAche_Impl
 				break;
 
 			case Expose:
-				// Todo
 				if ((*wndMapper)[event.xexpose.window]->onRefresh)
 					(*wndMapper)[event.xexpose.window]->onRefresh ();
-
-				XFillRectangle (display, event.xexpose.window, DefaultGC (display, screen), 20, 20, 10, 10);
-				XDrawString (display, event.xexpose.window, DefaultGC (display, screen), 50, 50, "Hello, World!", 14);
 				break;
 
 			case DestroyNotify:
@@ -247,14 +239,11 @@ namespace EggAche_Impl
 
 		auto initX = 10, initY = 10, initBorder = 1;
 		_window = XCreateSimpleWindow (display, RootWindow (display, screen),
-											 initX, initY, width, height, initBorder,
-											 BlackPixel (display, screen),
-											 WhitePixel (display, screen));
+									   initX, initY, width, height, initBorder,
+									   BlackPixel (display, screen),
+									   WhitePixel (display, screen));
 
-		auto cap_str = new char[strlen (cap_string) + 1];
-		strcpy (cap_str, cap_string);
 		XStoreName (display, _window, cap_string);
-		delete[] cap_str;
 
 		/* select kind of events we are interested in */
 		XSelectInput (display, _window,
@@ -265,6 +254,14 @@ namespace EggAche_Impl
 		XMapWindow (display, _window);
 
 		(*WindowManager::wndMapper ())[_window] = this;
+
+		if (!WindowManager::isEventHandlerRunning)
+
+		{
+			std::thread eventHandler (WindowImpl_XWindow::EventHandler);
+			eventHandler.detach ();
+			WindowManager::isEventHandlerRunning = true;
+		}
 	}
 
 	WindowImpl_XWindow::~WindowImpl_XWindow ()
@@ -279,7 +276,12 @@ namespace EggAche_Impl
 	void WindowImpl_XWindow::Draw (const GUIContext *context,
 								   size_t x, size_t y)
 	{
-		// Todo
+		auto display = WindowManager::display ();
+		auto screen = DefaultScreen (display);
+
+		auto _context = static_cast<const GUIContext_XWindow *> (context);
+		XCopyArea (display, _context->_pixmap, _window, DefaultGC (display, screen),
+				   0, 0, _context->_w, _context->_h, x, y);
 	}
 
 	std::pair<size_t, size_t> WindowImpl_XWindow::GetSize ()
@@ -315,14 +317,24 @@ namespace EggAche_Impl
 	// Context
 
 	GUIContext_XWindow::GUIContext_XWindow (size_t width, size_t height)
-		: _w (width), _h (height)
+		: _w (width), _h (height), _pixmap (0), _gc (0)
 	{
-		// Todo
+		auto display = WindowManager::display ();
+		auto screen = DefaultScreen (display);
+
+		_pixmap = XCreatePixmap (display, RootWindow (display, screen),
+								 width, height,
+								 DefaultDepth (display, screen));
+		_gc = XCreateGC (display, _pixmap, 0, NULL);
+
+		Clear ();
 	}
 
 	GUIContext_XWindow::~GUIContext_XWindow ()
 	{
-		// Todo
+		auto display = WindowManager::display ();
+		XFreeGC (display, _gc);
+		XFreePixmap (display, _pixmap);
 	}
 
 	bool GUIContext_XWindow::SetPen (unsigned int width,
@@ -355,6 +367,9 @@ namespace EggAche_Impl
 
 	bool GUIContext_XWindow::DrawLine (int xBeg, int yBeg, int xEnd, int yEnd)
 	{
+		auto display = WindowManager::display ();
+		auto screen = DefaultScreen (display);
+		XDrawLine (display, _pixmap, _gc, xBeg, yBeg, xEnd, yEnd);
 		// Todo
 		return false;
 	}
@@ -420,7 +435,15 @@ namespace EggAche_Impl
 
 	void GUIContext_XWindow::Clear ()
 	{
-		// Todo
+		auto display = WindowManager::display ();
+		auto screen = DefaultScreen (display);
+
+		XSetForeground (display, _gc, WhitePixel (display, screen));
+		XSetFillStyle (display, _gc, FillSolid);
+		XFillRectangle (display, _pixmap, _gc, 0, 0, _w, _h);
+
+		XSetForeground (display, _gc, BlackPixel (display, screen));
+		XFlushGC (display, _gc);
 	}
 
 	void GUIContext_XWindow::PaintOnContext (GUIContext *parentContext,
@@ -443,9 +466,13 @@ int main (int argc, char *argv[])
 {
 	using namespace EggAche_Impl;
 	WindowImpl_XWindow wnd (500, 300, "Hello EggAche");
+	GUIContext_XWindow context (500, 300);
 
-	wnd.OnClick ([] (int x, int y)
+	wnd.OnClick ([&] (int x, int y)
 	{
+		context.Clear ();
+		context.DrawLine (0, 0, x, y);
+		wnd.Draw (&context, 0, 0);
 		printf ("You Click %03d, %03d\n", x, y);
 	});
 
@@ -459,8 +486,9 @@ int main (int argc, char *argv[])
 		printf ("You Typed %c\n", ch);
 	});
 
-	wnd.OnRefresh ([] ()
+	wnd.OnRefresh ([&] ()
 	{
+		wnd.Draw (&context, 0, 0);
 		printf ("Your Window Refreshed\n");
 	});
 
