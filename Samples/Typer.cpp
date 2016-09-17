@@ -73,6 +73,13 @@ int main (int argc, char *argv[])
 				bufStr.pop_back ();
 			break;
 
+		case '\r':
+		case '\n':
+		case '\t':
+		case '\v':
+		case '\f':
+			break;
+
 		default:
 			bufStr.push_back (ch);
 			break;
