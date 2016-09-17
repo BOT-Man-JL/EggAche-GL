@@ -5,6 +5,7 @@
 
 #include <exception>
 #include <thread>
+#include <cstring>
 #include <X11/Xlib.h>
 
 #include "EggAche_Impl.h"
@@ -201,18 +202,23 @@ namespace EggAche_Impl
 		auto screen = DefaultScreen (display);
 
 		auto initX = 10, initY = 10, initBorder = 1;
-		this->_window = XCreateSimpleWindow (display, RootWindow (display, screen),
+		_window = XCreateSimpleWindow (display, RootWindow (display, screen),
 											 initX, initY, width, height, initBorder,
 											 BlackPixel (display, screen),
 											 WhitePixel (display, screen));
 
+		auto cap_str = new char[strlen (cap_string) + 1];
+		strcpy (cap_str, cap_string);
+		XStoreName (display, _window, cap_string);
+		delete[] cap_str;
+
 		/* select kind of events we are interested in */
-		XSelectInput (display, this->_window,
+		XSelectInput (display, _window,
 					  ExposureMask | KeyPressMask | ButtonPressMask |
 					  ResizeRedirectMask | SubstructureNotifyMask);
 
 		/* map (show) the window */
-		XMapWindow (display, this->_window);
+		XMapWindow (display, _window);
 
 		WindowManager::refCount++;
 	}
@@ -220,12 +226,8 @@ namespace EggAche_Impl
 	WindowImpl_XWindow::~WindowImpl_XWindow ()
 	{
 		auto display = WindowManager::Instance ();
-		XEvent event;
-		event.type = DestroyNotify;
-		event.xdestroywindow.window = this->_window;
 
-		XSendEvent (display, this->_window, false,
-					SubstructureNotifyMask, &event);
+		XDestroyWindow (display, _window);
 
 		WindowManager::refCount--;
 	}
@@ -393,11 +395,11 @@ namespace EggAche_Impl
 }
 
 // Test Funcion
-// g++ XWindow_Impl.cpp -o test -std=c++11 -lX11
+// g++ XWindow_Impl.cpp -o test -std=c++11 -lX11 -lpthread
 int main (int argc, char *argv[])
 {
 	using namespace EggAche_Impl;
-	WindowImpl_XWindow wnd (200, 200, "Hello EggAche");
+	WindowImpl_XWindow wnd (500, 300, "Hello EggAche");
 
 	getchar ();
 	return 0;
