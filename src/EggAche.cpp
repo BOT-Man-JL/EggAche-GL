@@ -23,7 +23,8 @@ namespace EggAche
 					const char *cap_string)
 		: bgEgg (nullptr), windowImpl (nullptr)
 	{
-		bgEgg = new Egg (width, height);
+		// Assume 2000 is big enough
+		bgEgg = new Egg (2000, 2000);
 
 		auto guiFactory = NewGUIFactory ();
 

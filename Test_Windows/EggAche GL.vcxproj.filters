@@ -23,10 +23,10 @@
     <ClCompile Include="..\src\Windows_Impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sample.cpp">
+    <ClCompile Include="..\src\EggAche.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\EggAche.cpp">
+    <ClCompile Include="..\Samples\Typer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

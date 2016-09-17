@@ -145,9 +145,9 @@
     <Image Include="Egg.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Samples\Typer.cpp" />
     <ClCompile Include="..\src\EggAche.cpp" />
     <ClCompile Include="..\src\Windows_Impl.cpp" />
-    <ClCompile Include="Sample.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\EggAche.h" />

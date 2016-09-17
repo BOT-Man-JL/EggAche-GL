@@ -6,8 +6,8 @@
 #ifndef EGGACHE_GL
 #define EGGACHE_GL
 
-//#define EGGACHE_WINDOWS
-#define EGGACHE_XWINDOW
+#define EGGACHE_WINDOWS
+//#define EGGACHE_XWINDOW
 
 #include <functional>
 #include <list>
