@@ -839,7 +839,6 @@ namespace EggAche_Impl
 
 			auto rbgaArr = new BYTE[pbmInfoHeader->biWidth * pbmInfoHeader->biHeight * 4];
 
-			printf ("pos1\n");
 			/*
 			There are 3 differences between BMP and the raw image buffer for LodePNG:
 			-it's upside down
@@ -868,14 +867,12 @@ namespace EggAche_Impl
 					else
 					{
 						// 32 bit
-						auto i = pData[bmpos + 3];
 						rbgaArr[newpos + 0] = pData[bmpos + 2];	//R
 						rbgaArr[newpos + 1] = pData[bmpos + 1];	//G
 						rbgaArr[newpos + 2] = pData[bmpos + 0];	//B
 						rbgaArr[newpos + 3] = 255;				//A
 					}
 				}
-			printf ("pos2\n");
 
 			std::vector<BYTE> pngBytes;
 			if (lodepng::encode (pngBytes, rbgaArr,
@@ -885,14 +882,12 @@ namespace EggAche_Impl
 				delete[] rbgaArr;
 				return false;
 			}
-			printf ("pos3\n");
 
 			if (lodepng::save_file (pngBytes, fileName))
 			{
 				delete[] rbgaArr;
 				return false;
 			}
-			printf ("pos4\n");
 
 			delete[] rbgaArr;
 			return true;
