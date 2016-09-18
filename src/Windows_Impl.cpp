@@ -6,7 +6,6 @@
 #include <exception>
 #include <string>
 #include <unordered_map>
-#include <fstream>
 
 #include <Windows.h>
 #include <windowsx.h>
@@ -21,6 +20,7 @@
 #endif
 
 #include "EggAche_Impl.h"
+#include "lodepng\lodepng.h"
 
 namespace EggAche_Impl
 {
@@ -111,7 +111,8 @@ namespace EggAche_Impl
 					  int g = -1,
 					  int b = -1) override;
 
-		bool SaveAsBmp (const char *fileName) override;
+		bool SaveAsBmp (const char *fileName) const override;
+		bool SaveAsPng (const char *fileName) const override;
 
 		void Clear () override;
 
@@ -126,6 +127,9 @@ namespace EggAche_Impl
 		static const COLORREF _colorMask;
 		static const COLORREF _GetColor (int r, int g, int b);
 
+		bool SaveAsImg (
+			std::function<bool (BYTE *pData,
+								BITMAPINFOHEADER *pbmInfoHeader)> fnSave) const;
 		friend void WindowImpl_Windows::Draw (const GUIContext *, size_t, size_t);
 
 		GUIContext_Windows (const GUIContext_Windows &) = delete;		// Not allow to copy
@@ -709,7 +713,9 @@ namespace EggAche_Impl
 
 #endif
 
-	bool GUIContext_Windows::SaveAsBmp (const char *fileName)
+	bool GUIContext_Windows::SaveAsImg (
+		std::function<bool (BYTE *pData,
+							BITMAPINFOHEADER *pbmInfoHeader)> fnSave) const
 	{
 		// Ref:
 		// https://msdn.microsoft.com/en-us/library/dd145119(v=vs.85).aspx
@@ -718,100 +724,181 @@ namespace EggAche_Impl
 		BITMAP bitmap = { 0 };
 		GetObject (this->_hBitmap, sizeof (BITMAP), &bitmap);
 
-		// Convert the color format to a count of bits.
-		auto cClrBits = (WORD) (bitmap.bmPlanes * bitmap.bmBitsPixel);
-		if (cClrBits == 1)
-			cClrBits = 1;
-		else if (cClrBits <= 4)
-			cClrBits = 4;
-		else if (cClrBits <= 8)
-			cClrBits = 8;
-		else if (cClrBits <= 16)
-			cClrBits = 16;
-		else if (cClrBits <= 24)
-			cClrBits = 24;
-		else cClrBits = 32;
-
-		PBITMAPINFO pbmi;
-
-		// Allocate memory for the BITMAPINFO structure. (This structure
-		// contains a BITMAPINFOHEADER structure and an array of RGBQUAD
-		// data structures.)
-		if (cClrBits < 24)
-			pbmi = (PBITMAPINFO) LocalAlloc (LPTR,
-											 sizeof (BITMAPINFOHEADER) +
-											 sizeof (RGBQUAD) * (1 << cClrBits));
-
+		// NOT Support Less than 24 bit
 		// There is no RGBQUAD array for these formats:
 		// 24-bit-per-pixel or 32-bit-per-pixel
-		else
-			pbmi = (PBITMAPINFO) LocalAlloc (LPTR,
-											 sizeof (BITMAPINFOHEADER));
+		BITMAPINFOHEADER bmInfoHeader = { 0 };
 
 		// Initialize the fields in the BITMAPINFO structure.
-		pbmi->bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
-		pbmi->bmiHeader.biWidth = bitmap.bmWidth;
-		pbmi->bmiHeader.biHeight = bitmap.bmHeight;
-		pbmi->bmiHeader.biPlanes = bitmap.bmPlanes;
-		pbmi->bmiHeader.biBitCount = bitmap.bmBitsPixel;
-		if (cClrBits < 24)
-			pbmi->bmiHeader.biClrUsed = (1 << cClrBits);
+		bmInfoHeader.biSize = sizeof (BITMAPINFOHEADER);
+		bmInfoHeader.biWidth = bitmap.bmWidth;
+		bmInfoHeader.biHeight = bitmap.bmHeight;
+		bmInfoHeader.biPlanes = 1;
+
+		// Convert the color format to a count of bits.
+		if (bitmap.bmBitsPixel <= 24)
+			bmInfoHeader.biBitCount = 24;
+		else
+			bmInfoHeader.biBitCount = 32;
 
 		// If the bitmap is not compressed, set the BI_RGB flag.
-		pbmi->bmiHeader.biCompression = BI_RGB;
+		bmInfoHeader.biCompression = BI_RGB;
 
 		// Compute the number of bytes in the array of color
 		// indices and store the result in biSizeImage.
 		// The width must be DWORD aligned unless the bitmap is RLE
 		// compressed.
-		pbmi->bmiHeader.biSizeImage =
-			((pbmi->bmiHeader.biWidth * cClrBits + 31) & ~31) / 8
-			* pbmi->bmiHeader.biHeight;
+		bmInfoHeader.biSizeImage =
+			((bmInfoHeader.biWidth * bmInfoHeader.biBitCount + 31) & ~31)
+			/ 8 * bmInfoHeader.biHeight;
 
 		// Set biClrImportant to 0, indicating that all of the
 		// device colors are important.
-		pbmi->bmiHeader.biClrImportant = 0;
-
-		// Fill Unused Fields.
-		pbmi->bmiHeader.biXPelsPerMeter
-			= pbmi->bmiHeader.biYPelsPerMeter = 0;
+		bmInfoHeader.biClrImportant = 0;
 
 		// Allocate Memory for DIB Data.
-		auto hDIB = GlobalAlloc (GHND, pbmi->bmiHeader.biSizeImage);
+		auto hDIB = GlobalAlloc (GHND, bmInfoHeader.biSizeImage);
 		auto pData = (BYTE *) GlobalLock (hDIB);
 
 		// Get DIB.
-		GetDIBits (this->_hdc, this->_hBitmap, 0,
-			(WORD) this->_h, pData, pbmi, DIB_RGB_COLORS);
+		GetDIBits (this->_hdc, this->_hBitmap, 0, (WORD) this->_h, pData,
+			(LPBITMAPINFO) &bmInfoHeader, DIB_RGB_COLORS);
 
-		// Initialize BITMAPFILEHEADER.
-		BITMAPFILEHEADER bmFileHeader = { 0 };
-		bmFileHeader.bfType = 0x4d42;			// 0x42 = "B" 0x4d = "M"
-		bmFileHeader.bfOffBits = sizeof (BITMAPFILEHEADER) +
-			sizeof (BITMAPINFOHEADER);
-		bmFileHeader.bfSize = bmFileHeader.bfOffBits
-			+ pbmi->bmiHeader.biSizeImage;
-
-		// Save to File.
-		std::ofstream ofs (fileName,
-						   std::ios_base::out | std::ios_base::binary);
-		if (!ofs.is_open ())
+		// Save to Bmp or Png
+		// Strategy Pattern :-)
+		if (!fnSave (pData, &bmInfoHeader))
 		{
-			LocalFree (pbmi);
 			GlobalUnlock (hDIB);
 			GlobalFree (hDIB);
 			return false;
 		}
 
-		ofs.write ((const char *) &bmFileHeader, sizeof (BITMAPFILEHEADER));
-		ofs.write ((const char *) &pbmi->bmiHeader, sizeof (BITMAPINFOHEADER));
-		ofs.write ((const char *) pData, pbmi->bmiHeader.biSizeImage);
-
 		// Free Memory.
-		LocalFree (pbmi);
 		GlobalUnlock (hDIB);
 		GlobalFree (hDIB);
 		return true;
+	}
+
+	bool GUIContext_Windows::SaveAsBmp (const char *fileName) const
+	{
+		auto fnSave = [&] (BYTE *pData,
+						   BITMAPINFOHEADER *pbmInfoHeader)
+		{
+			// Initialize BITMAPFILEHEADER.
+			BITMAPFILEHEADER bmFileHeader = { 0 };
+			bmFileHeader.bfType = 0x4d42;			// 0x42 = "B" 0x4d = "M"
+			bmFileHeader.bfOffBits = sizeof (BITMAPFILEHEADER) +
+				sizeof (BITMAPINFOHEADER);
+			bmFileHeader.bfSize = bmFileHeader.bfOffBits
+				+ pbmInfoHeader->biSizeImage;
+
+			auto hFile = CreateFileA (fileName,
+									  GENERIC_READ | GENERIC_WRITE,
+									  (DWORD) 0,
+									  NULL,
+									  CREATE_ALWAYS,
+									  FILE_ATTRIBUTE_NORMAL,
+									  (HANDLE) NULL);
+			if (hFile == INVALID_HANDLE_VALUE)
+				return false;
+
+			if (!WriteFile (hFile, &bmFileHeader, sizeof (BITMAPFILEHEADER), NULL, NULL))
+			{
+				CloseHandle (hFile);
+				return false;
+			}
+			if (!WriteFile (hFile, pbmInfoHeader, sizeof (BITMAPINFOHEADER), NULL, NULL))
+			{
+				CloseHandle (hFile);
+				return false;
+			}
+			if (!WriteFile (hFile, pData, pbmInfoHeader->biSizeImage, NULL, NULL))
+			{
+				CloseHandle (hFile);
+				return false;
+			}
+			CloseHandle (hFile);
+			return true;
+		};
+
+		return SaveAsImg (fnSave);
+	}
+
+	bool GUIContext_Windows::SaveAsPng (const char *fileName) const
+	{
+		auto fnConvertAndSave = [&] (BYTE *pData,
+									 BITMAPINFOHEADER *pbmInfoHeader)
+		{
+			// The amount of scanline bytes is width of image times channels,
+			// with extra bytes added if needed to make it a multiple of 4 bytes.
+			unsigned numChannels = pbmInfoHeader->biBitCount / 8;
+			unsigned scanlineBytes = pbmInfoHeader->biWidth * numChannels;
+			if (scanlineBytes % 4 != 0)
+				scanlineBytes = (scanlineBytes / 4) * 4 + 4;
+			unsigned dataSize = scanlineBytes * pbmInfoHeader->biHeight;
+
+			auto rbgaArr = new BYTE[pbmInfoHeader->biWidth * pbmInfoHeader->biHeight * 4];
+
+			printf ("pos1\n");
+			/*
+			There are 3 differences between BMP and the raw image buffer for LodePNG:
+			-it's upside down
+			-it's in BGR instead of RGB format (or BRGA instead of RGBA)
+			-each scanline has padding bytes to make it a multiple of 4 if needed
+			The 2D for loop below does all these 3 conversions at once.
+			*/
+			for (unsigned y = 0; y < pbmInfoHeader->biHeight; y++)
+				for (unsigned x = 0; x < pbmInfoHeader->biWidth; x++)
+				{
+					// pixel start byte position in the BMP
+					unsigned bmpos = (pbmInfoHeader->biHeight - y - 1)
+						* scanlineBytes + numChannels * x;
+
+					// pixel start byte position in the rbgaArr
+					unsigned newpos = 4 * y * pbmInfoHeader->biWidth + 4 * x;
+
+					if (numChannels == 3)
+					{
+						// 24 bit
+						rbgaArr[newpos + 0] = pData[bmpos + 2];	//R
+						rbgaArr[newpos + 1] = pData[bmpos + 1];	//G
+						rbgaArr[newpos + 2] = pData[bmpos + 0];	//B
+						rbgaArr[newpos + 3] = 255;				//A
+					}
+					else
+					{
+						// 32 bit
+						auto i = pData[bmpos + 3];
+						rbgaArr[newpos + 0] = pData[bmpos + 2];	//R
+						rbgaArr[newpos + 1] = pData[bmpos + 1];	//G
+						rbgaArr[newpos + 2] = pData[bmpos + 0];	//B
+						rbgaArr[newpos + 3] = 255;				//A
+					}
+				}
+			printf ("pos2\n");
+
+			std::vector<BYTE> pngBytes;
+			if (lodepng::encode (pngBytes, rbgaArr,
+								 pbmInfoHeader->biWidth,
+								 pbmInfoHeader->biHeight))
+			{
+				delete[] rbgaArr;
+				return false;
+			}
+			printf ("pos3\n");
+
+			if (lodepng::save_file (pngBytes, fileName))
+			{
+				delete[] rbgaArr;
+				return false;
+			}
+			printf ("pos4\n");
+
+			delete[] rbgaArr;
+			return true;
+		};
+
+		return SaveAsImg (fnConvertAndSave);
 	}
 
 	void GUIContext_Windows::Clear ()

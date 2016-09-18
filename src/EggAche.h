@@ -186,9 +186,10 @@ namespace EggAche
 		// The curve begins at the point where the Ellipse intersects the first radial
 		// and extends counterclockwise to the point where the second radial intersects;
 
-		bool SaveAsBmp (const char *fileName);				// "path/name.bmp"
+		bool SaveAsBmp (const char *fileName) const;		// "path/name.bmp"
+		bool SaveAsPng (const char *fileName) const;		// "path/name.png"
 		// Remarks:
-		// Save Window's Content into a Bitmap (.bmp) File;
+		// Save Egg's Content into a .bmp/.png File;
 
 	private:
 		int x, y, w, h;										// Postion and Size

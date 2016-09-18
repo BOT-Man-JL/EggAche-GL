@@ -81,7 +81,7 @@ namespace EggAche
 		delete guiFactory;
 	}
 
-	bool Egg::SaveAsBmp (const char *fileName)
+	bool Egg::SaveAsBmp (const char *fileName) const
 	{
 		auto guiFactory = NewGUIFactory ();
 		auto context =
@@ -92,6 +92,23 @@ namespace EggAche
 
 		this->RecursiveDraw (context, 0, 0);
 		auto ret = context->SaveAsBmp (fileName);
+
+		delete context;
+		delete guiFactory;
+		return ret;
+	}
+
+	bool Egg::SaveAsPng (const char * fileName) const
+	{
+		auto guiFactory = NewGUIFactory ();
+		auto context =
+			guiFactory->NewGUIContext (this->w, this->h);
+
+		context->SetBrush (false, 255, 255, 255);
+		context->DrawRect (-10, -10, this->w + 10, this->h + 10);
+
+		this->RecursiveDraw (context, 0, 0);
+		auto ret = context->SaveAsPng (fileName);
 
 		delete context;
 		delete guiFactory;

@@ -26,7 +26,10 @@
     <ClCompile Include="..\src\EggAche.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Samples\Typer.cpp">
+    <ClCompile Include="..\src\lodepng\lodepng.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Samples\Basic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,6 +38,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\EggAche_Impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\lodepng\lodepng.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
