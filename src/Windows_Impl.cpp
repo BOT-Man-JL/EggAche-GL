@@ -826,6 +826,74 @@ namespace EggAche_Impl
 		return SaveAsImg (fnSave);
 	}
 
+#ifdef _MSC_VER
+	// Using GDI+ to Encode Png
+	bool GUIContext_Windows::SaveAsPng (const char *fileName) const
+	{
+		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+		ULONG_PTR gdiplusToken;
+		auto ret = false;
+
+		Gdiplus::GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
+		{
+			auto GetEncoderClsid = [] (const WCHAR* format, CLSID* pClsid)
+			{
+				using namespace Gdiplus;
+
+				UINT  num = 0;          // number of image encoders
+				UINT  size = 0;         // size of the image encoder array in bytes
+
+				ImageCodecInfo* pImageCodecInfo = NULL;
+
+				GetImageEncodersSize (&num, &size);
+				if (size == 0)
+					return -1;  // Failure
+
+				pImageCodecInfo = (ImageCodecInfo*) (malloc (size));
+				if (pImageCodecInfo == NULL)
+					return -1;  // Failure
+
+				GetImageEncoders (num, size, pImageCodecInfo);
+
+				for (int j = 0; j < num; ++j)
+				{
+					if (wcscmp (pImageCodecInfo[j].MimeType, format) == 0)
+					{
+						*pClsid = pImageCodecInfo[j].Clsid;
+						free (pImageCodecInfo);
+						return j;  // Success
+					}
+				}
+
+				free (pImageCodecInfo);
+				return -1;  // Failure
+			};
+
+			// Get the CLSID of the PNG encoder.
+			CLSID encoderClsid;
+			if (-1 == GetEncoderClsid (L"image/png", &encoderClsid))
+				return false;
+
+			auto bmp = Gdiplus::Bitmap::FromHBITMAP (this->_hBitmap, NULL);
+
+			// Save to File
+			auto cchW = MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
+											 fileName, -1, NULL, 0);
+			wchar_t *fileNameW = new wchar_t[cchW];
+			MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
+								 fileName, -1, fileNameW, cchW);
+			auto status = bmp->Save (fileNameW, &encoderClsid, NULL);
+			delete[] fileNameW;
+
+			if (status == Gdiplus::Ok)
+				ret = true;
+		}
+		Gdiplus::GdiplusShutdown (gdiplusToken);
+		return ret;
+	}
+
+#else
+	// MinGW doesn't support GDI+
 	bool GUIContext_Windows::SaveAsPng (const char *fileName) const
 	{
 		auto fnConvertAndSave = [&] (BYTE *pData,
@@ -872,7 +940,8 @@ namespace EggAche_Impl
 		};
 
 		return SaveAsImg (fnConvertAndSave);
-	}
+}
+#endif
 
 	void GUIContext_Windows::Clear ()
 	{
