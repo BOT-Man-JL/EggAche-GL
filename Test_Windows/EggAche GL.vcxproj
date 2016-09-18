@@ -147,13 +147,11 @@
   <ItemGroup>
     <ClCompile Include="..\Samples\Basic.cpp" />
     <ClCompile Include="..\src\EggAche.cpp" />
-    <ClCompile Include="..\src\lodepng\lodepng.cpp" />
     <ClCompile Include="..\src\Windows_Impl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\EggAche.h" />
     <ClInclude Include="..\src\EggAche_Impl.h" />
-    <ClInclude Include="..\src\lodepng\lodepng.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

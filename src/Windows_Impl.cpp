@@ -20,7 +20,9 @@
 #endif
 
 #include "EggAche_Impl.h"
-#include "lodepng\lodepng.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 namespace EggAche_Impl
 {
@@ -837,8 +839,6 @@ namespace EggAche_Impl
 				scanlineBytes = (scanlineBytes / 4) * 4 + 4;
 			unsigned dataSize = scanlineBytes * pbmInfoHeader->biHeight;
 
-			auto rbgaArr = new BYTE[pbmInfoHeader->biWidth * pbmInfoHeader->biHeight * 4];
-
 			/*
 			There are 3 differences between BMP and the raw image buffer for LodePNG:
 			-it's upside down
@@ -846,6 +846,7 @@ namespace EggAche_Impl
 			-each scanline has padding bytes to make it a multiple of 4 if needed
 			The 2D for loop below does all these 3 conversions at once.
 			*/
+			auto rgbArr = new BYTE[pbmInfoHeader->biWidth * pbmInfoHeader->biHeight * 3];
 			for (unsigned y = 0; y < pbmInfoHeader->biHeight; y++)
 				for (unsigned x = 0; x < pbmInfoHeader->biWidth; x++)
 				{
@@ -853,43 +854,20 @@ namespace EggAche_Impl
 					unsigned bmpos = (pbmInfoHeader->biHeight - y - 1)
 						* scanlineBytes + numChannels * x;
 
-					// pixel start byte position in the rbgaArr
-					unsigned newpos = 4 * y * pbmInfoHeader->biWidth + 4 * x;
+					// pixel start byte position in the rgbaArr
+					unsigned newpos = 3 * y * pbmInfoHeader->biWidth + 3 * x;
 
-					if (numChannels == 3)
-					{
-						// 24 bit
-						rbgaArr[newpos + 0] = pData[bmpos + 2];	//R
-						rbgaArr[newpos + 1] = pData[bmpos + 1];	//G
-						rbgaArr[newpos + 2] = pData[bmpos + 0];	//B
-						rbgaArr[newpos + 3] = 255;				//A
-					}
-					else
-					{
-						// 32 bit
-						rbgaArr[newpos + 0] = pData[bmpos + 2];	//R
-						rbgaArr[newpos + 1] = pData[bmpos + 1];	//G
-						rbgaArr[newpos + 2] = pData[bmpos + 0];	//B
-						rbgaArr[newpos + 3] = 255;				//A
-					}
+					// Take 24 bit
+					rgbArr[newpos + 0] = pData[bmpos + 2];	//R
+					rgbArr[newpos + 1] = pData[bmpos + 1];	//G
+					rgbArr[newpos + 2] = pData[bmpos + 0];	//B
 				}
 
-			std::vector<BYTE> pngBytes;
-			if (lodepng::encode (pngBytes, rbgaArr,
-								 pbmInfoHeader->biWidth,
-								 pbmInfoHeader->biHeight))
-			{
-				delete[] rbgaArr;
-				return false;
-			}
+			stbi_write_png (fileName, pbmInfoHeader->biWidth,
+							pbmInfoHeader->biHeight,
+							3, rgbArr, pbmInfoHeader->biWidth * 3);
 
-			if (lodepng::save_file (pngBytes, fileName))
-			{
-				delete[] rbgaArr;
-				return false;
-			}
-
-			delete[] rbgaArr;
+			delete[] rgbArr;
 			return true;
 		};
 
