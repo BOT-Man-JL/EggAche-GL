@@ -81,7 +81,7 @@ namespace EggAche
 		delete guiFactory;
 	}
 
-	bool Egg::SaveAsBmp (const char *fileName)
+	bool Egg::SaveAsImg (std::function<bool (EggAche_Impl::GUIContext *context)> fn) const
 	{
 		auto guiFactory = NewGUIFactory ();
 		auto context =
@@ -91,11 +91,38 @@ namespace EggAche
 		context->DrawRect (-10, -10, this->w + 10, this->h + 10);
 
 		this->RecursiveDraw (context, 0, 0);
-		auto ret = context->SaveAsBmp (fileName);
+		auto ret = fn (context);
 
 		delete context;
 		delete guiFactory;
 		return ret;
+	}
+
+	bool Egg::SaveAsJpg (const char * fileName) const
+	{
+		auto fn = [&] (EggAche_Impl::GUIContext *context)
+		{
+			return context->SaveAsJpg (fileName);
+		};
+		return SaveAsImg (fn);
+	}
+
+	bool Egg::SaveAsPng (const char * fileName) const
+	{
+		auto fn = [&] (EggAche_Impl::GUIContext *context)
+		{
+			return context->SaveAsPng (fileName);
+		};
+		return SaveAsImg (fn);
+	}
+
+	bool Egg::SaveAsBmp (const char *fileName) const
+	{
+		auto fn = [&] (EggAche_Impl::GUIContext *context)
+		{
+			return context->SaveAsBmp (fileName);
+		};
+		return SaveAsImg (fn);
 	}
 
 	bool Window::IsClosed () const
