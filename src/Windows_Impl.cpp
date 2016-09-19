@@ -30,6 +30,73 @@
 
 namespace EggAche_Impl
 {
+	// Handle Manager
+
+#ifdef _MSC_VER
+	class GdiPlusManager
+	{
+	private:
+		static ULONG_PTR gdiplusToken;
+		static size_t refCount;
+	public:
+		GdiPlusManager ()
+		{
+			if (refCount == 0)
+			{
+				Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+				Gdiplus::GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
+			}
+			refCount++;
+		}
+
+		~GdiPlusManager ()
+		{
+			refCount--;
+			if (refCount == 0)
+				Gdiplus::GdiplusShutdown (gdiplusToken);
+		}
+	};
+	size_t GdiPlusManager::refCount = 0;
+	ULONG_PTR GdiPlusManager::gdiplusToken = 0;
+#endif
+
+	class WindowImpl_Windows;
+	class HwndManager
+	{
+	private:
+		static std::unordered_map<HWND, WindowImpl_Windows *> *_hwndMapper;
+		static size_t refCount;
+	public:
+		HwndManager ()
+		{
+			if (refCount == 0 && _hwndMapper == nullptr)
+				_hwndMapper = new std::unordered_map<HWND, WindowImpl_Windows *> ();
+			refCount++;
+		}
+
+		~HwndManager ()
+		{
+			refCount--;
+			if (refCount == 0)
+			{
+				delete _hwndMapper;
+				_hwndMapper = nullptr;
+			}
+		}
+
+		static bool isRegClass;
+
+		static std::unordered_map<HWND, WindowImpl_Windows *> *hwndMapper ()
+		{
+			return _hwndMapper;
+		}
+	};
+	size_t HwndManager::refCount = 0;
+	std::unordered_map<HWND, WindowImpl_Windows *> *HwndManager::_hwndMapper = nullptr;
+	bool HwndManager::isRegClass = false;
+
+	// Window
+
 	class WindowImpl_Windows : public WindowImpl
 	{
 	public:
@@ -61,12 +128,19 @@ namespace EggAche_Impl
 		std::function<void (int, int)> onResized;
 		std::function<void ()> onRefresh;
 
+		HwndManager _hwndManager;
+#ifdef _MSC_VER
+		GdiPlusManager _gdiplusManager;
+#endif
+
 		static void WINAPI _NewWindow_Thread (WindowImpl_Windows *pew);
 		static LRESULT CALLBACK _WndProc (HWND, UINT, WPARAM, LPARAM);
 
 		WindowImpl_Windows (const WindowImpl_Windows &) = delete;		// Not allow to copy
 		void operator= (const WindowImpl_Windows &) = delete;			// Not allow to copy
 	};
+
+	// Context
 
 	class GUIContext_Windows : public GUIContext
 	{
@@ -131,6 +205,10 @@ namespace EggAche_Impl
 		HBITMAP _hBitmap;
 		size_t _w, _h;
 
+#ifdef _MSC_VER
+		GdiPlusManager _gdiplusManager;
+#endif
+
 		static const COLORREF _colorMask;
 		static const COLORREF _GetColor (int r, int g, int b);
 
@@ -165,53 +243,6 @@ namespace EggAche_Impl
 	}
 
 	// Window
-
-	class HwndManager
-	{
-	private:
-#ifdef _MSC_VER
-		static ULONG_PTR gdiplusToken;
-#endif
-		static std::unordered_map<HWND, WindowImpl_Windows *> *_hwndMapper;
-	protected:
-		HwndManager () {}
-	public:
-		static bool isRegClass;
-
-		static std::unordered_map<HWND, WindowImpl_Windows *> *Instance ()
-		{
-			if (_hwndMapper == nullptr)
-			{
-				_hwndMapper = new std::unordered_map<HWND, WindowImpl_Windows *> ();
-
-#ifdef _MSC_VER
-				Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-				Gdiplus::GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
-#endif
-			}
-			return _hwndMapper;
-		}
-
-		static bool IsRefed ()
-		{
-			return _hwndMapper != nullptr && !_hwndMapper->empty ();
-		}
-
-		static void Delete ()
-		{
-#ifdef _MSC_VER
-			Gdiplus::GdiplusShutdown (gdiplusToken);
-#endif
-			delete _hwndMapper;
-			_hwndMapper = nullptr;
-		}
-	};
-
-#ifdef _MSC_VER
-	ULONG_PTR HwndManager::gdiplusToken = 0;
-#endif
-	std::unordered_map<HWND, WindowImpl_Windows *> *HwndManager::_hwndMapper = nullptr;
-	bool HwndManager::isRegClass = false;
 
 	WindowImpl_Windows::WindowImpl_Windows (size_t width, size_t height,
 											const char *cap_string)
@@ -286,13 +317,50 @@ namespace EggAche_Impl
 			throw std::runtime_error ("Err_Window_#3_CreateWindow");
 	}
 
+	void WindowImpl_Windows::_NewWindow_Thread (WindowImpl_Windows *pew)
+	{
+		RECT rect { 0 };
+		rect.right = pew->_cxCanvas;
+		rect.bottom = pew->_cyCanvas;
+		if (!AdjustWindowRect (&rect, WS_OVERLAPPEDWINDOW, FALSE))
+		{
+			pew->_fFailed = true;
+			SetEvent (pew->_hEvent);
+		}
+
+		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->capStr.c_str (),
+									WS_OVERLAPPEDWINDOW,
+									// & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
+									CW_USEDEFAULT, CW_USEDEFAULT,
+									rect.right - rect.left,
+									rect.bottom - rect.top,
+									NULL, NULL,
+									(HINSTANCE) GetCurrentProcess (), NULL);
+		if (!pew->_hwnd)
+		{
+			pew->_fFailed = true;
+			SetEvent (pew->_hEvent);
+			return;
+		}
+
+		(*HwndManager::hwndMapper ())[pew->_hwnd] = pew;
+
+		ShowWindow (pew->_hwnd, SW_NORMAL);
+		UpdateWindow (pew->_hwnd);
+		SetEvent (pew->_hEvent);
+
+		MSG msg;
+		while (GetMessage (&msg, NULL, 0, 0))
+		{
+			TranslateMessage (&msg);
+			DispatchMessage (&msg);
+		}
+	}
+
 	WindowImpl_Windows::~WindowImpl_Windows ()
 	{
 		if (this->_hwnd != NULL)
 			SendMessage (this->_hwnd, WM_CLOSE, 0, 0);
-
-		if (!HwndManager::IsRefed ())
-			HwndManager::Delete ();
 	}
 
 	void WindowImpl_Windows::Draw (const GUIContext *context,
@@ -347,52 +415,13 @@ namespace EggAche_Impl
 		onRefresh = std::move (fn);
 	}
 
-	void WindowImpl_Windows::_NewWindow_Thread (WindowImpl_Windows *pew)
-	{
-		RECT rect { 0 };
-		rect.right = pew->_cxCanvas;
-		rect.bottom = pew->_cyCanvas;
-		if (!AdjustWindowRect (&rect, WS_OVERLAPPEDWINDOW, FALSE))
-		{
-			pew->_fFailed = true;
-			SetEvent (pew->_hEvent);
-		}
-
-		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->capStr.c_str (),
-									WS_OVERLAPPEDWINDOW,
-									// & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
-									CW_USEDEFAULT, CW_USEDEFAULT,
-									rect.right - rect.left,
-									rect.bottom - rect.top,
-									NULL, NULL,
-									(HINSTANCE) GetCurrentProcess (), NULL);
-		if (!pew->_hwnd)
-		{
-			pew->_fFailed = true;
-			SetEvent (pew->_hEvent);
-		}
-
-		(*HwndManager::Instance ())[pew->_hwnd] = pew;
-
-		ShowWindow (pew->_hwnd, SW_NORMAL);
-		UpdateWindow (pew->_hwnd);
-		SetEvent (pew->_hEvent);
-
-		MSG msg;
-		while (GetMessage (&msg, NULL, 0, 0))
-		{
-			TranslateMessage (&msg);
-			DispatchMessage (&msg);
-		}
-	}
-
 	LRESULT CALLBACK WindowImpl_Windows::_WndProc (
 		HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		if (!HwndManager::IsRefed ())
-			goto tagRet;
+		auto hwndMapper = HwndManager::hwndMapper ();
+		if (hwndMapper == nullptr)
+			return DefWindowProc (hwnd, message, wParam, lParam);
 
-		auto hwndMapper = HwndManager::Instance ();
 		switch (message)
 		{
 		case WM_LBUTTONUP:
@@ -427,8 +456,6 @@ namespace EggAche_Impl
 			PostQuitMessage (0);
 			return 0;
 		}
-
-	tagRet:
 		return DefWindowProc (hwnd, message, wParam, lParam);
 	}
 
