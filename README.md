@@ -15,8 +15,8 @@ Welcome to Join :wink:
 
 Requirements:
 
-- **MSVC** (installed with Visual Studio) / **g++**
-- **Windows SDK** (installed with Visual Studio) / **MinGW**
+- **MSVC** and **Windows SDK** (installed with *Visual Studio*)
+- **g++** and **MinGW**
 
 Steps:
 
@@ -26,6 +26,8 @@ Steps:
 4. Add `#define EGGACHE_WINDOWS` in `EggAche.h` to specify that you are on Windows
 
 ### UNIX / X Window System
+
+Support **Linux**, **Mac OSX** and other **Unix/Unix-Like** Systems.
 
 Still on the way :innocent:
 
@@ -152,5 +154,6 @@ And you will notice that `Snapshot.bmp` has been saved :wink:
   - Using **Abstract Factory** to Produce Platform-specific Implementation Objects for diverse Platforms (`EggAche.cpp`)
   - Using **Composite Pattern** to Define the Layout of Canvases (`EggAche.h`)
   - Using **Singleton Pattern** to Maintain the Window Manager (`*_Impl.h`)
-  - Using **Observer Pattern** to Notify Window Events and Auto Redraw (`*_Impl.h`)
   - Using **Adapter Pattern** to Convert the interface of `WindowImpl Events` into `Window Events` (`EggAche.cpp`)
+  - Using **Observer Pattern** to Notify Window Events and Auto Redraw (`*_Impl.h`)
+  - Using **Strategy Pattern** to Implement *Inversion of Control* in Window Event System and Save Images (`EggAche.h`, `EggAche.cpp`, `*_Impl.cpp`)

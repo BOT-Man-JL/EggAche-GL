@@ -186,16 +186,22 @@ namespace EggAche
 		// The curve begins at the point where the Ellipse intersects the first radial
 		// and extends counterclockwise to the point where the second radial intersects;
 
-		bool SaveAsBmp (const char *fileName) const;		// "path/name.bmp"
+		bool SaveAsJpg (const char *fileName) const;		// "path/name.jpg"
 		bool SaveAsPng (const char *fileName) const;		// "path/name.png"
+		bool SaveAsBmp (const char *fileName) const;		// "path/name.bmp"
 		// Remarks:
-		// Save Egg's Content into a .bmp/.png File;
+		// 1. Save Egg's Content into a .jpg/.png/.bmp File;
+		// 2. Performance: bmp = jpg >> png;
+		// 3. Size: bmp >> jpg > png;
 
 	private:
 		int x, y, w, h;										// Postion and Size
 		std::list<const Egg *> subEggs;						// Sub Eggs
 		EggAche_Impl::GUIContext *context;					// GUI Impl Bridge
 
+		bool SaveAsImg (									// Helper Function of
+			std::function<bool (							// SaveAsJpg/Png/Bmp
+				EggAche_Impl::GUIContext *context)>) const;
 		void RecursiveDraw (EggAche_Impl::GUIContext *,		// Helper Function of
 							size_t, size_t) const;			// Window.Refresh
 		friend void Window::Refresh ();

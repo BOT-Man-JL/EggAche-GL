@@ -11,18 +11,22 @@
 #include <windowsx.h>
 
 #ifdef _MSC_VER
+
 // Only Windows SDK support GDI+
 #include <gdiplus.h>
 #pragma comment (lib, "Gdiplus.lib")
 
 // Only MSVC support #pragma link
 #pragma comment (lib, "Msimg32.lib")
-#endif
 
-#include "EggAche_Impl.h"
+#else
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+
+#endif
+
+#include "EggAche_Impl.h"
 
 namespace EggAche_Impl
 {
@@ -113,8 +117,9 @@ namespace EggAche_Impl
 					  int g = -1,
 					  int b = -1) override;
 
-		bool SaveAsBmp (const char *fileName) const override;
+		bool SaveAsJpg (const char *fileName) const override;
 		bool SaveAsPng (const char *fileName) const override;
+		bool SaveAsBmp (const char *fileName) const override;
 
 		void Clear () override;
 
@@ -129,9 +134,14 @@ namespace EggAche_Impl
 		static const COLORREF _colorMask;
 		static const COLORREF _GetColor (int r, int g, int b);
 
+#ifdef _MSC_VER
+		bool SaveAsImg (const char *fileName,
+						const wchar_t *mime) const;
+#else
 		bool SaveAsImg (
 			std::function<bool (BYTE *pData,
 								BITMAPINFOHEADER *pbmInfoHeader)> fnSave) const;
+#endif
 		friend void WindowImpl_Windows::Draw (const GUIContext *, size_t, size_t);
 
 		GUIContext_Windows (const GUIContext_Windows &) = delete;		// Not allow to copy
@@ -159,6 +169,9 @@ namespace EggAche_Impl
 	class HwndManager
 	{
 	private:
+#ifdef _MSC_VER
+		static ULONG_PTR gdiplusToken;
+#endif
 		static std::unordered_map<HWND, WindowImpl_Windows *> *_hwndMapper;
 	protected:
 		HwndManager () {}
@@ -168,7 +181,14 @@ namespace EggAche_Impl
 		static std::unordered_map<HWND, WindowImpl_Windows *> *Instance ()
 		{
 			if (_hwndMapper == nullptr)
+			{
 				_hwndMapper = new std::unordered_map<HWND, WindowImpl_Windows *> ();
+
+#ifdef _MSC_VER
+				Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+				Gdiplus::GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
+#endif
+			}
 			return _hwndMapper;
 		}
 
@@ -179,11 +199,17 @@ namespace EggAche_Impl
 
 		static void Delete ()
 		{
+#ifdef _MSC_VER
+			Gdiplus::GdiplusShutdown (gdiplusToken);
+#endif
 			delete _hwndMapper;
 			_hwndMapper = nullptr;
 		}
 	};
 
+#ifdef _MSC_VER
+	ULONG_PTR HwndManager::gdiplusToken = 0;
+#endif
 	std::unordered_map<HWND, WindowImpl_Windows *> *HwndManager::_hwndMapper = nullptr;
 	bool HwndManager::isRegClass = false;
 
@@ -715,6 +741,90 @@ namespace EggAche_Impl
 
 #endif
 
+#ifdef _MSC_VER
+	// Using GDI+ to Encode Images
+
+	bool GUIContext_Windows::SaveAsImg (const char *fileName,
+										const wchar_t *mime) const
+	{
+		auto ret = false;
+		{
+			auto GetEncoderClsid = [] (const WCHAR* format, CLSID* pClsid)
+			{
+				using namespace Gdiplus;
+
+				UINT  num = 0;          // number of image encoders
+				UINT  size = 0;         // size of the image encoder array in bytes
+
+				ImageCodecInfo* pImageCodecInfo = NULL;
+
+				GetImageEncodersSize (&num, &size);
+				if (size == 0)
+					return -1;  // Failure
+
+				pImageCodecInfo = (ImageCodecInfo*) (malloc (size));
+				if (pImageCodecInfo == NULL)
+					return -1;  // Failure
+
+				GetImageEncoders (num, size, pImageCodecInfo);
+
+				for (int j = 0; j < num; ++j)
+				{
+					if (wcscmp (pImageCodecInfo[j].MimeType, format) == 0)
+					{
+						*pClsid = pImageCodecInfo[j].Clsid;
+						free (pImageCodecInfo);
+						return j;  // Success
+					}
+				}
+
+				free (pImageCodecInfo);
+				return -1;  // Failure
+			};
+
+			// Get the CLSID of the PNG encoder.
+			CLSID encoderClsid;
+			if (-1 == GetEncoderClsid (mime, &encoderClsid))
+				return false;
+
+			// Get Bitmap Object.
+			auto bmp = Gdiplus::Bitmap::FromHBITMAP (this->_hBitmap, NULL);
+
+			// Get File Name in Wide Chars.
+			auto cchW = MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
+											 fileName, -1, NULL, 0);
+			wchar_t *fileNameW = new wchar_t[cchW];
+			MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
+								 fileName, -1, fileNameW, cchW);
+
+			// Save to File
+			auto status = bmp->Save (fileNameW, &encoderClsid, NULL);
+
+			delete[] fileNameW;
+			delete bmp;
+			ret = (status == Gdiplus::Ok);
+		}
+		return ret;
+	}
+
+	bool GUIContext_Windows::SaveAsJpg (const char *fileName) const
+	{
+		return SaveAsImg (fileName, L"image/jpeg");
+	}
+
+	bool GUIContext_Windows::SaveAsPng (const char *fileName) const
+	{
+		return SaveAsImg (fileName, L"image/png");
+	}
+
+	bool GUIContext_Windows::SaveAsBmp (const char *fileName) const
+	{
+		return SaveAsImg (fileName, L"image/bmp");
+	}
+
+#else
+	// MinGW doesn't support GDI+
+
 	bool GUIContext_Windows::SaveAsImg (
 		std::function<bool (BYTE *pData,
 							BITMAPINFOHEADER *pbmInfoHeader)> fnSave) const
@@ -826,74 +936,6 @@ namespace EggAche_Impl
 		return SaveAsImg (fnSave);
 	}
 
-#ifdef _MSC_VER
-	// Using GDI+ to Encode Png
-	bool GUIContext_Windows::SaveAsPng (const char *fileName) const
-	{
-		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-		ULONG_PTR gdiplusToken;
-		auto ret = false;
-
-		Gdiplus::GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
-		{
-			auto GetEncoderClsid = [] (const WCHAR* format, CLSID* pClsid)
-			{
-				using namespace Gdiplus;
-
-				UINT  num = 0;          // number of image encoders
-				UINT  size = 0;         // size of the image encoder array in bytes
-
-				ImageCodecInfo* pImageCodecInfo = NULL;
-
-				GetImageEncodersSize (&num, &size);
-				if (size == 0)
-					return -1;  // Failure
-
-				pImageCodecInfo = (ImageCodecInfo*) (malloc (size));
-				if (pImageCodecInfo == NULL)
-					return -1;  // Failure
-
-				GetImageEncoders (num, size, pImageCodecInfo);
-
-				for (int j = 0; j < num; ++j)
-				{
-					if (wcscmp (pImageCodecInfo[j].MimeType, format) == 0)
-					{
-						*pClsid = pImageCodecInfo[j].Clsid;
-						free (pImageCodecInfo);
-						return j;  // Success
-					}
-				}
-
-				free (pImageCodecInfo);
-				return -1;  // Failure
-			};
-
-			// Get the CLSID of the PNG encoder.
-			CLSID encoderClsid;
-			if (-1 == GetEncoderClsid (L"image/png", &encoderClsid))
-				return false;
-
-			auto bmp = Gdiplus::Bitmap::FromHBITMAP (this->_hBitmap, NULL);
-
-			// Save to File
-			auto cchW = MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
-											 fileName, -1, NULL, 0);
-			wchar_t *fileNameW = new wchar_t[cchW];
-			MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
-								 fileName, -1, fileNameW, cchW);
-			auto status = bmp->Save (fileNameW, &encoderClsid, NULL);
-			delete[] fileNameW;
-
-			if (status == Gdiplus::Ok)
-				ret = true;
-		}
-		Gdiplus::GdiplusShutdown (gdiplusToken);
-		return ret;
-	}
-
-#else
-	// MinGW doesn't support GDI+
 	bool GUIContext_Windows::SaveAsPng (const char *fileName) const
 	{
 		auto fnConvertAndSave = [&] (BYTE *pData,
@@ -940,7 +982,13 @@ namespace EggAche_Impl
 		};
 
 		return SaveAsImg (fnConvertAndSave);
-}
+	}
+
+	bool GUIContext_Windows::SaveAsJpg (const char * fileName) const
+	{
+		// Not Implemented
+		return false;
+	}
 #endif
 
 	void GUIContext_Windows::Clear ()

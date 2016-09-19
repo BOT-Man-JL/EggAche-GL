@@ -78,8 +78,9 @@ namespace EggAche_Impl
 							  int g = -1,
 							  int b = -1) = 0;
 
-		virtual bool SaveAsBmp (const char *fileName) const = 0;
+		virtual bool SaveAsJpg (const char *fileName) const = 0;
 		virtual bool SaveAsPng (const char *fileName) const = 0;
+		virtual bool SaveAsBmp (const char *fileName) const = 0;
 
 		virtual void Clear () = 0;
 
