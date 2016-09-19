@@ -96,7 +96,9 @@ namespace EggAche_Impl
                       int g = -1,
                       int b = -1) override;
 
-        bool SaveAsBmp (const char *fileName) override;
+        bool SaveAsBmp (const char *fileName) const override;
+        bool SaveAsJpg (const char *fileName) const override ;
+        bool SaveAsPng (const char *fileName) const override ;
 
         void Clear () override;
 
@@ -343,8 +345,14 @@ namespace EggAche_Impl
                                      unsigned int b)
     {
         auto display=WindowManager::display();
+        XColor penColor;
+        penColor.red=r;
+        penColor.green=g;
+        penColor.blue=b;
+
         XSetLineAttributes(display,_gc,width,LineSolid,CapRound,JoinBevel);
         // Todo     no color change!!!!!!!!!
+
         return false;
     }
 
@@ -353,6 +361,11 @@ namespace EggAche_Impl
                                        unsigned int g,
                                        unsigned int b)
     {
+        XColor brushColor;
+        brushColor.red=r;
+        brushColor.green=g;
+        brushColor.blue=b;
+
         // Todo
         return false;
     }
@@ -443,11 +456,28 @@ namespace EggAche_Impl
         return false;
     }
 
-    bool GUIContext_XWindow::SaveAsBmp (const char *fileName)
+    bool GUIContext_XWindow::SaveAsBmp (const char *fileName) const
     {
         // Todo
         return false;
     }
+
+
+    bool GUIContext_XWindow::SaveAsJpg(const char *fileName) const
+    {
+
+        //Todo
+        return false;
+    }
+
+
+    bool GUIContext_XWindow::SaveAsPng(const char *fileName) const
+    {
+
+        //Todo
+        return false;
+    }
+
 
     void GUIContext_XWindow::Clear ()
     {
@@ -516,3 +546,4 @@ int main (int argc, char *argv[])
     getchar ();
     return 0;
 }
+
