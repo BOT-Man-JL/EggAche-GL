@@ -13,81 +13,73 @@
 
 namespace EggAche_Impl
 {
-	//Display Manager
 
-	class DisplayManager
-	{
-	private:
-		static Display *_display;
-		static size_t refCount;
-	public:
-		DisplayManager ()
-		{
-			if (refCount == 0)
-			{
-				_display = XOpenDisplay (NULL);
-				if (_display == NULL)
-					throw std::runtime_error ("Failed at XOpenDisplay");
-			}
-			refCount++;
-		}
+    class WindowImpl_XWindow;
+    //Display Manager
 
-		~DisplayManager ()
-		{
-			refCount--;
-			if (refCount == 0)
-				XCloseDisplay (_display);
-		}
+    class DisplayManager
+    {
+    private:
+        static Display *_display;
+        static size_t refCount;
+    public:
+        DisplayManager ()
+        {
+            if (refCount == 0)
+            {
+                _display = XOpenDisplay (NULL);
+                if (_display == NULL)
+                    throw std::runtime_error ("Failed at XOpenDisplay");
+            }
+            refCount++;
+        }
 
-		static Display *display ()
-		{
-			return _display;
-		}
-	};
-	size_t DisplayManager::refCount = 0;
-	Display *DisplayManager::_display = nullptr;
+        ~DisplayManager ()
+        {
+            refCount--;
+            if (refCount == 0)
+                XCloseDisplay (_display);
+        }
 
-	// Window Manager
+        static Display *display ()
+        {
+            return _display;
+        }
+    };
+    size_t DisplayManager::refCount = 0;
+    Display *DisplayManager::_display = nullptr;
 
-	class WindowManager
-	{
-	private:
-		static std::unordered_map<Window, WindowImpl_XWindow *> *_hwndMapper;
-		static size_t refCount;
-	public:
-		WindowManager ()
-		{
-			if (refCount == 0 && _hwndMapper == nullptr)
-			{
-				_hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
+    // Window Manager
 
-				// Create a new thread
-				std::thread thread (WindowImpl_XWindow::EventHandler);
-				thread.detach ();
-			}
-			refCount++;
-		}
+    class WindowManager
+    {
+    private:
+        static std::unordered_map<Window, WindowImpl_XWindow *> *_hwndMapper;
+        static size_t refCount;
+    public:
+        WindowManager ();
 
-		~WindowManager ()
-		{
-			refCount--;
-			if (refCount == 0)
-			{
-				delete _hwndMapper;
-				_hwndMapper = nullptr;
-			}
-		}
 
-		static std::unordered_map<Window, WindowImpl_XWindow *> *hwndMapper ()
-		{
-			return _hwndMapper;
-		}
-	};
+        ~WindowManager ()
+        {
+            refCount--;
+            if (refCount == 0)
+            {
+                delete _hwndMapper;
+                _hwndMapper = nullptr;
+            }
+        }
 
-	size_t WindowManager::refCount = 0;
-	std::unordered_map<Window, WindowImpl_XWindow *> *WindowManager::_hwndMapper = nullptr;
+        static std::unordered_map<Window, WindowImpl_XWindow *> *hwndMapper ()
+        {
+            return _hwndMapper;
+        }
+    };
 
-	// Window
+    size_t WindowManager::refCount = 0;
+    std::unordered_map<Window, WindowImpl_XWindow *> *WindowManager::_hwndMapper = nullptr;
+
+    // Window
 
     class WindowImpl_XWindow : public WindowImpl
     {
@@ -114,8 +106,8 @@ namespace EggAche_Impl
 
         Window		_window;
 
-		DisplayManager _displayManager;
-		WindowManager _windowManager;
+        DisplayManager _displayManager;
+        WindowManager _windowManager;
 
         std::function<void (int, int)> onClick;
         std::function<void (char)> onPress;
@@ -126,7 +118,7 @@ namespace EggAche_Impl
         void operator= (const WindowImpl_XWindow &) = delete;			// Not allow to copy
     };
 
-	// Context
+    // Context
 
     class GUIContext_XWindow : public GUIContext
     {
@@ -191,7 +183,7 @@ namespace EggAche_Impl
         Pixmap _pixmap;
         GC _gc;
 
-		DisplayManager _displayManager;
+        DisplayManager _displayManager;
 
         friend void WindowImpl_XWindow::Draw (const GUIContext *context,
                                               size_t x, size_t y);
@@ -215,14 +207,14 @@ namespace EggAche_Impl
         return new GUIContext_XWindow (width, height);
     }
 
-	// Window
+    // Window
 
     void WindowImpl_XWindow::EventHandler ()
     {
         XEvent event;
         while (auto wndMapper = WindowManager::hwndMapper ())
-		{
-			auto display = DisplayManager::display ();
+        {
+            auto display = DisplayManager::display ();
 
             XNextEvent (display, &event);
             switch (event.type)
@@ -550,6 +542,23 @@ namespace EggAche_Impl
     {
         // Todo
     }
+
+
+
+
+    //Windows Manager
+    WindowManager::WindowManager ()
+    {
+        if (refCount == 0 && _hwndMapper == nullptr)
+        {
+            _hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
+
+            // Create a new thread
+            std::thread thread (WindowImpl_XWindow::EventHandler);
+            thread.detach ();
+        }
+        refCount++;
+    }
 }
 
 // Test Funcion
@@ -593,4 +602,3 @@ int main (int argc, char *argv[])
     getchar ();
     return 0;
 }
-
