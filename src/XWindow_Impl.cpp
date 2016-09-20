@@ -377,13 +377,24 @@ namespace EggAche_Impl
                                      unsigned int b)
     {
         auto display=WindowManager::display();
-        XColor penColor;
-        penColor.red=r;
-        penColor.green=g;
-        penColor.blue=b;
+        auto screen = DefaultScreen (display);
+        XColor xcolor;
 
+//      set the attributes of the line
         XSetLineAttributes(display,_gc,width,LineSolid,CapRound,JoinBevel);
-        // Todo     no color change!!!!!!!!!
+
+//      get the colormap
+        Colormap cmap   = DefaultColormap(display, screen);
+
+//      set the rgb values
+        xcolor.red = r;
+        xcolor.green = g;
+        xcolor.blue = b;
+        xcolor.flags = DoRed | DoGreen | DoBlue;
+        XAllocColor(display, cmap, &xcolor);
+
+//      using set the rgb values of foreground to set the rgb values of pen
+        XSetForeground(display, _gc, xcolor.pixel);
 
         return false;
     }
@@ -567,8 +578,8 @@ int main (int argc, char *argv[])
 
     wnd.OnClick ([&] (int x, int y)
                  {
-                     context.SetPen(4,0,0,0);
                      context.Clear ();
+                     context.SetPen(4,50000,40000,60000);//values are 0~65535
                      context.DrawLine (0, 0, x, y);
                      context.DrawRect(x-50,y-50,x+50,y+50);
                      context.DrawTxt(50,50,"thiefunvierse");
