@@ -132,6 +132,38 @@ namespace EggAche_Impl
         return new GUIContext_XWindow (width, height);
     }
 
+    //Display
+
+    class DisplayManager
+    {
+    private:
+        static Display * _display;
+        static int refCounter;
+
+    public:
+        DisplayManager()
+        {
+            if (_display == nullptr)
+            {
+                /* open connection with the server */
+                _display = XOpenDisplay (NULL);
+                if (_display == NULL)
+                    throw std::runtime_error ("Failed at XOpenDisplay");
+            }
+
+        }
+        
+        static Display *getDisplay()
+        {
+            refCounter++;
+            return _display;
+        }
+        
+        
+    };
+
+
+
     // Window
 
     class WindowManager
@@ -376,7 +408,7 @@ namespace EggAche_Impl
                                       unsigned int g,
                                       unsigned int b)
     {
-       // Font
+        // Font
         // Todo
         return false;
     }
@@ -384,7 +416,7 @@ namespace EggAche_Impl
     bool GUIContext_XWindow::DrawLine (int xBeg, int yBeg, int xEnd, int yEnd)
     {
         auto display = WindowManager::display ();
-      //  auto screen = DefaultScreen (display);
+        //  auto screen = DefaultScreen (display);
         XDrawLine (display, _pixmap, _gc, xBeg, yBeg, xEnd, yEnd);
         // Todo
         return false;
@@ -393,7 +425,7 @@ namespace EggAche_Impl
     bool GUIContext_XWindow::DrawRect (int xBeg, int yBeg, int xEnd, int yEnd)
     {
         auto display=WindowManager::display();
-      //  auto screen=DefaultScreen(display);
+        //  auto screen=DefaultScreen(display);
         XDrawRectangle(display,_pixmap,_gc,xBeg,yBeg,xEnd,yEnd);
         // Todo
 
@@ -409,11 +441,30 @@ namespace EggAche_Impl
         return false;
     }
 
+    //draw RoundRectangle
     bool GUIContext_XWindow::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd,
                                        int wElps, int hElps)
     {
         auto display=WindowManager::display();
-        // Todo
+        const int fullAngle=23040;
+        int rdWid=xEnd-xBeg-2*wElps;
+        int rdHei=yEnd-yBeg-2*hElps;
+
+        XDrawLine(display,_pixmap,_gc,xBeg+wElps,yBeg,xEnd-wElps,yBeg);
+        XDrawLine(display,_pixmap,_gc,xBeg,yBeg+hElps,xBeg,yEnd-hElps);
+        XDrawLine(display,_pixmap,_gc,xBeg+wElps,yEnd,xEnd-wElps,yEnd);
+        XDrawLine(display,_pixmap,_gc,xEnd,yBeg+hElps,xEnd,yEnd-hElps);
+
+        //left up
+        XDrawArc(display,_pixmap,_gc,xBeg,yBeg,wElps*2,hElps*2,fullAngle/4,fullAngle/4);
+        //left down
+        XDrawArc(display,_pixmap,_gc,xBeg,yEnd-2*hElps,wElps*2,hElps*2,fullAngle/2,fullAngle/4);
+        //right up
+        XDrawArc(display,_pixmap,_gc,xEnd-2*wElps,yBeg,wElps*2,hElps*2,0,fullAngle/4);
+        //right down
+        XDrawArc(display,_pixmap,_gc,xEnd-2*wElps,yEnd-2*hElps,wElps*2,hElps*2,0,-fullAngle/4);
+
+
         return false;
     }
 
@@ -522,6 +573,7 @@ int main (int argc, char *argv[])
                      context.DrawRect(x-50,y-50,x+50,y+50);
                      context.DrawTxt(50,50,"thiefunvierse");
                      context.DrawElps(x-50,y-50,x+80,y+150);
+                     context.DrawRdRt(50,50,220,220,30,30);
                      //context.DrawArc(0,10,90,80,10,50,70,80);
                      wnd.Draw (&context, 0, 0);
                      printf ("You Click %03d, %03d\n", x, y);
