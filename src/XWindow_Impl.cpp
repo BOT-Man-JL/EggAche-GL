@@ -13,6 +13,82 @@
 
 namespace EggAche_Impl
 {
+	//Display Manager
+
+	class DisplayManager
+	{
+	private:
+		static Display *_display;
+		static size_t refCount;
+	public:
+		DisplayManager ()
+		{
+			if (refCount == 0)
+			{
+				_display = XOpenDisplay (NULL);
+				if (_display == NULL)
+					throw std::runtime_error ("Failed at XOpenDisplay");
+			}
+			refCount++;
+		}
+
+		~DisplayManager ()
+		{
+			refCount--;
+			if (refCount == 0)
+				XCloseDisplay (_display);
+		}
+
+		static Display *display ()
+		{
+			return _display;
+		}
+	};
+	size_t DisplayManager::refCount = 0;
+	Display *DisplayManager::_display = nullptr;
+
+	// Window Manager
+
+	class WindowManager
+	{
+	private:
+		static std::unordered_map<Window, WindowImpl_XWindow *> *_hwndMapper;
+		static size_t refCount;
+	public:
+		WindowManager ()
+		{
+			if (refCount == 0 && _hwndMapper == nullptr)
+			{
+				_hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
+
+				// Create a new thread
+				std::thread thread (WindowImpl_XWindow::EventHandler);
+				thread.detach ();
+			}
+			refCount++;
+		}
+
+		~WindowManager ()
+		{
+			refCount--;
+			if (refCount == 0)
+			{
+				delete _hwndMapper;
+				_hwndMapper = nullptr;
+			}
+		}
+
+		static std::unordered_map<Window, WindowImpl_XWindow *> *hwndMapper ()
+		{
+			return _hwndMapper;
+		}
+	};
+
+	size_t WindowManager::refCount = 0;
+	std::unordered_map<Window, WindowImpl_XWindow *> *WindowManager::_hwndMapper = nullptr;
+
+	// Window
+
     class WindowImpl_XWindow : public WindowImpl
     {
     public:
@@ -38,6 +114,9 @@ namespace EggAche_Impl
 
         Window		_window;
 
+		DisplayManager _displayManager;
+		WindowManager _windowManager;
+
         std::function<void (int, int)> onClick;
         std::function<void (char)> onPress;
         std::function<void (int, int)> onResized;
@@ -46,6 +125,8 @@ namespace EggAche_Impl
         WindowImpl_XWindow (const WindowImpl_XWindow &) = delete;		// Not allow to copy
         void operator= (const WindowImpl_XWindow &) = delete;			// Not allow to copy
     };
+
+	// Context
 
     class GUIContext_XWindow : public GUIContext
     {
@@ -97,8 +178,8 @@ namespace EggAche_Impl
                       int b = -1) override;
 
         bool SaveAsBmp (const char *fileName) const override;
-        bool SaveAsJpg (const char *fileName) const override ;
-        bool SaveAsPng (const char *fileName) const override ;
+        bool SaveAsJpg (const char *fileName) const override;
+        bool SaveAsPng (const char *fileName) const override;
 
         void Clear () override;
 
@@ -109,6 +190,8 @@ namespace EggAche_Impl
         size_t _w, _h;
         Pixmap _pixmap;
         GC _gc;
+
+		DisplayManager _displayManager;
 
         friend void WindowImpl_XWindow::Draw (const GUIContext *context,
                                               size_t x, size_t y);
@@ -132,100 +215,15 @@ namespace EggAche_Impl
         return new GUIContext_XWindow (width, height);
     }
 
-    //Display
-
-    class DisplayManager
-    {
-    private:
-        static Display * _display;
-        static int refCounter;
-
-    public:
-        DisplayManager()
-        {
-            if (_display == nullptr)
-            {
-                /* open connection with the server */
-                _display = XOpenDisplay (NULL);
-                if (_display == NULL)
-                    throw std::runtime_error ("Failed at XOpenDisplay");
-            }
-
-        }
-        
-        static Display *getDisplay()
-        {
-            refCounter++;
-            return _display;
-        }
-        
-        
-    };
-
-
-
-    // Window
-
-    class WindowManager
-    {
-    private:
-        static Display *_display;
-        static std::unordered_map<Window, WindowImpl_XWindow *> *_hwndMapper;
-    protected:
-        WindowManager () {}
-    public:
-        static bool isEventHandlerRunning;
-
-        static Display *display ()
-        {
-            if (_display == nullptr)
-            {
-                /* open connection with the server */
-                _display = XOpenDisplay (NULL);
-                if (_display == NULL)
-                    throw std::runtime_error ("Failed at XOpenDisplay");
-            }
-            return _display;
-        }
-
-        static void CloseDisplay ()
-        {
-            /* close connection to server */
-            XCloseDisplay (_display);
-        }
-
-        static std::unordered_map<Window, WindowImpl_XWindow *> *wndMapper ()
-        {
-            if (_hwndMapper == nullptr)
-                _hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
-            return _hwndMapper;
-        }
-
-        static bool IsRefed ()
-        {
-            return _hwndMapper != nullptr && !_hwndMapper->empty ();
-        }
-
-        static void DeleteMapper ()
-        {
-            delete _hwndMapper;
-            _hwndMapper = nullptr;
-        }
-    };
-
-    bool WindowManager::isEventHandlerRunning = false;
-    Display *WindowManager::_display = nullptr;
-    std::unordered_map<Window, WindowImpl_XWindow *> *WindowManager::_hwndMapper = nullptr;
+	// Window
 
     void WindowImpl_XWindow::EventHandler ()
     {
-        auto display = WindowManager::display ();
-        auto screen = DefaultScreen (display);
-        auto wndMapper = WindowManager::wndMapper ();
-
         XEvent event;
-        while (WindowManager::IsRefed ())
-        {
+        while (auto wndMapper = WindowManager::hwndMapper ())
+		{
+			auto display = DisplayManager::display ();
+
             XNextEvent (display, &event);
             switch (event.type)
             {
@@ -258,9 +256,6 @@ namespace EggAche_Impl
                     break;
             }
         }
-
-        WindowManager::isEventHandlerRunning = false;
-        WindowManager::CloseDisplay ();
     }
 
     WindowImpl_XWindow::WindowImpl_XWindow (size_t width, size_t height,
@@ -268,7 +263,7 @@ namespace EggAche_Impl
             : _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
               _window (0)
     {
-        auto display = WindowManager::display ();
+        auto display = DisplayManager::display ();
         auto screen = DefaultScreen (display);
 
         auto initX = 10, initY = 10, initBorder = 1;
@@ -287,30 +282,19 @@ namespace EggAche_Impl
         /* map (show) the window */
         XMapWindow (display, _window);
 
-        (*WindowManager::wndMapper ())[_window] = this;
-
-        if (!WindowManager::isEventHandlerRunning)
-
-        {
-            std::thread eventHandler (WindowImpl_XWindow::EventHandler);
-            eventHandler.detach ();
-            WindowManager::isEventHandlerRunning = true;
-        }
+        (*WindowManager::hwndMapper ())[_window] = this;
     }
 
     WindowImpl_XWindow::~WindowImpl_XWindow ()
     {
-        auto display = WindowManager::display ();
+        auto display = DisplayManager::display ();
         XDestroyWindow (display, _window);
-
-        if (!WindowManager::IsRefed ())
-            WindowManager::DeleteMapper ();
     }
 
     void WindowImpl_XWindow::Draw (const GUIContext *context,
                                    size_t x, size_t y)
     {
-        auto display = WindowManager::display ();
+        auto display = DisplayManager::display ();
         auto screen = DefaultScreen (display);
 
         auto _context = static_cast<const GUIContext_XWindow *> (context);
@@ -353,7 +337,7 @@ namespace EggAche_Impl
     GUIContext_XWindow::GUIContext_XWindow (size_t width, size_t height)
             : _w (width), _h (height), _pixmap (0), _gc (0)
     {
-        auto display = WindowManager::display ();
+        auto display = DisplayManager::display ();
         auto screen = DefaultScreen (display);
 
         _pixmap = XCreatePixmap (display, RootWindow (display, screen),
@@ -366,7 +350,7 @@ namespace EggAche_Impl
 
     GUIContext_XWindow::~GUIContext_XWindow ()
     {
-        auto display = WindowManager::display ();
+        auto display = DisplayManager::display ();
         XFreeGC (display, _gc);
         XFreePixmap (display, _pixmap);
     }
@@ -376,7 +360,7 @@ namespace EggAche_Impl
                                      unsigned int g,
                                      unsigned int b)
     {
-        auto display=WindowManager::display();
+        auto display = DisplayManager::display();
         auto screen = DefaultScreen (display);
         XColor xcolor;
 
@@ -384,7 +368,7 @@ namespace EggAche_Impl
         XSetLineAttributes(display,_gc,width,LineSolid,CapRound,JoinBevel);
 
 //      get the colormap
-        Colormap cmap   = DefaultColormap(display, screen);
+        Colormap cmap = DefaultColormap(display, screen);
 
 //      set the rgb values
         xcolor.red = r;
@@ -426,7 +410,7 @@ namespace EggAche_Impl
 
     bool GUIContext_XWindow::DrawLine (int xBeg, int yBeg, int xEnd, int yEnd)
     {
-        auto display = WindowManager::display ();
+        auto display = DisplayManager::display ();
         //  auto screen = DefaultScreen (display);
         XDrawLine (display, _pixmap, _gc, xBeg, yBeg, xEnd, yEnd);
         // Todo
@@ -435,7 +419,7 @@ namespace EggAche_Impl
 
     bool GUIContext_XWindow::DrawRect (int xBeg, int yBeg, int xEnd, int yEnd)
     {
-        auto display=WindowManager::display();
+        auto display= DisplayManager::display();
         //  auto screen=DefaultScreen(display);
         XDrawRectangle(display,_pixmap,_gc,xBeg,yBeg,xEnd,yEnd);
         // Todo
@@ -445,7 +429,7 @@ namespace EggAche_Impl
 
     bool GUIContext_XWindow::DrawElps (int xBeg, int yBeg, int xEnd, int yEnd)
     {
-        auto display=WindowManager::display();
+        auto display= DisplayManager::display();
         const int fullAngle=23040;
         XDrawArc(display,_pixmap,_gc,xBeg,yBeg,xEnd-xBeg,yEnd-yBeg,fullAngle,fullAngle);
         // Todo
@@ -456,7 +440,7 @@ namespace EggAche_Impl
     bool GUIContext_XWindow::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd,
                                        int wElps, int hElps)
     {
-        auto display=WindowManager::display();
+        auto display= DisplayManager::display();
         const int fullAngle=23040;
         int rdWid=xEnd-xBeg-2*wElps;
         int rdHei=yEnd-yBeg-2*hElps;
@@ -482,7 +466,7 @@ namespace EggAche_Impl
     bool GUIContext_XWindow::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
                                       int xBeg, int yBeg, int xEnd, int yEnd)
     {
-        auto display=WindowManager::display();
+        auto display = DisplayManager::display();
         XDrawArc(display,_pixmap,_gc,xLeft,yTop,xRight-xLeft,yBottom-yTop,xEnd-xBeg,yEnd-yBeg);
         // Todo
         return false;
@@ -504,7 +488,7 @@ namespace EggAche_Impl
 
     bool GUIContext_XWindow::DrawTxt (int xBeg, int yBeg, const char * szText)
     {
-        auto display=WindowManager::display();
+        auto display = DisplayManager::display();
         //XDrawText(display,_pixmap,_gc,xBeg,yBeg, ,0);
         XDrawString(display,_pixmap,_gc,xBeg,yBeg,szText,strlen(szText));
         // Todo
@@ -543,7 +527,7 @@ namespace EggAche_Impl
 
     void GUIContext_XWindow::Clear ()
     {
-        auto display = WindowManager::display ();
+        auto display = DisplayManager::display ();
         auto screen = DefaultScreen (display);
 
         XSetForeground (display, _gc, WhitePixel (display, screen));
