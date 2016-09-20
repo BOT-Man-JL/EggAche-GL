@@ -6,8 +6,8 @@
 #ifndef EGGACHE_GL
 #define EGGACHE_GL
 
-//#define EGGACHE_WINDOWS
-#define EGGACHE_XWINDOW
+#define EGGACHE_WINDOWS
+//#define EGGACHE_XWINDOW
 
 #include <functional>
 #include <list>
@@ -53,9 +53,11 @@ namespace EggAche
 		void OnResized (std::function<void (Window *, int, int)> fn);
 		// Remarks:
 		// If you click or press a key on Window, back-end will callback fn;
-		// 1. Calling fnClick with (int x, int y) means point (x, y) is Clicked;
-		// 2. Calling fnPress with (char ch) means character 'ch' is Inputted;
-		// 3. Calling fnResized with (int x, int y) means Currently Window Size is x * y;
+		// 1. Calling onClick with (int x, int y) means point (x, y) is Clicked;
+		// 2. Calling onPress with (char ch) means character 'ch' is Inputted;
+		// 3. Calling onResized with (int x, int y) means Currently Window Size is x * y;
+		// 4. These functions will be called by Background Threads, while
+		//    NO Thread-Safe Guarantee (Reentrant Behaviors are UNKNOWN) :-(
 
 	private:
 		EggAche_Impl::WindowImpl *windowImpl;				// Window Impl Bridge
@@ -186,15 +188,22 @@ namespace EggAche
 		// The curve begins at the point where the Ellipse intersects the first radial
 		// and extends counterclockwise to the point where the second radial intersects;
 
-		bool SaveAsBmp (const char *fileName);				// "path/name.bmp"
+		bool SaveAsJpg (const char *fileName) const;		// "path/name.jpg"
+		bool SaveAsPng (const char *fileName) const;		// "path/name.png"
+		bool SaveAsBmp (const char *fileName) const;		// "path/name.bmp"
 		// Remarks:
-		// Save Window's Content into a Bitmap (.bmp) File;
+		// 1. Save Egg's Content into a .jpg/.png/.bmp File;
+		// 2. Performance: bmp = jpg >> png;
+		// 3. Size: bmp >> jpg > png;
 
 	private:
 		int x, y, w, h;										// Postion and Size
 		std::list<const Egg *> subEggs;						// Sub Eggs
 		EggAche_Impl::GUIContext *context;					// GUI Impl Bridge
 
+		bool SaveAsImg (									// Helper Function of
+			std::function<bool (							// SaveAsJpg/Png/Bmp
+				EggAche_Impl::GUIContext *context)>) const;
 		void RecursiveDraw (EggAche_Impl::GUIContext *,		// Helper Function of
 							size_t, size_t) const;			// Window.Refresh
 		friend void Window::Refresh ();

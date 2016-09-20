@@ -1,4 +1,4 @@
-﻿//
+//
 // X Window System Implementation of EggAche Graphics Library
 // By BOT Man, 2016
 //
@@ -13,485 +13,600 @@
 
 namespace EggAche_Impl
 {
-	class WindowImpl_XWindow : public WindowImpl
-	{
-	public:
-		WindowImpl_XWindow (size_t width, size_t height,
-							const char *cap_string);
-		~WindowImpl_XWindow () override;
+    class WindowImpl_XWindow : public WindowImpl
+    {
+    public:
+        WindowImpl_XWindow (size_t width, size_t height,
+                            const char *cap_string);
+        ~WindowImpl_XWindow () override;
 
-		void Draw (const GUIContext *context, size_t x, size_t y) override;
+        void Draw (const GUIContext *context, size_t x, size_t y) override;
 
-		std::pair<size_t, size_t> GetSize () override;
-		bool IsClosed () const override;
+        std::pair<size_t, size_t> GetSize () override;
+        bool IsClosed () const override;
 
-		void OnClick (std::function<void (int, int)> fn) override;
-		void OnPress (std::function<void (char)> fn) override;
-		void OnResized (std::function<void (int, int)> fn) override;
-		void OnRefresh (std::function<void ()> fn) override;
+        void OnClick (std::function<void (int, int)> fn) override;
+        void OnPress (std::function<void (char)> fn) override;
+        void OnResized (std::function<void (int, int)> fn) override;
+        void OnRefresh (std::function<void ()> fn) override;
 
-		static void EventHandler ();
+        static void EventHandler ();
 
-	protected:
-		int			_cxCanvas, _cyCanvas;
-		int			_cxClient, _cyClient;
+    protected:
+        int			_cxCanvas, _cyCanvas;
+        int			_cxClient, _cyClient;
 
-		Window		_window;
+        Window		_window;
 
-		std::function<void (int, int)> onClick;
-		std::function<void (char)> onPress;
-		std::function<void (int, int)> onResized;
-		std::function<void ()> onRefresh;
+        std::function<void (int, int)> onClick;
+        std::function<void (char)> onPress;
+        std::function<void (int, int)> onResized;
+        std::function<void ()> onRefresh;
 
-		WindowImpl_XWindow (const WindowImpl_XWindow &) = delete;		// Not allow to copy
-		void operator= (const WindowImpl_XWindow &) = delete;			// Not allow to copy
-	};
+        WindowImpl_XWindow (const WindowImpl_XWindow &) = delete;		// Not allow to copy
+        void operator= (const WindowImpl_XWindow &) = delete;			// Not allow to copy
+    };
 
-	class GUIContext_XWindow : public GUIContext
-	{
-	public:
-		GUIContext_XWindow (size_t width, size_t height);
-		~GUIContext_XWindow () override;
+    class GUIContext_XWindow : public GUIContext
+    {
+    public:
+        GUIContext_XWindow (size_t width, size_t height);
+        ~GUIContext_XWindow () override;
 
-		bool SetPen (unsigned int width,
-					 unsigned int r = 0,
-					 unsigned int g = 0,
-					 unsigned int b = 0) override;
+        bool SetPen (unsigned int width,
+                     unsigned int r = 0,
+                     unsigned int g = 0,
+                     unsigned int b = 0) override;
 
-		bool SetBrush (bool isTransparent,
-					   unsigned int r,
-					   unsigned int g,
-					   unsigned int b) override;
+        bool SetBrush (bool isTransparent,
+                       unsigned int r,
+                       unsigned int g,
+                       unsigned int b) override;
 
-		bool SetFont (unsigned int size = 18,
-					  const char *family = "Consolas",
-					  unsigned int r = 0,
-					  unsigned int g = 0,
-					  unsigned int b = 0) override;
+        bool SetFont (unsigned int size = 18,
+                      const char *family = "Consolas",
+                      unsigned int r = 0,
+                      unsigned int g = 0,
+                      unsigned int b = 0) override;
 
-		bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd) override;
+        bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd) override;
 
-		bool DrawRect (int xBeg, int yBeg, int xEnd, int yEnd) override;
+        bool DrawRect (int xBeg, int yBeg, int xEnd, int yEnd) override;
 
-		bool DrawElps (int xBeg, int yBeg, int xEnd, int yEnd) override;
+        bool DrawElps (int xBeg, int yBeg, int xEnd, int yEnd) override;
 
-		bool DrawRdRt (int xBeg, int yBeg,
-					   int xEnd, int yEnd, int wElps, int hElps) override;
+        bool DrawRdRt (int xBeg, int yBeg,
+                       int xEnd, int yEnd, int wElps, int hElps) override;
 
-		bool DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-					  int xBeg, int yBeg, int xEnd, int yEnd) override;
+        bool DrawArc (int xLeft, int yTop, int xRight, int yBottom,
+                      int xBeg, int yBeg, int xEnd, int yEnd) override;
 
-		bool DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-						int xBeg, int yBeg, int xEnd, int yEnd) override;
+        bool DrawChord (int xLeft, int yTop, int xRight, int yBottom,
+                        int xBeg, int yBeg, int xEnd, int yEnd) override;
 
-		bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-					  int xBeg, int yBeg, int xEnd, int yEnd) override;
+        bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
+                      int xBeg, int yBeg, int xEnd, int yEnd) override;
 
-		bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
+        bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
 
-		bool DrawImg (const char *fileName,
-					  int x, int y,
-					  int width = -1, int height = -1,
-					  int r = -1,
-					  int g = -1,
-					  int b = -1) override;
+        bool DrawImg (const char *fileName,
+                      int x, int y,
+                      int width = -1, int height = -1,
+                      int r = -1,
+                      int g = -1,
+                      int b = -1) override;
 
-		bool SaveAsBmp (const char *fileName) override;
+        bool SaveAsBmp (const char *fileName) const override;
+        bool SaveAsJpg (const char *fileName) const override ;
+        bool SaveAsPng (const char *fileName) const override ;
 
-		void Clear () override;
+        void Clear () override;
 
-		void PaintOnContext (GUIContext *,
-							 size_t x, size_t y) const override;
+        void PaintOnContext (GUIContext *,
+                             size_t x, size_t y) const override;
 
-	protected:
-		size_t _w, _h;
-		Pixmap _pixmap;
-		GC _gc;
+    protected:
+        size_t _w, _h;
+        Pixmap _pixmap;
+        GC _gc;
 
-		friend void WindowImpl_XWindow::Draw (const GUIContext *context,
-											  size_t x, size_t y);
-		GUIContext_XWindow (const GUIContext_XWindow &) = delete;		// Not allow to copy
-		void operator= (const GUIContext_XWindow &) = delete;			// Not allow to copy
-	};
+        friend void WindowImpl_XWindow::Draw (const GUIContext *context,
+                                              size_t x, size_t y);
+        GUIContext_XWindow (const GUIContext_XWindow &) = delete;		// Not allow to copy
+        void operator= (const GUIContext_XWindow &) = delete;			// Not allow to copy
+    };
 }
 
 namespace EggAche_Impl
 {
-	// Factory
+    // Factory
 
-	WindowImpl *GUIFactory_XWindow::NewWindow (size_t width, size_t height,
-											   const char *cap_string)
-	{
-		return new WindowImpl_XWindow (width, height, cap_string);
-	}
+    WindowImpl *GUIFactory_XWindow::NewWindow (size_t width, size_t height,
+                                               const char *cap_string)
+    {
+        return new WindowImpl_XWindow (width, height, cap_string);
+    }
 
-	GUIContext *GUIFactory_XWindow::NewGUIContext (size_t width, size_t height)
-	{
-		return new GUIContext_XWindow (width, height);
-	}
+    GUIContext *GUIFactory_XWindow::NewGUIContext (size_t width, size_t height)
+    {
+        return new GUIContext_XWindow (width, height);
+    }
 
-	// Window
+    //Display
 
-	class WindowManager
-	{
-	private:
-		static Display *_display;
-		static std::unordered_map<Window, WindowImpl_XWindow *> *_hwndMapper;
-	protected:
-		WindowManager () {}
-	public:
-		static bool isEventHandlerRunning;
+    class DisplayManager
+    {
+    private:
+        static Display * _display;
+        static int refCounter;
 
-		static Display *display ()
-		{
-			if (_display == nullptr)
-			{
-				/* open connection with the server */
-				_display = XOpenDisplay (NULL);
-				if (_display == NULL)
-					throw std::runtime_error ("Failed at XOpenDisplay");
-			}
-			return _display;
-		}
+    public:
+        DisplayManager()
+        {
+            if (_display == nullptr)
+            {
+                /* open connection with the server */
+                _display = XOpenDisplay (NULL);
+                if (_display == NULL)
+                    throw std::runtime_error ("Failed at XOpenDisplay");
+            }
 
-		static void CloseDisplay ()
-		{
-			/* close connection to server */
-			XCloseDisplay (_display);
-		}
+        }
+        
+        static Display *getDisplay()
+        {
+            refCounter++;
+            return _display;
+        }
+        
+        
+    };
 
-		static std::unordered_map<Window, WindowImpl_XWindow *> *wndMapper ()
-		{
-			if (_hwndMapper == nullptr)
-				_hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
-			return _hwndMapper;
-		}
 
-		static bool IsRefed ()
-		{
-			return _hwndMapper != nullptr && !_hwndMapper->empty ();
-		}
 
-		static void DeleteMapper ()
-		{
-			delete _hwndMapper;
-			_hwndMapper = nullptr;
-		}
-	};
+    // Window
 
-	bool WindowManager::isEventHandlerRunning = false;
-	Display *WindowManager::_display = nullptr;
-	std::unordered_map<Window, WindowImpl_XWindow *> *WindowManager::_hwndMapper = nullptr;
+    class WindowManager
+    {
+    private:
+        static Display *_display;
+        static std::unordered_map<Window, WindowImpl_XWindow *> *_hwndMapper;
+    protected:
+        WindowManager () {}
+    public:
+        static bool isEventHandlerRunning;
 
-	void WindowImpl_XWindow::EventHandler ()
-	{
-		auto display = WindowManager::display ();
-		auto screen = DefaultScreen (display);
-		auto wndMapper = WindowManager::wndMapper ();
+        static Display *display ()
+        {
+            if (_display == nullptr)
+            {
+                /* open connection with the server */
+                _display = XOpenDisplay (NULL);
+                if (_display == NULL)
+                    throw std::runtime_error ("Failed at XOpenDisplay");
+            }
+            return _display;
+        }
 
-		XEvent event;
-		while (WindowManager::IsRefed ())
-		{
-			XNextEvent (display, &event);
-			switch (event.type)
-			{
-			case ButtonPress:
-				if ((*wndMapper)[event.xbutton.window]->onClick)
-					(*wndMapper)[event.xbutton.window]->onClick (event.xbutton.x, event.xbutton.y);
-				break;
+        static void CloseDisplay ()
+        {
+            /* close connection to server */
+            XCloseDisplay (_display);
+        }
 
-			case KeyPress:
-				if ((*wndMapper)[event.xkey.window]->onPress)
-					(*wndMapper)[event.xkey.window]->onPress (event.xkey.keycode);
-				break;
+        static std::unordered_map<Window, WindowImpl_XWindow *> *wndMapper ()
+        {
+            if (_hwndMapper == nullptr)
+                _hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
+            return _hwndMapper;
+        }
 
-			case ResizeRequest:
-				if ((*wndMapper)[event.xresizerequest.window]->onResized)
-					(*wndMapper)[event.xresizerequest.window]->onResized (event.xresizerequest.width, event.xresizerequest.height);
-				break;
+        static bool IsRefed ()
+        {
+            return _hwndMapper != nullptr && !_hwndMapper->empty ();
+        }
 
-			case Expose:
-				if ((*wndMapper)[event.xexpose.window]->onRefresh)
-					(*wndMapper)[event.xexpose.window]->onRefresh ();
-				break;
+        static void DeleteMapper ()
+        {
+            delete _hwndMapper;
+            _hwndMapper = nullptr;
+        }
+    };
 
-			case DestroyNotify:
-				(*wndMapper)[event.xdestroywindow.window]->_window = 0;
-				wndMapper->erase (event.xdestroywindow.window);
-				break;
+    bool WindowManager::isEventHandlerRunning = false;
+    Display *WindowManager::_display = nullptr;
+    std::unordered_map<Window, WindowImpl_XWindow *> *WindowManager::_hwndMapper = nullptr;
 
-			default:
-				break;
-			}
-		}
+    void WindowImpl_XWindow::EventHandler ()
+    {
+        auto display = WindowManager::display ();
+        auto screen = DefaultScreen (display);
+        auto wndMapper = WindowManager::wndMapper ();
 
-		WindowManager::isEventHandlerRunning = false;
-		WindowManager::CloseDisplay ();
-	}
+        XEvent event;
+        while (WindowManager::IsRefed ())
+        {
+            XNextEvent (display, &event);
+            switch (event.type)
+            {
+                case ButtonPress:
+                    if ((*wndMapper)[event.xbutton.window]->onClick)
+                        (*wndMapper)[event.xbutton.window]->onClick (event.xbutton.x, event.xbutton.y);
+                    break;
 
-	WindowImpl_XWindow::WindowImpl_XWindow (size_t width, size_t height,
-											const char *cap_string)
-		: _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
-		_window (0)
-	{
-		auto display = WindowManager::display ();
-		auto screen = DefaultScreen (display);
+                case KeyPress:
+                    if ((*wndMapper)[event.xkey.window]->onPress)
+                        (*wndMapper)[event.xkey.window]->onPress (event.xkey.keycode);
+                    break;
 
-		auto initX = 10, initY = 10, initBorder = 1;
-		_window = XCreateSimpleWindow (display, RootWindow (display, screen),
-									   initX, initY, width, height, initBorder,
-									   BlackPixel (display, screen),
-									   WhitePixel (display, screen));
+                case ResizeRequest:
+                    if ((*wndMapper)[event.xresizerequest.window]->onResized)
+                        (*wndMapper)[event.xresizerequest.window]->onResized (event.xresizerequest.width, event.xresizerequest.height);
+                    break;
 
-		XStoreName (display, _window, cap_string);
+                case Expose:
+                    if ((*wndMapper)[event.xexpose.window]->onRefresh)
+                        (*wndMapper)[event.xexpose.window]->onRefresh ();
+                    break;
 
-		/* select kind of events we are interested in */
-		XSelectInput (display, _window,
-					  ExposureMask | KeyPressMask | ButtonPressMask |
-					  ResizeRedirectMask | SubstructureNotifyMask);
+                case DestroyNotify:
+                    (*wndMapper)[event.xdestroywindow.window]->_window = 0;
+                    wndMapper->erase (event.xdestroywindow.window);
+                    break;
 
-		/* map (show) the window */
-		XMapWindow (display, _window);
+                default:
+                    break;
+            }
+        }
 
-		(*WindowManager::wndMapper ())[_window] = this;
+        WindowManager::isEventHandlerRunning = false;
+        WindowManager::CloseDisplay ();
+    }
 
-		if (!WindowManager::isEventHandlerRunning)
+    WindowImpl_XWindow::WindowImpl_XWindow (size_t width, size_t height,
+                                            const char *cap_string)
+            : _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
+              _window (0)
+    {
+        auto display = WindowManager::display ();
+        auto screen = DefaultScreen (display);
 
-		{
-			std::thread eventHandler (WindowImpl_XWindow::EventHandler);
-			eventHandler.detach ();
-			WindowManager::isEventHandlerRunning = true;
-		}
-	}
+        auto initX = 10, initY = 10, initBorder = 1;
+        _window = XCreateSimpleWindow (display, RootWindow (display, screen),
+                                       initX, initY, width, height, initBorder,
+                                       BlackPixel (display, screen),
+                                       WhitePixel (display, screen));
 
-	WindowImpl_XWindow::~WindowImpl_XWindow ()
-	{
-		auto display = WindowManager::display ();
-		XDestroyWindow (display, _window);
+        XStoreName (display, _window, cap_string);
 
-		if (!WindowManager::IsRefed ())
-			WindowManager::DeleteMapper ();
-	}
+        /* select kind of events we are interested in */
+        XSelectInput (display, _window,
+                      ExposureMask | KeyPressMask | ButtonPressMask |
+                      ResizeRedirectMask | SubstructureNotifyMask);
 
-	void WindowImpl_XWindow::Draw (const GUIContext *context,
-								   size_t x, size_t y)
-	{
-		auto display = WindowManager::display ();
-		auto screen = DefaultScreen (display);
+        /* map (show) the window */
+        XMapWindow (display, _window);
 
-		auto _context = static_cast<const GUIContext_XWindow *> (context);
-		XCopyArea (display, _context->_pixmap, _window, DefaultGC (display, screen),
-				   0, 0, _context->_w, _context->_h, x, y);
-	}
+        (*WindowManager::wndMapper ())[_window] = this;
 
-	std::pair<size_t, size_t> WindowImpl_XWindow::GetSize ()
-	{
-		return std::make_pair (this->_cxClient, this->_cyClient);
-	}
+        if (!WindowManager::isEventHandlerRunning)
 
-	bool WindowImpl_XWindow::IsClosed () const
-	{
-		return _window == 0;
-	}
+        {
+            std::thread eventHandler (WindowImpl_XWindow::EventHandler);
+            eventHandler.detach ();
+            WindowManager::isEventHandlerRunning = true;
+        }
+    }
 
-	void WindowImpl_XWindow::OnClick (std::function<void (int, int)> fn)
-	{
-		onClick = std::move (fn);
-	}
+    WindowImpl_XWindow::~WindowImpl_XWindow ()
+    {
+        auto display = WindowManager::display ();
+        XDestroyWindow (display, _window);
 
-	void WindowImpl_XWindow::OnPress (std::function<void (char)> fn)
-	{
-		onPress = std::move (fn);
-	}
+        if (!WindowManager::IsRefed ())
+            WindowManager::DeleteMapper ();
+    }
 
-	void WindowImpl_XWindow::OnResized (std::function<void (int, int)> fn)
-	{
-		onResized = std::move (fn);
-	}
+    void WindowImpl_XWindow::Draw (const GUIContext *context,
+                                   size_t x, size_t y)
+    {
+        auto display = WindowManager::display ();
+        auto screen = DefaultScreen (display);
 
-	void WindowImpl_XWindow::OnRefresh (std::function<void ()> fn)
-	{
-		onRefresh = std::move (fn);
-	}
+        auto _context = static_cast<const GUIContext_XWindow *> (context);
+        XCopyArea (display, _context->_pixmap, _window, DefaultGC (display, screen),
+                   0, 0, _context->_w, _context->_h, x, y);
+    }
 
-	// Context
+    std::pair<size_t, size_t> WindowImpl_XWindow::GetSize ()
+    {
+        return std::make_pair (this->_cxClient, this->_cyClient);
+    }
 
-	GUIContext_XWindow::GUIContext_XWindow (size_t width, size_t height)
-		: _w (width), _h (height), _pixmap (0), _gc (0)
-	{
-		auto display = WindowManager::display ();
-		auto screen = DefaultScreen (display);
+    bool WindowImpl_XWindow::IsClosed () const
+    {
+        return _window == 0;
+    }
 
-		_pixmap = XCreatePixmap (display, RootWindow (display, screen),
-								 width, height,
-								 DefaultDepth (display, screen));
-		_gc = XCreateGC (display, _pixmap, 0, NULL);
+    void WindowImpl_XWindow::OnClick (std::function<void (int, int)> fn)
+    {
+        onClick = std::move (fn);
+    }
 
-		Clear ();
-	}
+    void WindowImpl_XWindow::OnPress (std::function<void (char)> fn)
+    {
+        onPress = std::move (fn);
+    }
 
-	GUIContext_XWindow::~GUIContext_XWindow ()
-	{
-		auto display = WindowManager::display ();
-		XFreeGC (display, _gc);
-		XFreePixmap (display, _pixmap);
-	}
+    void WindowImpl_XWindow::OnResized (std::function<void (int, int)> fn)
+    {
+        onResized = std::move (fn);
+    }
 
-	bool GUIContext_XWindow::SetPen (unsigned int width,
-									 unsigned int r,
-									 unsigned int g,
-									 unsigned int b)
-	{
-		// Todo
-		return false;
-	}
+    void WindowImpl_XWindow::OnRefresh (std::function<void ()> fn)
+    {
+        onRefresh = std::move (fn);
+    }
 
-	bool GUIContext_XWindow::SetBrush (bool isTransparent,
-									   unsigned int r,
-									   unsigned int g,
-									   unsigned int b)
-	{
-		// Todo
-		return false;
-	}
+    // Context
 
-	bool GUIContext_XWindow::SetFont (unsigned int size,
-									  const char *family,
-									  unsigned int r,
-									  unsigned int g,
-									  unsigned int b)
-	{
-		// Todo
-		return false;
-	}
+    GUIContext_XWindow::GUIContext_XWindow (size_t width, size_t height)
+            : _w (width), _h (height), _pixmap (0), _gc (0)
+    {
+        auto display = WindowManager::display ();
+        auto screen = DefaultScreen (display);
 
-	bool GUIContext_XWindow::DrawLine (int xBeg, int yBeg, int xEnd, int yEnd)
-	{
-		auto display = WindowManager::display ();
-		auto screen = DefaultScreen (display);
-		XDrawLine (display, _pixmap, _gc, xBeg, yBeg, xEnd, yEnd);
-		// Todo
-		return false;
-	}
+        _pixmap = XCreatePixmap (display, RootWindow (display, screen),
+                                 width, height,
+                                 DefaultDepth (display, screen));
+        _gc = XCreateGC (display, _pixmap, 0, NULL);
 
-	bool GUIContext_XWindow::DrawRect (int xBeg, int yBeg, int xEnd, int yEnd)
-	{
-		// Todo
-		return false;
-	}
+        Clear ();
+    }
 
-	bool GUIContext_XWindow::DrawElps (int xBeg, int yBeg, int xEnd, int yEnd)
-	{
-		// Todo
-		return false;
-	}
+    GUIContext_XWindow::~GUIContext_XWindow ()
+    {
+        auto display = WindowManager::display ();
+        XFreeGC (display, _gc);
+        XFreePixmap (display, _pixmap);
+    }
 
-	bool GUIContext_XWindow::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd,
-									   int wElps, int hElps)
-	{
-		// Todo
-		return false;
-	}
+    bool GUIContext_XWindow::SetPen (unsigned int width,
+                                     unsigned int r,
+                                     unsigned int g,
+                                     unsigned int b)
+    {
+        auto display=WindowManager::display();
+        auto screen = DefaultScreen (display);
+        XColor xcolor;
 
-	bool GUIContext_XWindow::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-									  int xBeg, int yBeg, int xEnd, int yEnd)
-	{
-		// Todo
-		return false;
-	}
+//      set the attributes of the line
+        XSetLineAttributes(display,_gc,width,LineSolid,CapRound,JoinBevel);
 
-	bool GUIContext_XWindow::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-										int xBeg, int yBeg, int xEnd, int yEnd)
-	{
-		// Todo
-		return false;
-	}
+//      get the colormap
+        Colormap cmap   = DefaultColormap(display, screen);
 
-	bool GUIContext_XWindow::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-									  int xBeg, int yBeg, int xEnd, int yEnd)
-	{
-		// Todo
-		return false;
-	}
+//      set the rgb values
+        xcolor.red = r;
+        xcolor.green = g;
+        xcolor.blue = b;
+        xcolor.flags = DoRed | DoGreen | DoBlue;
+        XAllocColor(display, cmap, &xcolor);
 
-	bool GUIContext_XWindow::DrawTxt (int xBeg, int yBeg, const char * szText)
-	{
-		// Todo
-		return false;
-	}
+//      using set the rgb values of foreground to set the rgb values of pen
+        XSetForeground(display, _gc, xcolor.pixel);
 
-	bool GUIContext_XWindow::DrawImg (const char *fileName, int x, int y,
-									  int width, int height, int r, int g, int b)
-	{
-		// Todo
-		return false;
-	}
+        return false;
+    }
 
-	bool GUIContext_XWindow::SaveAsBmp (const char *fileName)
-	{
-		// Todo
-		return false;
-	}
+    bool GUIContext_XWindow::SetBrush (bool isTransparent,
+                                       unsigned int r,
+                                       unsigned int g,
+                                       unsigned int b)
+    {
+        XColor brushColor;
+        brushColor.red=r;
+        brushColor.green=g;
+        brushColor.blue=b;
 
-	void GUIContext_XWindow::Clear ()
-	{
-		auto display = WindowManager::display ();
-		auto screen = DefaultScreen (display);
+        // Todo
+        return false;
+    }
 
-		XSetForeground (display, _gc, WhitePixel (display, screen));
-		XSetFillStyle (display, _gc, FillSolid);
-		XFillRectangle (display, _pixmap, _gc, 0, 0, _w, _h);
+    bool GUIContext_XWindow::SetFont (unsigned int size,
+                                      const char *family,
+                                      unsigned int r,
+                                      unsigned int g,
+                                      unsigned int b)
+    {
+        // Font
+        // Todo
+        return false;
+    }
 
-		XSetForeground (display, _gc, BlackPixel (display, screen));
-		XFlushGC (display, _gc);
-	}
+    bool GUIContext_XWindow::DrawLine (int xBeg, int yBeg, int xEnd, int yEnd)
+    {
+        auto display = WindowManager::display ();
+        //  auto screen = DefaultScreen (display);
+        XDrawLine (display, _pixmap, _gc, xBeg, yBeg, xEnd, yEnd);
+        // Todo
+        return false;
+    }
 
-	void GUIContext_XWindow::PaintOnContext (GUIContext *parentContext,
-											 size_t x, size_t y) const
-	{
-		// Todo
-	}
+    bool GUIContext_XWindow::DrawRect (int xBeg, int yBeg, int xEnd, int yEnd)
+    {
+        auto display=WindowManager::display();
+        //  auto screen=DefaultScreen(display);
+        XDrawRectangle(display,_pixmap,_gc,xBeg,yBeg,xEnd,yEnd);
+        // Todo
 
-	// MsgBox
+        return false;
+    }
 
-	void MsgBox_Impl (const char * szTxt, const char * szCap)
-	{
-		// Todo
-	}
+    bool GUIContext_XWindow::DrawElps (int xBeg, int yBeg, int xEnd, int yEnd)
+    {
+        auto display=WindowManager::display();
+        const int fullAngle=23040;
+        XDrawArc(display,_pixmap,_gc,xBeg,yBeg,xEnd-xBeg,yEnd-yBeg,fullAngle,fullAngle);
+        // Todo
+        return false;
+    }
+
+    //draw RoundRectangle
+    bool GUIContext_XWindow::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd,
+                                       int wElps, int hElps)
+    {
+        auto display=WindowManager::display();
+        const int fullAngle=23040;
+        int rdWid=xEnd-xBeg-2*wElps;
+        int rdHei=yEnd-yBeg-2*hElps;
+
+        XDrawLine(display,_pixmap,_gc,xBeg+wElps,yBeg,xEnd-wElps,yBeg);
+        XDrawLine(display,_pixmap,_gc,xBeg,yBeg+hElps,xBeg,yEnd-hElps);
+        XDrawLine(display,_pixmap,_gc,xBeg+wElps,yEnd,xEnd-wElps,yEnd);
+        XDrawLine(display,_pixmap,_gc,xEnd,yBeg+hElps,xEnd,yEnd-hElps);
+
+        //left up
+        XDrawArc(display,_pixmap,_gc,xBeg,yBeg,wElps*2,hElps*2,fullAngle/4,fullAngle/4);
+        //left down
+        XDrawArc(display,_pixmap,_gc,xBeg,yEnd-2*hElps,wElps*2,hElps*2,fullAngle/2,fullAngle/4);
+        //right up
+        XDrawArc(display,_pixmap,_gc,xEnd-2*wElps,yBeg,wElps*2,hElps*2,0,fullAngle/4);
+        //right down
+        XDrawArc(display,_pixmap,_gc,xEnd-2*wElps,yEnd-2*hElps,wElps*2,hElps*2,0,-fullAngle/4);
+
+
+        return false;
+    }
+
+    bool GUIContext_XWindow::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
+                                      int xBeg, int yBeg, int xEnd, int yEnd)
+    {
+        auto display=WindowManager::display();
+        XDrawArc(display,_pixmap,_gc,xLeft,yTop,xRight-xLeft,yBottom-yTop,xEnd-xBeg,yEnd-yBeg);
+        // Todo
+        return false;
+    }
+
+    bool GUIContext_XWindow::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
+                                        int xBeg, int yBeg, int xEnd, int yEnd)
+    {
+        // Todo
+        return false;
+    }
+
+    bool GUIContext_XWindow::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
+                                      int xBeg, int yBeg, int xEnd, int yEnd)
+    {
+        // Todo
+        return false;
+    }
+
+    bool GUIContext_XWindow::DrawTxt (int xBeg, int yBeg, const char * szText)
+    {
+        auto display=WindowManager::display();
+        //XDrawText(display,_pixmap,_gc,xBeg,yBeg, ,0);
+        XDrawString(display,_pixmap,_gc,xBeg,yBeg,szText,strlen(szText));
+        // Todo
+        return false;
+    }
+
+    bool GUIContext_XWindow::DrawImg (const char *fileName, int x, int y,
+                                      int width, int height, int r, int g, int b)
+    {
+        // Todo
+        return false;
+    }
+
+    bool GUIContext_XWindow::SaveAsBmp (const char *fileName) const
+    {
+        // Todo
+        return false;
+    }
+
+
+    bool GUIContext_XWindow::SaveAsJpg(const char *fileName) const
+    {
+
+        //Todo
+        return false;
+    }
+
+
+    bool GUIContext_XWindow::SaveAsPng(const char *fileName) const
+    {
+
+        //Todo
+        return false;
+    }
+
+
+    void GUIContext_XWindow::Clear ()
+    {
+        auto display = WindowManager::display ();
+        auto screen = DefaultScreen (display);
+
+        XSetForeground (display, _gc, WhitePixel (display, screen));
+        XSetFillStyle (display, _gc, FillSolid);
+        XFillRectangle (display, _pixmap, _gc, 0, 0, _w, _h);
+
+        XSetForeground (display, _gc, BlackPixel (display, screen));
+        XFlushGC (display, _gc);
+    }
+
+    void GUIContext_XWindow::PaintOnContext (GUIContext *parentContext,
+                                             size_t x, size_t y) const
+    {
+        // Todo
+    }
+
+    // MsgBox
+
+    void MsgBox_Impl (const char * szTxt, const char * szCap)
+    {
+        // Todo
+    }
 }
 
 // Test Funcion
 // g++ XWindow_Impl.cpp -o test -std=c++11 -lX11 -lpthread
 int main (int argc, char *argv[])
 {
-	using namespace EggAche_Impl;
-	WindowImpl_XWindow wnd (500, 300, "Hello EggAche");
-	GUIContext_XWindow context (500, 300);
+    using namespace EggAche_Impl;
+    WindowImpl_XWindow wnd (500, 300, "Hello EggAche");
+    GUIContext_XWindow context (500, 300);
 
-	wnd.OnClick ([&] (int x, int y)
-	{
-		context.Clear ();
-		context.DrawLine (0, 0, x, y);
-		wnd.Draw (&context, 0, 0);
-		printf ("You Click %03d, %03d\n", x, y);
-	});
+    wnd.OnClick ([&] (int x, int y)
+                 {
+                     context.Clear ();
+                     context.SetPen(4,50000,40000,60000);//values are 0~65535
+                     context.DrawLine (0, 0, x, y);
+                     context.DrawRect(x-50,y-50,x+50,y+50);
+                     context.DrawTxt(50,50,"thiefunvierse");
+                     context.DrawElps(x-50,y-50,x+80,y+150);
+                     context.DrawRdRt(50,50,220,220,30,30);
+                     //context.DrawArc(0,10,90,80,10,50,70,80);
+                     wnd.Draw (&context, 0, 0);
+                     printf ("You Click %03d, %03d\n", x, y);
+                 });
 
-	wnd.OnResized ([] (int x, int y)
-	{
-		printf ("You Resized to %03d, %03d\n", x, y);
-	});
+    wnd.OnResized ([] (int x, int y)
+                   {
+                       printf ("You Resized to %03d, %03d\n", x, y);
+                   });
 
-	wnd.OnPress ([] (char ch)
-	{
-		printf ("You Typed %c\n", ch);
-	});
+    wnd.OnPress ([] (char ch)
+                 {
+                     printf ("You Typed %c\n", ch);
+                 });
 
-	wnd.OnRefresh ([&] ()
-	{
-		wnd.Draw (&context, 0, 0);
-		printf ("Your Window Refreshed\n");
-	});
+    wnd.OnRefresh ([&] ()
+                   {
+                       wnd.Draw (&context, 0, 0);
+                       printf ("Your Window Refreshed\n");
+                   });
 
-	getchar ();
-	return 0;
+    getchar ();
+    return 0;
 }
+

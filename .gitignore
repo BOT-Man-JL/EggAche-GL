@@ -6,6 +6,11 @@
 *.user
 *.userosscache
 *.sln.docstates
+src/makefile
+src/GPATH
+src/GRTAGS
+src/GTAGS
+src/egg_test
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -212,3 +217,5 @@ _Pvt_Extensions/
 ModelManifest.xml
 /Test_Windows/Snapshot.bmp
 /Test_Windows/X11
+/Test_Windows/Snapshot.png
+/Test_Windows/Snapshot.jpg

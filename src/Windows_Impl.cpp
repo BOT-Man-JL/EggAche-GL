@@ -6,24 +6,97 @@
 #include <exception>
 #include <string>
 #include <unordered_map>
-#include <fstream>
 
 #include <Windows.h>
 #include <windowsx.h>
 
 #ifdef _MSC_VER
+
 // Only Windows SDK support GDI+
 #include <gdiplus.h>
 #pragma comment (lib, "Gdiplus.lib")
 
 // Only MSVC support #pragma link
 #pragma comment (lib, "Msimg32.lib")
+
+#else
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #endif
 
 #include "EggAche_Impl.h"
 
 namespace EggAche_Impl
 {
+	// Handle Manager
+
+#ifdef _MSC_VER
+	class GdiPlusManager
+	{
+	private:
+		static ULONG_PTR gdiplusToken;
+		static size_t refCount;
+	public:
+		GdiPlusManager ()
+		{
+			if (refCount == 0)
+			{
+				Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+				Gdiplus::GdiplusStartup (&gdiplusToken, &gdiplusStartupInput, NULL);
+			}
+			refCount++;
+		}
+
+		~GdiPlusManager ()
+		{
+			refCount--;
+			if (refCount == 0)
+				Gdiplus::GdiplusShutdown (gdiplusToken);
+		}
+	};
+	size_t GdiPlusManager::refCount = 0;
+	ULONG_PTR GdiPlusManager::gdiplusToken = 0;
+#endif
+
+	class WindowImpl_Windows;
+	class HwndManager
+	{
+	private:
+		static std::unordered_map<HWND, WindowImpl_Windows *> *_hwndMapper;
+		static size_t refCount;
+	public:
+		HwndManager ()
+		{
+			if (refCount == 0 && _hwndMapper == nullptr)
+				_hwndMapper = new std::unordered_map<HWND, WindowImpl_Windows *> ();
+			refCount++;
+		}
+
+		~HwndManager ()
+		{
+			refCount--;
+			if (refCount == 0)
+			{
+				delete _hwndMapper;
+				_hwndMapper = nullptr;
+			}
+		}
+
+		static bool isRegClass;
+
+		static std::unordered_map<HWND, WindowImpl_Windows *> *hwndMapper ()
+		{
+			return _hwndMapper;
+		}
+	};
+	size_t HwndManager::refCount = 0;
+	std::unordered_map<HWND, WindowImpl_Windows *> *HwndManager::_hwndMapper = nullptr;
+	bool HwndManager::isRegClass = false;
+
+	// Window
+
 	class WindowImpl_Windows : public WindowImpl
 	{
 	public:
@@ -55,12 +128,19 @@ namespace EggAche_Impl
 		std::function<void (int, int)> onResized;
 		std::function<void ()> onRefresh;
 
+		HwndManager _hwndManager;
+#ifdef _MSC_VER
+		GdiPlusManager _gdiplusManager;
+#endif
+
 		static void WINAPI _NewWindow_Thread (WindowImpl_Windows *pew);
 		static LRESULT CALLBACK _WndProc (HWND, UINT, WPARAM, LPARAM);
 
 		WindowImpl_Windows (const WindowImpl_Windows &) = delete;		// Not allow to copy
 		void operator= (const WindowImpl_Windows &) = delete;			// Not allow to copy
 	};
+
+	// Context
 
 	class GUIContext_Windows : public GUIContext
 	{
@@ -111,7 +191,9 @@ namespace EggAche_Impl
 					  int g = -1,
 					  int b = -1) override;
 
-		bool SaveAsBmp (const char *fileName) override;
+		bool SaveAsJpg (const char *fileName) const override;
+		bool SaveAsPng (const char *fileName) const override;
+		bool SaveAsBmp (const char *fileName) const override;
 
 		void Clear () override;
 
@@ -123,9 +205,21 @@ namespace EggAche_Impl
 		HBITMAP _hBitmap;
 		size_t _w, _h;
 
+#ifdef _MSC_VER
+		GdiPlusManager _gdiplusManager;
+#endif
+
 		static const COLORREF _colorMask;
 		static const COLORREF _GetColor (int r, int g, int b);
 
+#ifdef _MSC_VER
+		bool SaveAsImg (const char *fileName,
+						const wchar_t *mime) const;
+#else
+		bool SaveAsImg (
+			std::function<bool (BYTE *pData,
+								BITMAPINFOHEADER *pbmInfoHeader)> fnSave) const;
+#endif
 		friend void WindowImpl_Windows::Draw (const GUIContext *, size_t, size_t);
 
 		GUIContext_Windows (const GUIContext_Windows &) = delete;		// Not allow to copy
@@ -149,37 +243,6 @@ namespace EggAche_Impl
 	}
 
 	// Window
-
-	class HwndManager
-	{
-	private:
-		static std::unordered_map<HWND, WindowImpl_Windows *> *_hwndMapper;
-	protected:
-		HwndManager () {}
-	public:
-		static bool isRegClass;
-
-		static std::unordered_map<HWND, WindowImpl_Windows *> *Instance ()
-		{
-			if (_hwndMapper == nullptr)
-				_hwndMapper = new std::unordered_map<HWND, WindowImpl_Windows *> ();
-			return _hwndMapper;
-		}
-
-		static bool IsRefed ()
-		{
-			return _hwndMapper != nullptr && !_hwndMapper->empty ();
-		}
-
-		static void Delete ()
-		{
-			delete _hwndMapper;
-			_hwndMapper = nullptr;
-		}
-	};
-
-	std::unordered_map<HWND, WindowImpl_Windows *> *HwndManager::_hwndMapper = nullptr;
-	bool HwndManager::isRegClass = false;
 
 	WindowImpl_Windows::WindowImpl_Windows (size_t width, size_t height,
 											const char *cap_string)
@@ -254,13 +317,50 @@ namespace EggAche_Impl
 			throw std::runtime_error ("Err_Window_#3_CreateWindow");
 	}
 
+	void WindowImpl_Windows::_NewWindow_Thread (WindowImpl_Windows *pew)
+	{
+		RECT rect { 0 };
+		rect.right = pew->_cxCanvas;
+		rect.bottom = pew->_cyCanvas;
+		if (!AdjustWindowRect (&rect, WS_OVERLAPPEDWINDOW, FALSE))
+		{
+			pew->_fFailed = true;
+			SetEvent (pew->_hEvent);
+		}
+
+		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->capStr.c_str (),
+									WS_OVERLAPPEDWINDOW,
+									// & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
+									CW_USEDEFAULT, CW_USEDEFAULT,
+									rect.right - rect.left,
+									rect.bottom - rect.top,
+									NULL, NULL,
+									(HINSTANCE) GetCurrentProcess (), NULL);
+		if (!pew->_hwnd)
+		{
+			pew->_fFailed = true;
+			SetEvent (pew->_hEvent);
+			return;
+		}
+
+		(*HwndManager::hwndMapper ())[pew->_hwnd] = pew;
+
+		ShowWindow (pew->_hwnd, SW_NORMAL);
+		UpdateWindow (pew->_hwnd);
+		SetEvent (pew->_hEvent);
+
+		MSG msg;
+		while (GetMessage (&msg, NULL, 0, 0))
+		{
+			TranslateMessage (&msg);
+			DispatchMessage (&msg);
+		}
+	}
+
 	WindowImpl_Windows::~WindowImpl_Windows ()
 	{
 		if (this->_hwnd != NULL)
 			SendMessage (this->_hwnd, WM_CLOSE, 0, 0);
-
-		if (!HwndManager::IsRefed ())
-			HwndManager::Delete ();
 	}
 
 	void WindowImpl_Windows::Draw (const GUIContext *context,
@@ -315,52 +415,13 @@ namespace EggAche_Impl
 		onRefresh = std::move (fn);
 	}
 
-	void WindowImpl_Windows::_NewWindow_Thread (WindowImpl_Windows *pew)
-	{
-		RECT rect { 0 };
-		rect.right = pew->_cxCanvas;
-		rect.bottom = pew->_cyCanvas;
-		if (!AdjustWindowRect (&rect, WS_OVERLAPPEDWINDOW, FALSE))
-		{
-			pew->_fFailed = true;
-			SetEvent (pew->_hEvent);
-		}
-
-		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->capStr.c_str (),
-									WS_OVERLAPPEDWINDOW,
-									// & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
-									CW_USEDEFAULT, CW_USEDEFAULT,
-									rect.right - rect.left,
-									rect.bottom - rect.top,
-									NULL, NULL,
-									(HINSTANCE) GetCurrentProcess (), NULL);
-		if (!pew->_hwnd)
-		{
-			pew->_fFailed = true;
-			SetEvent (pew->_hEvent);
-		}
-
-		(*HwndManager::Instance ())[pew->_hwnd] = pew;
-
-		ShowWindow (pew->_hwnd, SW_NORMAL);
-		UpdateWindow (pew->_hwnd);
-		SetEvent (pew->_hEvent);
-
-		MSG msg;
-		while (GetMessage (&msg, NULL, 0, 0))
-		{
-			TranslateMessage (&msg);
-			DispatchMessage (&msg);
-		}
-	}
-
 	LRESULT CALLBACK WindowImpl_Windows::_WndProc (
 		HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		if (!HwndManager::IsRefed ())
-			goto tagRet;
+		auto hwndMapper = HwndManager::hwndMapper ();
+		if (hwndMapper == nullptr)
+			return DefWindowProc (hwnd, message, wParam, lParam);
 
-		auto hwndMapper = HwndManager::Instance ();
 		switch (message)
 		{
 		case WM_LBUTTONUP:
@@ -395,8 +456,6 @@ namespace EggAche_Impl
 			PostQuitMessage (0);
 			return 0;
 		}
-
-	tagRet:
 		return DefWindowProc (hwnd, message, wParam, lParam);
 	}
 
@@ -709,7 +768,93 @@ namespace EggAche_Impl
 
 #endif
 
-	bool GUIContext_Windows::SaveAsBmp (const char *fileName)
+#ifdef _MSC_VER
+	// Using GDI+ to Encode Images
+
+	bool GUIContext_Windows::SaveAsImg (const char *fileName,
+										const wchar_t *mime) const
+	{
+		auto ret = false;
+		{
+			auto GetEncoderClsid = [] (const WCHAR* format, CLSID* pClsid)
+			{
+				using namespace Gdiplus;
+
+				UINT  num = 0;          // number of image encoders
+				UINT  size = 0;         // size of the image encoder array in bytes
+
+				ImageCodecInfo* pImageCodecInfo = NULL;
+
+				GetImageEncodersSize (&num, &size);
+				if (size == 0)
+					return -1;  // Failure
+
+				pImageCodecInfo = (ImageCodecInfo*) (malloc (size));
+				if (pImageCodecInfo == NULL)
+					return -1;  // Failure
+
+				GetImageEncoders (num, size, pImageCodecInfo);
+
+				for (int j = 0; j < num; ++j)
+				{
+					if (wcscmp (pImageCodecInfo[j].MimeType, format) == 0)
+					{
+						*pClsid = pImageCodecInfo[j].Clsid;
+						free (pImageCodecInfo);
+						return j;  // Success
+					}
+				}
+
+				free (pImageCodecInfo);
+				return -1;  // Failure
+			};
+
+			// Get the CLSID of the PNG encoder.
+			CLSID encoderClsid;
+			if (-1 == GetEncoderClsid (mime, &encoderClsid))
+				return false;
+
+			// Get Bitmap Object.
+			auto bmp = Gdiplus::Bitmap::FromHBITMAP (this->_hBitmap, NULL);
+
+			// Get File Name in Wide Chars.
+			auto cchW = MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
+											 fileName, -1, NULL, 0);
+			wchar_t *fileNameW = new wchar_t[cchW];
+			MultiByteToWideChar (CP_ACP, MB_COMPOSITE,
+								 fileName, -1, fileNameW, cchW);
+
+			// Save to File
+			auto status = bmp->Save (fileNameW, &encoderClsid, NULL);
+
+			delete[] fileNameW;
+			delete bmp;
+			ret = (status == Gdiplus::Ok);
+		}
+		return ret;
+	}
+
+	bool GUIContext_Windows::SaveAsJpg (const char *fileName) const
+	{
+		return SaveAsImg (fileName, L"image/jpeg");
+	}
+
+	bool GUIContext_Windows::SaveAsPng (const char *fileName) const
+	{
+		return SaveAsImg (fileName, L"image/png");
+	}
+
+	bool GUIContext_Windows::SaveAsBmp (const char *fileName) const
+	{
+		return SaveAsImg (fileName, L"image/bmp");
+	}
+
+#else
+	// MinGW doesn't support GDI+
+
+	bool GUIContext_Windows::SaveAsImg (
+		std::function<bool (BYTE *pData,
+							BITMAPINFOHEADER *pbmInfoHeader)> fnSave) const
 	{
 		// Ref:
 		// https://msdn.microsoft.com/en-us/library/dd145119(v=vs.85).aspx
@@ -718,101 +863,160 @@ namespace EggAche_Impl
 		BITMAP bitmap = { 0 };
 		GetObject (this->_hBitmap, sizeof (BITMAP), &bitmap);
 
-		// Convert the color format to a count of bits.
-		auto cClrBits = (WORD) (bitmap.bmPlanes * bitmap.bmBitsPixel);
-		if (cClrBits == 1)
-			cClrBits = 1;
-		else if (cClrBits <= 4)
-			cClrBits = 4;
-		else if (cClrBits <= 8)
-			cClrBits = 8;
-		else if (cClrBits <= 16)
-			cClrBits = 16;
-		else if (cClrBits <= 24)
-			cClrBits = 24;
-		else cClrBits = 32;
-
-		PBITMAPINFO pbmi;
-
-		// Allocate memory for the BITMAPINFO structure. (This structure
-		// contains a BITMAPINFOHEADER structure and an array of RGBQUAD
-		// data structures.)
-		if (cClrBits < 24)
-			pbmi = (PBITMAPINFO) LocalAlloc (LPTR,
-											 sizeof (BITMAPINFOHEADER) +
-											 sizeof (RGBQUAD) * (1 << cClrBits));
-
+		// NOT Support Less than 24 bit
 		// There is no RGBQUAD array for these formats:
 		// 24-bit-per-pixel or 32-bit-per-pixel
-		else
-			pbmi = (PBITMAPINFO) LocalAlloc (LPTR,
-											 sizeof (BITMAPINFOHEADER));
+		BITMAPINFOHEADER bmInfoHeader = { 0 };
 
 		// Initialize the fields in the BITMAPINFO structure.
-		pbmi->bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
-		pbmi->bmiHeader.biWidth = bitmap.bmWidth;
-		pbmi->bmiHeader.biHeight = bitmap.bmHeight;
-		pbmi->bmiHeader.biPlanes = bitmap.bmPlanes;
-		pbmi->bmiHeader.biBitCount = bitmap.bmBitsPixel;
-		if (cClrBits < 24)
-			pbmi->bmiHeader.biClrUsed = (1 << cClrBits);
+		bmInfoHeader.biSize = sizeof (BITMAPINFOHEADER);
+		bmInfoHeader.biWidth = bitmap.bmWidth;
+		bmInfoHeader.biHeight = bitmap.bmHeight;
+		bmInfoHeader.biPlanes = 1;
+
+		// Convert the color format to a count of bits.
+		if (bitmap.bmBitsPixel <= 24)
+			bmInfoHeader.biBitCount = 24;
+		else
+			bmInfoHeader.biBitCount = 32;
 
 		// If the bitmap is not compressed, set the BI_RGB flag.
-		pbmi->bmiHeader.biCompression = BI_RGB;
+		bmInfoHeader.biCompression = BI_RGB;
 
 		// Compute the number of bytes in the array of color
 		// indices and store the result in biSizeImage.
 		// The width must be DWORD aligned unless the bitmap is RLE
 		// compressed.
-		pbmi->bmiHeader.biSizeImage =
-			((pbmi->bmiHeader.biWidth * cClrBits + 31) & ~31) / 8
-			* pbmi->bmiHeader.biHeight;
+		bmInfoHeader.biSizeImage =
+			((bmInfoHeader.biWidth * bmInfoHeader.biBitCount + 31) & ~31)
+			/ 8 * bmInfoHeader.biHeight;
 
 		// Set biClrImportant to 0, indicating that all of the
 		// device colors are important.
-		pbmi->bmiHeader.biClrImportant = 0;
-
-		// Fill Unused Fields.
-		pbmi->bmiHeader.biXPelsPerMeter
-			= pbmi->bmiHeader.biYPelsPerMeter = 0;
+		bmInfoHeader.biClrImportant = 0;
 
 		// Allocate Memory for DIB Data.
-		auto hDIB = GlobalAlloc (GHND, pbmi->bmiHeader.biSizeImage);
+		auto hDIB = GlobalAlloc (GHND, bmInfoHeader.biSizeImage);
 		auto pData = (BYTE *) GlobalLock (hDIB);
 
 		// Get DIB.
-		GetDIBits (this->_hdc, this->_hBitmap, 0,
-			(WORD) this->_h, pData, pbmi, DIB_RGB_COLORS);
+		GetDIBits (this->_hdc, this->_hBitmap, 0, (WORD) this->_h, pData,
+			(LPBITMAPINFO) &bmInfoHeader, DIB_RGB_COLORS);
 
-		// Initialize BITMAPFILEHEADER.
-		BITMAPFILEHEADER bmFileHeader = { 0 };
-		bmFileHeader.bfType = 0x4d42;			// 0x42 = "B" 0x4d = "M"
-		bmFileHeader.bfOffBits = sizeof (BITMAPFILEHEADER) +
-			sizeof (BITMAPINFOHEADER);
-		bmFileHeader.bfSize = bmFileHeader.bfOffBits
-			+ pbmi->bmiHeader.biSizeImage;
-
-		// Save to File.
-		std::ofstream ofs (fileName,
-						   std::ios_base::out | std::ios_base::binary);
-		if (!ofs.is_open ())
+		// Save to Bmp or Png
+		// Strategy Pattern :-)
+		if (!fnSave (pData, &bmInfoHeader))
 		{
-			LocalFree (pbmi);
 			GlobalUnlock (hDIB);
 			GlobalFree (hDIB);
 			return false;
 		}
 
-		ofs.write ((const char *) &bmFileHeader, sizeof (BITMAPFILEHEADER));
-		ofs.write ((const char *) &pbmi->bmiHeader, sizeof (BITMAPINFOHEADER));
-		ofs.write ((const char *) pData, pbmi->bmiHeader.biSizeImage);
-
 		// Free Memory.
-		LocalFree (pbmi);
 		GlobalUnlock (hDIB);
 		GlobalFree (hDIB);
 		return true;
 	}
+
+	bool GUIContext_Windows::SaveAsBmp (const char *fileName) const
+	{
+		auto fnSave = [&] (BYTE *pData,
+						   BITMAPINFOHEADER *pbmInfoHeader)
+		{
+			// Initialize BITMAPFILEHEADER.
+			BITMAPFILEHEADER bmFileHeader = { 0 };
+			bmFileHeader.bfType = 0x4d42;			// 0x42 = "B" 0x4d = "M"
+			bmFileHeader.bfOffBits = sizeof (BITMAPFILEHEADER) +
+				sizeof (BITMAPINFOHEADER);
+			bmFileHeader.bfSize = bmFileHeader.bfOffBits
+				+ pbmInfoHeader->biSizeImage;
+
+			auto hFile = CreateFileA (fileName,
+									  GENERIC_READ | GENERIC_WRITE,
+									  (DWORD) 0,
+									  NULL,
+									  CREATE_ALWAYS,
+									  FILE_ATTRIBUTE_NORMAL,
+									  (HANDLE) NULL);
+			if (hFile == INVALID_HANDLE_VALUE)
+				return false;
+
+			if (!WriteFile (hFile, &bmFileHeader, sizeof (BITMAPFILEHEADER), NULL, NULL))
+			{
+				CloseHandle (hFile);
+				return false;
+			}
+			if (!WriteFile (hFile, pbmInfoHeader, sizeof (BITMAPINFOHEADER), NULL, NULL))
+			{
+				CloseHandle (hFile);
+				return false;
+			}
+			if (!WriteFile (hFile, pData, pbmInfoHeader->biSizeImage, NULL, NULL))
+			{
+				CloseHandle (hFile);
+				return false;
+			}
+			CloseHandle (hFile);
+			return true;
+		};
+
+		return SaveAsImg (fnSave);
+	}
+
+	bool GUIContext_Windows::SaveAsPng (const char *fileName) const
+	{
+		auto fnConvertAndSave = [&] (BYTE *pData,
+									 BITMAPINFOHEADER *pbmInfoHeader)
+		{
+			// The amount of scanline bytes is width of image times channels,
+			// with extra bytes added if needed to make it a multiple of 4 bytes.
+			unsigned numChannels = pbmInfoHeader->biBitCount / 8;
+			unsigned scanlineBytes = pbmInfoHeader->biWidth * numChannels;
+			if (scanlineBytes % 4 != 0)
+				scanlineBytes = (scanlineBytes / 4) * 4 + 4;
+			unsigned dataSize = scanlineBytes * pbmInfoHeader->biHeight;
+
+			/*
+			There are 3 differences between BMP and the raw image buffer for LodePNG:
+			-it's upside down
+			-it's in BGR instead of RGB format (or BRGA instead of RGBA)
+			-each scanline has padding bytes to make it a multiple of 4 if needed
+			The 2D for loop below does all these 3 conversions at once.
+			*/
+			auto rgbArr = new BYTE[pbmInfoHeader->biWidth * pbmInfoHeader->biHeight * 3];
+			for (unsigned y = 0; y < pbmInfoHeader->biHeight; y++)
+				for (unsigned x = 0; x < pbmInfoHeader->biWidth; x++)
+				{
+					// pixel start byte position in the BMP
+					unsigned bmpos = (pbmInfoHeader->biHeight - y - 1)
+						* scanlineBytes + numChannels * x;
+
+					// pixel start byte position in the rgbaArr
+					unsigned newpos = 3 * y * pbmInfoHeader->biWidth + 3 * x;
+
+					// Take 24 bit
+					rgbArr[newpos + 0] = pData[bmpos + 2];	//R
+					rgbArr[newpos + 1] = pData[bmpos + 1];	//G
+					rgbArr[newpos + 2] = pData[bmpos + 0];	//B
+				}
+
+			stbi_write_png (fileName, pbmInfoHeader->biWidth,
+							pbmInfoHeader->biHeight,
+							3, rgbArr, pbmInfoHeader->biWidth * 3);
+
+			delete[] rgbArr;
+			return true;
+		};
+
+		return SaveAsImg (fnConvertAndSave);
+	}
+
+	bool GUIContext_Windows::SaveAsJpg (const char * fileName) const
+	{
+		// Not Implemented
+		return false;
+	}
+#endif
 
 	void GUIContext_Windows::Clear ()
 	{
