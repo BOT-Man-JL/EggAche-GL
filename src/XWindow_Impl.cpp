@@ -626,8 +626,7 @@ int main (int argc, char *argv[])
 
 	while (!wnd.IsClosed ())
 	{
-		using namespace std::chrono_literals;
-		std::this_thread::sleep_for (500ms);
+		std::this_thread::sleep_for (std::chrono::milliseconds (500));
 	}
     return 0;
 }
