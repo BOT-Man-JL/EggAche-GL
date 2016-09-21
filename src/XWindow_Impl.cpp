@@ -181,7 +181,7 @@ namespace EggAche_Impl
     protected:
         size_t _w, _h;
         Pixmap _pixmap;
-        GC _gc;
+        GC _gc, _penGC, _brushGC, _fontGC;
 
         DisplayManager _displayManager;
 
@@ -336,6 +336,9 @@ namespace EggAche_Impl
                                  width, height,
                                  DefaultDepth (display, screen));
         _gc = XCreateGC (display, _pixmap, 0, NULL);
+		_penGC = XCreateGC (display, _pixmap, 0, NULL);
+		_brushGC = XCreateGC (display, _pixmap, 0, NULL);
+		_fontGC = XCreateGC (display, _pixmap, 0, NULL);
 
         Clear ();
     }
@@ -343,7 +346,10 @@ namespace EggAche_Impl
     GUIContext_XWindow::~GUIContext_XWindow ()
     {
         auto display = DisplayManager::display ();
-        XFreeGC (display, _gc);
+		XFreeGC (display, _gc);
+		XFreeGC (display, _penGC);
+		XFreeGC (display, _brushGC);
+		XFreeGC (display, _fontGC);
         XFreePixmap (display, _pixmap);
     }
 
@@ -413,9 +419,8 @@ namespace EggAche_Impl
     {
         auto display= DisplayManager::display();
         //  auto screen=DefaultScreen(display);
-        XDrawRectangle(display,_pixmap,_gc,xBeg,yBeg,xEnd,yEnd);
-        // Todo
-
+        XDrawRectangle(display,_pixmap,_penGC,xBeg,yBeg,xEnd,yEnd);
+		XFillRectangle (display, _pixmap, _brushGC, xBeg, yBeg, xEnd, yEnd);
         return false;
     }
 
