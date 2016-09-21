@@ -5,6 +5,7 @@
 
 #include <exception>
 #include <thread>
+#include <chrono>
 #include <cstring>
 #include <unordered_map>
 #include <X11/Xlib.h>
@@ -271,7 +272,7 @@ namespace EggAche_Impl
         /* select kind of events we are interested in */
         XSelectInput (display, _window,
                       ExposureMask | KeyPressMask | ButtonPressMask |
-                      ResizeRedirectMask | SubstructureNotifyMask);
+                      ResizeRedirectMask | StructureNotifyMask);
 
         /* map (show) the window */
         XMapWindow (display, _window);
@@ -623,6 +624,10 @@ int main (int argc, char *argv[])
                        printf ("Your Window Refreshed\n");
                    });
 
-    getchar ();
+	while (!wnd.IsClosed ())
+	{
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for (500ms);
+	}
     return 0;
 }
