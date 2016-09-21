@@ -183,6 +183,8 @@ namespace EggAche_Impl
         Pixmap _pixmap;
         GC _gc, _penGC, _brushGC, _fontGC;
 
+
+        bool isBrushTransparant;
         DisplayManager _displayManager;
 
         friend void WindowImpl_XWindow::Draw (const GUIContext *context,
@@ -336,9 +338,9 @@ namespace EggAche_Impl
                                  width, height,
                                  DefaultDepth (display, screen));
         _gc = XCreateGC (display, _pixmap, 0, NULL);
-		_penGC = XCreateGC (display, _pixmap, 0, NULL);
-		_brushGC = XCreateGC (display, _pixmap, 0, NULL);
-		_fontGC = XCreateGC (display, _pixmap, 0, NULL);
+        _penGC = XCreateGC (display, _pixmap, 0, NULL);
+        _brushGC = XCreateGC (display, _pixmap, 0, NULL);
+        _fontGC = XCreateGC (display, _pixmap, 0, NULL);
 
         Clear ();
     }
@@ -346,10 +348,10 @@ namespace EggAche_Impl
     GUIContext_XWindow::~GUIContext_XWindow ()
     {
         auto display = DisplayManager::display ();
-		XFreeGC (display, _gc);
-		XFreeGC (display, _penGC);
-		XFreeGC (display, _brushGC);
-		XFreeGC (display, _fontGC);
+        XFreeGC (display, _gc);
+        XFreeGC (display, _penGC);
+        XFreeGC (display, _brushGC);
+        XFreeGC (display, _fontGC);
         XFreePixmap (display, _pixmap);
     }
 
@@ -375,6 +377,7 @@ namespace EggAche_Impl
         xcolor.flags = DoRed | DoGreen | DoBlue;
         XAllocColor(display, cmap, &xcolor);
 
+
 //      using set the rgb values of foreground to set the rgb values of pen
         XSetForeground(display, _gc, xcolor.pixel);
 
@@ -391,6 +394,7 @@ namespace EggAche_Impl
         brushColor.green=g;
         brushColor.blue=b;
 
+        this->isBrushTransparant=isTransparent;
         // Todo
         return false;
     }
@@ -410,7 +414,7 @@ namespace EggAche_Impl
     {
         auto display = DisplayManager::display ();
         //  auto screen = DefaultScreen (display);
-        XDrawLine (display, _pixmap, _gc, xBeg, yBeg, xEnd, yEnd);
+        XDrawLine (display, _pixmap, _penGC, xBeg, yBeg, xEnd, yEnd);
         // Todo
         return false;
     }
@@ -420,7 +424,9 @@ namespace EggAche_Impl
         auto display= DisplayManager::display();
         //  auto screen=DefaultScreen(display);
         XDrawRectangle(display,_pixmap,_penGC,xBeg,yBeg,xEnd,yEnd);
-		XFillRectangle (display, _pixmap, _brushGC, xBeg, yBeg, xEnd, yEnd);
+
+        if(!isBrushTransparant)
+        XFillRectangle (display, _pixmap, _brushGC, xBeg, yBeg, xEnd, yEnd);
         return false;
     }
 
@@ -465,7 +471,6 @@ namespace EggAche_Impl
     {
         auto display = DisplayManager::display();
         XDrawArc(display,_pixmap,_gc,xLeft,yTop,xRight-xLeft,yBottom-yTop,xEnd-xBeg,yEnd-yBeg);
-        // Todo
         return false;
     }
 
