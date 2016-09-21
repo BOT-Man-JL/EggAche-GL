@@ -343,6 +343,9 @@ namespace EggAche_Impl
         _fontGC = XCreateGC (display, _pixmap, 0, NULL);
 
         Clear ();
+
+        this->SetBrush(True,255,255,255);
+//        this->SetPen(4,10,200,100);
     }
 
     GUIContext_XWindow::~GUIContext_XWindow ()
@@ -365,21 +368,20 @@ namespace EggAche_Impl
         XColor xcolor;
 
 //      set the attributes of the line
-        XSetLineAttributes(display,_gc,width,LineSolid,CapRound,JoinBevel);
+        XSetLineAttributes(display,_penGC,width,LineSolid,CapRound,JoinBevel);
 
 //      get the colormap
         Colormap cmap = DefaultColormap(display, screen);
 
 //      set the rgb values
-        xcolor.red = r;
-        xcolor.green = g;
-        xcolor.blue = b;
+        xcolor.red = r*257;
+        xcolor.green = g*257;
+        xcolor.blue = b*257;
         xcolor.flags = DoRed | DoGreen | DoBlue;
         XAllocColor(display, cmap, &xcolor);
 
-
 //      using set the rgb values of foreground to set the rgb values of pen
-        XSetForeground(display, _gc, xcolor.pixel);
+        XSetForeground(display, _penGC, xcolor.pixel);
 
         return false;
     }
@@ -389,13 +391,25 @@ namespace EggAche_Impl
                                        unsigned int g,
                                        unsigned int b)
     {
-        XColor brushColor;
-        brushColor.red=r;
-        brushColor.green=g;
-        brushColor.blue=b;
-
         this->isBrushTransparant=isTransparent;
-        // Todo
+
+        auto display = DisplayManager::display();
+        auto screen = DefaultScreen (display);
+        XColor xcolor;
+
+//      get the colormap
+        Colormap cmap = DefaultColormap(display, screen);
+
+//      set the rgb values
+        xcolor.red = r*257;
+        xcolor.green = g*257;
+        xcolor.blue = b*257;
+        xcolor.flags = DoRed | DoGreen | DoBlue;
+        XAllocColor(display, cmap, &xcolor);
+
+//      using set the rgb values of foreground to set the rgb values of brush
+        XSetForeground(display, _brushGC, xcolor.pixel);
+
         return false;
     }
 
