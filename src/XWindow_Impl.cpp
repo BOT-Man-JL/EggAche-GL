@@ -449,8 +449,9 @@ namespace EggAche_Impl
     {
         auto display= DisplayManager::display();
         const int fullAngle=23040;
-        XDrawArc(display,_pixmap,_gc,xBeg,yBeg,xEnd-xBeg,yEnd-yBeg,fullAngle,fullAngle);
-        // Todo
+        XDrawArc(display,_pixmap,_penGC,xBeg,yBeg,xEnd-xBeg,yEnd-yBeg,fullAngle,fullAngle);
+        if(!isBrushTransparant)
+        XFillArc(display, _pixmap, _brushGC, xBeg,yBeg,xEnd-xBeg,yEnd-yBeg,fullAngle,fullAngle);
         return false;
     }
 
@@ -597,7 +598,8 @@ int main (int argc, char *argv[])
     wnd.OnClick ([&] (int x, int y)
                  {
                      context.Clear ();
-                     context.SetPen(4,50000,40000,60000);//values are 0~65535
+                     context.SetPen(4,100,100,100);//values are 0~65535
+                     context.SetBrush(false,50,100,150);
                      context.DrawLine (0, 0, x, y);
                      context.DrawRect(x-50,y-50,x+50,y+50);
                      context.DrawTxt(50,50,"thiefunvierse");
