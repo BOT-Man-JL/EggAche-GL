@@ -183,6 +183,7 @@ namespace EggAche_Impl
 					  int xBeg, int yBeg, int xEnd, int yEnd) override;
 
 		bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
+		size_t GetTxtWidth (const char *szText) override;
 
 		bool DrawImg (const char *fileName,
 					  int x, int y,
@@ -657,6 +658,20 @@ namespace EggAche_Impl
 	bool GUIContext_Windows::DrawTxt (int xBeg, int yBeg, const char * szText)
 	{
 		return !!TextOutA (this->_hdc, xBeg, yBeg, szText, (int) strlen (szText));
+	}
+
+	size_t GUIContext_Windows::GetTxtWidth (const char *szText)
+	{
+		std::string str (szText);
+		size_t ret = 0;
+		ABCFLOAT abcFloat;
+		for (const auto &ch : str)
+		{
+			if (!GetCharABCWidthsFloatA (this->_hdc, ch, ch, &abcFloat))
+				return 0;
+			ret += abcFloat.abcfA + abcFloat.abcfB + abcFloat.abcfC;
+		}
+		return ret;
 	}
 
 #ifdef _MSC_VER_TODO

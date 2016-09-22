@@ -118,6 +118,11 @@ namespace EggAche
 		// Remarks:
 		// Draw the szText with a upper left point (xBeg, yBeg)
 
+		size_t GetTxtWidth (const char *szText);			// Estimate Text Width
+		// Remarks:
+		// Return the Estimated Width of the String in Current Font;
+		// Return 0 if an Error occurs;
+
 		bool DrawImg (const char *fileName,					// Source: "path/name.*"
 					  int x, int y);						// Position to paste in Egg
 

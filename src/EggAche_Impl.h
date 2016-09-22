@@ -70,6 +70,7 @@ namespace EggAche_Impl
 							  int xBeg, int yBeg, int xEnd, int yEnd) = 0;
 
 		virtual bool DrawTxt (int xBeg, int yBeg, const char *szText) = 0;
+		virtual size_t GetTxtWidth (const char *szText) = 0;
 
 		virtual bool DrawImg (const char *fileName,
 							  int x = 0, int y = 0,
