@@ -173,7 +173,7 @@ namespace EggAche_Impl
         bool SaveAsBmp (const char *fileName) const override;
         bool SaveAsJpg (const char *fileName) const override;
         bool SaveAsPng (const char *fileName) const override;
-
+        size_t GetTxtWidth (const char *szText) override;
         void Clear () override;
 
         void PaintOnContext (GUIContext *,
@@ -464,19 +464,36 @@ namespace EggAche_Impl
         int rdWid=xEnd-xBeg-2*wElps;
         int rdHei=yEnd-yBeg-2*hElps;
 
-        XDrawLine(display,_pixmap,_gc,xBeg+wElps,yBeg,xEnd-wElps,yBeg);
-        XDrawLine(display,_pixmap,_gc,xBeg,yBeg+hElps,xBeg,yEnd-hElps);
-        XDrawLine(display,_pixmap,_gc,xBeg+wElps,yEnd,xEnd-wElps,yEnd);
-        XDrawLine(display,_pixmap,_gc,xEnd,yBeg+hElps,xEnd,yEnd-hElps);
+        XDrawLine(display,_pixmap,_penGC,xBeg+wElps,yBeg,xEnd-wElps,yBeg);
+        XDrawLine(display,_pixmap,_penGC,xBeg,yBeg+hElps,xBeg,yEnd-hElps);
+        XDrawLine(display,_pixmap,_penGC,xBeg+wElps,yEnd,xEnd-wElps,yEnd);
+        XDrawLine(display,_pixmap,_penGC,xEnd,yBeg+hElps,xEnd,yEnd-hElps);
 
         //left up
-        XDrawArc(display,_pixmap,_gc,xBeg,yBeg,wElps*2,hElps*2,fullAngle/4,fullAngle/4);
+        XDrawArc(display,_pixmap,_penGC,xBeg,yBeg,wElps*2,hElps*2,fullAngle/4,fullAngle/4);
         //left down
-        XDrawArc(display,_pixmap,_gc,xBeg,yEnd-2*hElps,wElps*2,hElps*2,fullAngle/2,fullAngle/4);
+        XDrawArc(display,_pixmap,_penGC,xBeg,yEnd-2*hElps,wElps*2,hElps*2,fullAngle/2,fullAngle/4);
         //right up
-        XDrawArc(display,_pixmap,_gc,xEnd-2*wElps,yBeg,wElps*2,hElps*2,0,fullAngle/4);
+        XDrawArc(display,_pixmap,_penGC,xEnd-2*wElps,yBeg,wElps*2,hElps*2,0,fullAngle/4);
         //right down
-        XDrawArc(display,_pixmap,_gc,xEnd-2*wElps,yEnd-2*hElps,wElps*2,hElps*2,0,-fullAngle/4);
+        XDrawArc(display,_pixmap,_penGC,xEnd-2*wElps,yEnd-2*hElps,wElps*2,hElps*2,0,-fullAngle/4);
+
+        if(!isBrushTransparant)
+        {
+            //left up
+            XFillArc(display,_pixmap,_brushGC,xBeg,yBeg,wElps*2,hElps*2,fullAngle/4,fullAngle/4);
+            //left down
+            XFillArc(display,_pixmap,_brushGC,xBeg,yEnd-2*hElps,wElps*2,hElps*2,fullAngle/2,fullAngle/4);
+            //right up
+            XFillArc(display,_pixmap,_brushGC,xEnd-2*wElps,yBeg,wElps*2,hElps*2,0,fullAngle/4);
+            //right down
+            XFillArc(display,_pixmap,_brushGC,xEnd-2*wElps,yEnd-2*hElps,wElps*2,hElps*2,0,-fullAngle/4);
+
+
+            XFillRectangle(display,_pixmap,_brushGC,xBeg+wElps,yBeg,rdWid,yEnd-yBeg);
+            XFillRectangle(display,_pixmap,_brushGC,xBeg,yBeg+hElps,xEnd-xBeg,rdHei);
+
+        }
 
 
         return false;
@@ -516,13 +533,20 @@ namespace EggAche_Impl
     bool GUIContext_XWindow::DrawImg (const char *fileName, int x, int y,
                                       int width, int height, int r, int g, int b)
     {
+
         // Todo
         return false;
     }
 
     bool GUIContext_XWindow::SaveAsBmp (const char *fileName) const
     {
+        auto display=DisplayManager::display();
+        unsigned int width=120;
+        unsigned int height=120;
+        XWriteBitmapFile(display,fileName,_pixmap,width,height,40,40);
         // Todo
+
+        //!!! it doesn't work !!!!!!!!!!!
         return false;
     }
 
@@ -542,6 +566,10 @@ namespace EggAche_Impl
         return false;
     }
 
+
+    size_t GUIContext_XWindow::GetTxtWidth(const char *szText) {
+
+    }
 
     void GUIContext_XWindow::Clear ()
     {
@@ -598,13 +626,14 @@ int main (int argc, char *argv[])
     wnd.OnClick ([&] (int x, int y)
                  {
                      context.Clear ();
-                     context.SetPen(4,100,100,100);//values are 0~65535
-                     context.SetBrush(false,50,100,150);
+                     context.SetPen(4,200,100,100);//values are 0~65535
+                     context.SetBrush(false,20,100,150);
                      context.DrawLine (0, 0, x, y);
+                     context.DrawRdRt(50,50,220,220,30,30);
                      context.DrawRect(x-50,y-50,x+50,y+50);
                      context.DrawTxt(50,50,"thiefunvierse");
                      context.DrawElps(x-50,y-50,x+80,y+150);
-                     context.DrawRdRt(50,50,220,220,30,30);
+                     context.SaveAsBmp("thief.bmp");
                      //context.DrawArc(0,10,90,80,10,50,70,80);
                      wnd.Draw (&context, 0, 0);
                      printf ("You Click %03d, %03d\n", x, y);
