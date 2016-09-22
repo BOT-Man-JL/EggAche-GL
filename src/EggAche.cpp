@@ -270,6 +270,11 @@ namespace EggAche
 		return context->DrawTxt (xBeg, yBeg, szText);
 	}
 
+	size_t Egg::GetTxtWidth (const char *szText)
+	{
+		return context->GetTxtWidth (szText);
+	}
+
 	bool Egg::DrawImg (const char *fileName, int x, int y)
 	{
 		return context->DrawImg (fileName, x, y);

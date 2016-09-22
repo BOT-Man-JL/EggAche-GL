@@ -29,8 +29,8 @@ int main (int argc, char *argv[])
 	Window window (width, height, "Typer");
 	auto bgEgg = window.GetBackground ();
 
-	const auto fontWidth = 8;
-	const auto fontHeight = 18;
+	const auto fontHeight = 18;							// Default Font Height is 18
+	const auto fontWidth = bgEgg->GetTxtWidth ("a");	// Default Font is Fixed-Width
 	auto chPerLine = width / fontWidth;
 	std::string bufStr;
 
