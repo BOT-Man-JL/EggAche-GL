@@ -8,6 +8,7 @@
 #include <chrono>
 #include <cstring>
 #include <unordered_map>
+#include <cmath>
 #include <X11/Xlib.h>
 
 #include "EggAche_Impl.h"
@@ -521,20 +522,39 @@ namespace EggAche_Impl
                                       int xBeg, int yBeg, int xEnd, int yEnd)
     {
         auto display = DisplayManager::display();
-        XDrawArc(display,_pixmap,_gc,xLeft,yTop,xRight-xLeft,yBottom-yTop,xEnd-xBeg,yEnd-yBeg);
+        XDrawArc(display,_pixmap,_gc,xLeft,yTop,xRight-xLeft,yBottom-yTop,
+                 (int)(64* atan( (yBeg-(yBottom-yTop)/2) / (xBeg-(xRight-xLeft)/2) ) ),
+                 (int)(64* (atan( (yEnd-(yBottom-yTop)/2) / (xEnd-(xRight-xLeft)/2) )
+                            -atan( (yBeg-(yBottom-yTop)/2) / (xBeg-(xRight-xLeft)/2) ) )));
+        XFillArc(display,_pixmap,_gc,xLeft,yTop,xRight-xLeft,yBottom-yTop,
+                 (int)(64* atan( (yBeg-(yBottom-yTop)/2) / (xBeg-(xRight-xLeft)/2) ) ),
+                 (int)(64* (atan( (yEnd-(yBottom-yTop)/2) / (xEnd-(xRight-xLeft)/2) )
+                            -atan( (yBeg-(yBottom-yTop)/2) / (xBeg-(xRight-xLeft)/2) ) )));
+        // dont know what it will do
+
         return false;
     }
 
     bool GUIContext_XWindow::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
                                         int xBeg, int yBeg, int xEnd, int yEnd)
     {
-        // Todo
+        auto display = DisplayManager::display();
+
+        GUIContext_XWindow::DrawArc (xLeft, yTop, xRight, yBottom,
+                                     xBeg, yBeg, xEnd, yEnd);//needs spread in XWindow's form if necessary
+        GUIContext_XWindow::DrawLine (xBeg, yBeg, xEnd, yEnd);
+
         return false;
     }
 
     bool GUIContext_XWindow::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
                                       int xBeg, int yBeg, int xEnd, int yEnd)
     {
+        GUIContext_XWindow::DrawArc (xLeft, yTop, xRight, yBottom,
+                                     xBeg, yBeg, xEnd, yEnd);
+        GUIContext_XWindow::DrawLine (xBeg, yBeg, (xRight-xLeft)/2, (yBottom-yTop)/2);
+        GUIContext_XWindow::DrawLine (xEnd, yEnd, (xRight-xLeft)/2, (yBottom-yTop)/2);
+
         // Todo
         return false;
     }
