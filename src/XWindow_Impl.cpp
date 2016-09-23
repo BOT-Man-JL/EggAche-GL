@@ -219,7 +219,7 @@ namespace EggAche_Impl
         while (auto wndMapper = WindowManager::hwndMapper ())
         {
             auto display = DisplayManager::display ();
-			Atom wmDeleteMessage = XInternAtom (display, "WM_DELETE_WINDOW", True);
+			Atom wmDeleteMessage = XInternAtom (display, "WM_DELETE_WINDOW", False);
 
             XNextEvent (display, &event);
             switch (event.type)
@@ -279,7 +279,7 @@ namespace EggAche_Impl
 
         XStoreName (display, _window, cap_string);
 
-		Atom wmDeleteMessage = XInternAtom (display, "WM_DELETE_WINDOW", True);
+		Atom wmDeleteMessage = XInternAtom (display, "WM_DELETE_WINDOW", False);
 		XSetWMProtocols (display, _window, &wmDeleteMessage, 1);
 
         /* select kind of events we are interested in */
@@ -641,6 +641,7 @@ namespace EggAche_Impl
     //Windows Manager
     WindowManager::WindowManager ()
     {
+        XInitThreads();
         if (refCount == 0 && _hwndMapper == nullptr)
         {
             _hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
