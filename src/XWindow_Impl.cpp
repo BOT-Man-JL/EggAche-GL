@@ -162,6 +162,7 @@ namespace EggAche_Impl
                       int xBeg, int yBeg, int xEnd, int yEnd) override;
 
         bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
+        size_t GetTxtWidth (const char *szText) override;
 
         bool DrawImg (const char *fileName,
                       int x, int y,
@@ -173,7 +174,6 @@ namespace EggAche_Impl
         bool SaveAsBmp (const char *fileName) const override;
         bool SaveAsJpg (const char *fileName) const override;
         bool SaveAsPng (const char *fileName) const override;
-        size_t GetTxtWidth (const char *szText) override;
         void Clear () override;
 
         void PaintOnContext (GUIContext *,
@@ -218,6 +218,7 @@ namespace EggAche_Impl
         while (auto wndMapper = WindowManager::hwndMapper ())
         {
             auto display = DisplayManager::display ();
+			Atom wmDeleteMessage = XInternAtom (display, "WM_DELETE_WINDOW", True);
 
             XNextEvent (display, &event);
             switch (event.type)
@@ -247,6 +248,14 @@ namespace EggAche_Impl
                     wndMapper->erase (event.xdestroywindow.window);
                     break;
 
+				case ClientMessage:
+					if (event.xclient.data.l[0] == wmDeleteMessage)
+					{
+						(*wndMapper)[event.xdestroywindow.window]->_window = 0;
+						wndMapper->erase (event.xdestroywindow.window);
+					}
+					break;
+
                 default:
                     break;
             }
@@ -269,10 +278,13 @@ namespace EggAche_Impl
 
         XStoreName (display, _window, cap_string);
 
+		Atom wmDeleteMessage = XInternAtom (display, "WM_DELETE_WINDOW", True);
+		XSetWMProtocols (display, _window, &wmDeleteMessage, 1);
+
         /* select kind of events we are interested in */
         XSelectInput (display, _window,
                       ExposureMask | KeyPressMask | ButtonPressMask |
-                      ResizeRedirectMask | StructureNotifyMask);
+                      ResizeRedirectMask | StructureNotifyMask | SubstructureNotifyMask);
 
         /* map (show) the window */
         XMapWindow (display, _window);
@@ -345,7 +357,7 @@ namespace EggAche_Impl
 
         Clear ();
 
-        this->SetBrush(True,255,255,255);
+        // this->SetBrush(True,255,255,255);
 //        this->SetPen(4,10,200,100);
     }
 
@@ -372,7 +384,8 @@ namespace EggAche_Impl
         XSetLineAttributes(display,_penGC,width,LineSolid,CapRound,JoinBevel);
 
 //      get the colormap
-        Colormap cmap = DefaultColormap(display, screen);
+		Colormap cmap = XCreateColormap (display, DefaultRootWindow (display),
+										 DefaultVisual (display, screen), AllocNone);
 
 //      set the rgb values
         xcolor.red = r*257;
@@ -384,7 +397,9 @@ namespace EggAche_Impl
 //      using set the rgb values of foreground to set the rgb values of pen
         XSetForeground(display, _penGC, xcolor.pixel);
 
-        return false;
+		XFreeColors (display, cmap, &xcolor.pixel, 1, 0);
+		XFreeColormap (display, cmap);
+        return true;
     }
 
     bool GUIContext_XWindow::SetBrush (bool isTransparent,
@@ -399,7 +414,8 @@ namespace EggAche_Impl
         XColor xcolor;
 
 //      get the colormap
-        Colormap cmap = DefaultColormap(display, screen);
+        Colormap cmap = XCreateColormap (display, DefaultRootWindow (display),
+										 DefaultVisual (display, screen), AllocNone);
 
 //      set the rgb values
         xcolor.red = r*257;
@@ -411,7 +427,9 @@ namespace EggAche_Impl
 //      using set the rgb values of foreground to set the rgb values of brush
         XSetForeground(display, _brushGC, xcolor.pixel);
 
-        return false;
+		XFreeColors (display, cmap, &xcolor.pixel, 1, 0);
+		XFreeColormap (display, cmap);
+        return true;
     }
 
     bool GUIContext_XWindow::SetFont (unsigned int size,
@@ -568,7 +586,7 @@ namespace EggAche_Impl
 
 
     size_t GUIContext_XWindow::GetTxtWidth(const char *szText) {
-
+		// Todo: add Fontstruct in SetFont
     }
 
     void GUIContext_XWindow::Clear ()
@@ -622,6 +640,7 @@ int main (int argc, char *argv[])
     using namespace EggAche_Impl;
     WindowImpl_XWindow wnd (500, 300, "Hello EggAche");
     GUIContext_XWindow context (500, 300);
+    context.DrawTxt(0,50,"thiefunvierse");
 
     wnd.OnClick ([&] (int x, int y)
                  {
