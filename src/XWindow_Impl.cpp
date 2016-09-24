@@ -40,10 +40,9 @@ namespace EggAche_Impl
         ~DisplayManager ()
         {
             refCount--;
-            printf("%d      displaymanager refcount \n",refCount);
             if (refCount == 0 &_display!= nullptr)
             {
-                XCloseDisplay (_display);
+              //  XCloseDisplay (_display);
                 printf("close display\n");
             }
         }
@@ -296,14 +295,16 @@ namespace EggAche_Impl
                     break;
 
                 case DestroyNotify:
-                    (*wndMapper)[event.xdestroywindow.window]->_window = 0;
-                    wndMapper->erase (event.xdestroywindow.window);
+                    //(*wndMapper)[event.xdestroywindow.window]->_window = 0;
+                   // wndMapper->erase (event.xdestroywindow.window);
+                    return;
                     break;
 
 				case ClientMessage:
 
+                    XDestroyWindow(display,event.xany.window);
 
-					if (event.xclient.data.l[0] == wmDeleteMessage)
+                    if (event.xclient.data.l[0] == wmDeleteMessage)
 					{
                         printf("close window    %d    \n",(*wndMapper)[event.xany.window]->_window);
 						(*wndMapper)[event.xany.window]->_window = 0;
