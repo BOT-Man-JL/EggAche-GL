@@ -40,21 +40,30 @@ namespace EggAche_Impl
         ~DisplayManager ()
         {
             refCount--;
-            if (refCount == 0)
+            printf("%d      displaymanager refcount \n",refCount);
+            if (refCount == 0 &_display!= nullptr)
+            {
                 XCloseDisplay (_display);
+                printf("close display\n");
+            }
         }
 
 		class DisplayHelper
 		{
 		public:
+            static int refCount;
 			DisplayHelper (Display *display)
 				: _display (display)
 			{
+                refCount++;
+                printf("lock     %d  \n",refCount);
 				XLockDisplay (_display);
 			}
 
 			~DisplayHelper ()
 			{
+                refCount--;
+                printf("unlock     %d\n",refCount);
 				XUnlockDisplay (_display);
 			}
 
@@ -68,11 +77,13 @@ namespace EggAche_Impl
 		};
 
 
+
         static DisplayHelper display ()
         {
             return DisplayHelper (_display);
         }
     };
+    int DisplayManager::DisplayHelper::refCount=0;
     size_t DisplayManager::refCount = 0;
     Display *DisplayManager::_display = nullptr;
 
@@ -290,10 +301,13 @@ namespace EggAche_Impl
                     break;
 
 				case ClientMessage:
+
+
 					if (event.xclient.data.l[0] == wmDeleteMessage)
 					{
-						(*wndMapper)[event.xdestroywindow.window]->_window = 0;
-						wndMapper->erase (event.xdestroywindow.window);
+                        printf("close window    %d    \n",(*wndMapper)[event.xany.window]->_window);
+						(*wndMapper)[event.xany.window]->_window = 0;
+						wndMapper->erase (event.xany.window);
 					}
 					break;
 
@@ -301,6 +315,7 @@ namespace EggAche_Impl
                     break;
             }
         }
+
     }
 
 	// Window
