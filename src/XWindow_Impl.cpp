@@ -42,7 +42,7 @@ namespace EggAche_Impl
             refCount--;
             if (refCount == 0 &_display!= nullptr)
             {
-              //  XCloseDisplay (_display);
+                XCloseDisplay (_display);
                 printf("close display\n");
             }
         }
@@ -294,11 +294,13 @@ namespace EggAche_Impl
                         (*wndMapper)[event.xexpose.window]->onRefresh ();
                     break;
 
+/*
                 case DestroyNotify:
                     //(*wndMapper)[event.xdestroywindow.window]->_window = 0;
                    // wndMapper->erase (event.xdestroywindow.window);
                     return;
                     break;
+*/
 
 				case ClientMessage:
 
