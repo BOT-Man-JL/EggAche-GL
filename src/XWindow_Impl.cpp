@@ -485,8 +485,57 @@ namespace EggAche_Impl
                                       unsigned int g,
                                       unsigned int b)
     {
-        // Font
-        // Todo
+        auto display = DisplayManager::display();
+        auto screen = DefaultScreen ((Display *) display);
+
+//        http://www.sbin.org/doc/Xlib/chapt_17_app_A.html
+//        For example, say you use the following name to specify a 24-point (size),
+//        medium (weight), Italic (slant), Charter (family) font:
+//        *charter-medium-i-*-240-*
+        char family_size[30];
+        family_size[0]='*';
+        int i;
+        for(i=1;i<strlen(family)+1;i++)
+            family_size[i] = family[i - 1];
+        family_size[i]='\0';
+        char temp[7]={'-','*','-','*','-','*','-'};
+        strcat(family_size,temp);
+        memset(temp,0,sizeof(temp));
+        sprintf(temp,"%d",size*10);
+        strcat(family_size,temp);
+        temp[0]='-';
+        temp[1]='*';
+        temp[2]='\0';
+        strcat(family_size,temp);
+        XFontStruct *font = XLoadQueryFont (display, family_size);
+        /* If the font could not be loaded, use the default font. */
+        if (!font)
+        {
+            fprintf (stderr, "unable to load font %s: using fixed\n", family_size);
+        }
+        else
+        {
+            XSetFont (display, _fontGC, font->fid);
+        }
+
+        XColor xcolor;
+
+//      get the colormap
+        Colormap cmap = XCreateColormap (display, DefaultRootWindow ((Display *) display),
+                                         DefaultVisual ((Display *) display, screen), AllocNone);
+
+//      set the rgb values
+        xcolor.red = r*257;
+        xcolor.green = g*257;
+        xcolor.blue = b*257;
+        xcolor.flags = DoRed | DoGreen | DoBlue;
+        XAllocColor(display, cmap, &xcolor);
+
+//      using set the rgb values of foreground to set the rgb values of brush
+        XSetForeground(display, _fontGC, xcolor.pixel);
+
+        XFreeColors (display, cmap, &xcolor.pixel, 1, 0);
+        XFreeColormap (display, cmap);
         return false;
     }
 
