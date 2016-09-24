@@ -293,7 +293,6 @@ namespace EggAche_Impl
                     if ((*wndMapper)[event.xexpose.window]->onRefresh)
                         (*wndMapper)[event.xexpose.window]->onRefresh ();
                     break;
-
 /*
                 case DestroyNotify:
                     //(*wndMapper)[event.xdestroywindow.window]->_window = 0;
@@ -301,16 +300,17 @@ namespace EggAche_Impl
                     return;
                     break;
 */
-
 				case ClientMessage:
-
-                    XDestroyWindow(display,event.xany.window);
 
                     if (event.xclient.data.l[0] == wmDeleteMessage)
 					{
+						XDestroyWindow(display,event.xany.window);
                         printf("close window    %d    \n",(*wndMapper)[event.xany.window]->_window);
 						(*wndMapper)[event.xany.window]->_window = 0;
 						wndMapper->erase (event.xany.window);
+
+						if (wndMapper->empty ())
+							return;
 					}
 					break;
 
@@ -345,7 +345,7 @@ namespace EggAche_Impl
         /* select kind of events we are interested in */
         XSelectInput (display, _window,
                       ExposureMask | KeyPressMask | ButtonPressMask |
-                      ResizeRedirectMask | StructureNotifyMask | SubstructureNotifyMask);
+                      ResizeRedirectMask/* | StructureNotifyMask | SubstructureNotifyMask*/);
 
         /* map (show) the window */
         XMapWindow (display, _window);
