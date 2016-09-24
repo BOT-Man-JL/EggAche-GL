@@ -580,14 +580,17 @@ namespace EggAche_Impl
                                       int xBeg, int yBeg, int xEnd, int yEnd)
     {
         auto display = DisplayManager::display();
+        int angle1=64*90;
+        if(xBeg-(xRight-xLeft)/2!=0)
+            angle1=(int)(64* atan( (yBeg-(yBottom-yTop)/2) / (xBeg-(xRight-xLeft)/2) ) );
+
+        int angle2=64*90-angle1;
+        if(xEnd-(xRight-xLeft)/2!=0)
+            angle2=(int)(64* (atan( (yEnd-(yBottom-yTop)/2) / (xEnd-(xRight-xLeft)/2) )))-angle1;
         XDrawArc(display,_pixmap,_gc,xLeft,yTop,xRight-xLeft,yBottom-yTop,
-                 (int)(64* atan( (yBeg-(yBottom-yTop)/2) / (xBeg-(xRight-xLeft)/2) ) ),
-                 (int)(64* (atan( (yEnd-(yBottom-yTop)/2) / (xEnd-(xRight-xLeft)/2) )
-                            -atan( (yBeg-(yBottom-yTop)/2) / (xBeg-(xRight-xLeft)/2) ) )));
+                 angle1,angle2);
         XFillArc(display,_pixmap,_gc,xLeft,yTop,xRight-xLeft,yBottom-yTop,
-                 (int)(64* atan( (yBeg-(yBottom-yTop)/2) / (xBeg-(xRight-xLeft)/2) ) ),
-                 (int)(64* (atan( (yEnd-(yBottom-yTop)/2) / (xEnd-(xRight-xLeft)/2) )
-                            -atan( (yBeg-(yBottom-yTop)/2) / (xBeg-(xRight-xLeft)/2) ) )));
+                 angle1,angle2);
         // dont know what it will do
 
         return false;
@@ -709,12 +712,12 @@ int main (int argc, char *argv[])
                      context.SetPen(4,200,100,100);//values are 0~65535
                      context.SetBrush(false,20,100,150);
                      context.DrawLine (0, 0, x, y);
-                     context.DrawRdRt(50,50,220,220,30,30);
-                     context.DrawRect(x-50,y-50,x+50,y+50);
+//                     context.DrawRdRt(50,50,220,220,30,30);
+//                     context.DrawRect(x-50,y-50,x+50,y+50);
                      context.DrawTxt(50,50,"thiefunvierse");
-                     context.DrawElps(x-50,y-50,x+80,y+150);
+//                     context.DrawElps(x-50,y-50,x+80,y+150);
                      context.SaveAsBmp("thief.bmp");
-                     //context.DrawArc(0,10,90,80,10,50,70,80);
+                     context.DrawArc(50,50,150,130,150,90,100,50);//fuck
                      wnd.Draw (&context, 0, 0);
                      printf ("You Click %03d, %03d\n", x, y);
                  });
