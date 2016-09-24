@@ -29,6 +29,7 @@ namespace EggAche_Impl
         {
             if (refCount == 0)
             {
+				XInitThreads ();
                 _display = XOpenDisplay (NULL);
                 if (_display == NULL)
                     throw std::runtime_error ("Failed at XOpenDisplay");
@@ -43,9 +44,33 @@ namespace EggAche_Impl
                 XCloseDisplay (_display);
         }
 
-        static Display *display ()
+		class DisplayHelper
+		{
+		public:
+			DisplayHelper (Display *display)
+				: _display (display)
+			{
+				XLockDisplay (_display);
+			}
+
+			~DisplayHelper ()
+			{
+				XUnlockDisplay (_display);
+			}
+
+			operator Display *()
+			{
+				return _display;
+			}
+
+		private:
+			Display *_display;
+		};
+
+
+        static DisplayHelper display ()
         {
-            return _display;
+            return DisplayHelper (_display);
         }
     };
     size_t DisplayManager::refCount = 0;
@@ -58,9 +83,21 @@ namespace EggAche_Impl
     private:
         static std::unordered_map<Window, WindowImpl_XWindow *> *_hwndMapper;
         static size_t refCount;
-    public:
-        WindowManager ();
 
+		static void EventHandler ();
+    public:
+        WindowManager ()
+		{
+			if (refCount == 0 && _hwndMapper == nullptr)
+			{
+				_hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
+
+				// Create a new thread
+				std::thread thread (EventHandler);
+				thread.detach ();
+			}
+			refCount++;
+		}
 
         ~WindowManager ()
         {
@@ -100,8 +137,6 @@ namespace EggAche_Impl
         void OnResized (std::function<void (int, int)> fn) override;
         void OnRefresh (std::function<void ()> fn) override;
 
-        static void EventHandler ();
-
     protected:
         int			_cxCanvas, _cyCanvas;
         int			_cxClient, _cyClient;
@@ -115,6 +150,8 @@ namespace EggAche_Impl
         std::function<void (char)> onPress;
         std::function<void (int, int)> onResized;
         std::function<void ()> onRefresh;
+
+		friend class WindowManager;
 
         WindowImpl_XWindow (const WindowImpl_XWindow &) = delete;		// Not allow to copy
         void operator= (const WindowImpl_XWindow &) = delete;			// Not allow to copy
@@ -211,10 +248,13 @@ namespace EggAche_Impl
         return new GUIContext_XWindow (width, height);
     }
 
-    // Window
+    // Window Manager
 
-    void WindowImpl_XWindow::EventHandler ()
+    void WindowManager::EventHandler ()
     {
+		// Add refCount of DisplayManager
+		DisplayManager ();
+
         XEvent event;
         while (auto wndMapper = WindowManager::hwndMapper ())
         {
@@ -263,19 +303,21 @@ namespace EggAche_Impl
         }
     }
 
+	// Window
+
     WindowImpl_XWindow::WindowImpl_XWindow (size_t width, size_t height,
                                             const char *cap_string)
             : _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
               _window (0)
     {
         auto display = DisplayManager::display ();
-        auto screen = DefaultScreen (display);
+        auto screen = DefaultScreen ((Display *) display);
 
         auto initX = 10, initY = 10, initBorder = 1;
-        _window = XCreateSimpleWindow (display, RootWindow (display, screen),
+        _window = XCreateSimpleWindow (display, RootWindow ((Display *) display, screen),
                                        initX, initY, width, height, initBorder,
-                                       BlackPixel (display, screen),
-                                       WhitePixel (display, screen));
+                                       BlackPixel ((Display *) display, screen),
+                                       WhitePixel ((Display *) display, screen));
 
         XStoreName (display, _window, cap_string);
 
@@ -303,10 +345,10 @@ namespace EggAche_Impl
                                    size_t x, size_t y)
     {
         auto display = DisplayManager::display ();
-        auto screen = DefaultScreen (display);
+        auto screen = DefaultScreen ((Display *) display);
 
         auto _context = static_cast<const GUIContext_XWindow *> (context);
-        XCopyArea (display, _context->_pixmap, _window, DefaultGC (display, screen),
+        XCopyArea (display, _context->_pixmap, _window, DefaultGC ((Display *) display, screen),
                    0, 0, _context->_w, _context->_h, x, y);
     }
 
@@ -346,11 +388,11 @@ namespace EggAche_Impl
             : _w (width), _h (height), _pixmap (0), _gc (0)
     {
         auto display = DisplayManager::display ();
-        auto screen = DefaultScreen (display);
+        auto screen = DefaultScreen ((Display *) display);
 
-        _pixmap = XCreatePixmap (display, RootWindow (display, screen),
+        _pixmap = XCreatePixmap (display, RootWindow ((Display *) display, screen),
                                  width, height,
-                                 DefaultDepth (display, screen));
+                                 DefaultDepth ((Display *) display, screen));
         _gc = XCreateGC (display, _pixmap, 0, NULL);
         _penGC = XCreateGC (display, _pixmap, 0, NULL);
         _brushGC = XCreateGC (display, _pixmap, 0, NULL);
@@ -378,15 +420,15 @@ namespace EggAche_Impl
                                      unsigned int b)
     {
         auto display = DisplayManager::display();
-        auto screen = DefaultScreen (display);
+        auto screen = DefaultScreen ((Display *) display);
         XColor xcolor;
 
 //      set the attributes of the line
         XSetLineAttributes(display,_penGC,width,LineSolid,CapRound,JoinBevel);
 
 //      get the colormap
-		Colormap cmap = XCreateColormap (display, DefaultRootWindow (display),
-										 DefaultVisual (display, screen), AllocNone);
+		Colormap cmap = XCreateColormap (display, DefaultRootWindow ((Display *) display),
+										 DefaultVisual ((Display *) display, screen), AllocNone);
 
 //      set the rgb values
         xcolor.red = r*257;
@@ -411,12 +453,12 @@ namespace EggAche_Impl
         this->isBrushTransparant=isTransparent;
 
         auto display = DisplayManager::display();
-        auto screen = DefaultScreen (display);
+        auto screen = DefaultScreen ((Display *) display);
         XColor xcolor;
 
 //      get the colormap
-        Colormap cmap = XCreateColormap (display, DefaultRootWindow (display),
-										 DefaultVisual (display, screen), AllocNone);
+        Colormap cmap = XCreateColormap (display, DefaultRootWindow ((Display *) display),
+										 DefaultVisual ((Display *) display, screen), AllocNone);
 
 //      set the rgb values
         xcolor.red = r*257;
@@ -612,13 +654,13 @@ namespace EggAche_Impl
     void GUIContext_XWindow::Clear ()
     {
         auto display = DisplayManager::display ();
-        auto screen = DefaultScreen (display);
+        auto screen = DefaultScreen ((Display *) display);
 
-        XSetForeground (display, _gc, WhitePixel (display, screen));
+        XSetForeground (display, _gc, WhitePixel ((Display *) display, screen));
         XSetFillStyle (display, _gc, FillSolid);
         XFillRectangle (display, _pixmap, _gc, 0, 0, _w, _h);
 
-        XSetForeground (display, _gc, BlackPixel (display, screen));
+        XSetForeground (display, _gc, BlackPixel ((Display *) display, screen));
         XFlushGC (display, _gc);
     }
 
@@ -633,24 +675,6 @@ namespace EggAche_Impl
     void MsgBox_Impl (const char * szTxt, const char * szCap)
     {
         // Todo
-    }
-
-
-
-
-    //Windows Manager
-    WindowManager::WindowManager ()
-    {
-        XInitThreads();
-        if (refCount == 0 && _hwndMapper == nullptr)
-        {
-            _hwndMapper = new std::unordered_map<Window, WindowImpl_XWindow *> ();
-
-            // Create a new thread
-            std::thread thread (WindowImpl_XWindow::EventHandler);
-            thread.detach ();
-        }
-        refCount++;
     }
 }
 
