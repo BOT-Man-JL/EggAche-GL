@@ -6,6 +6,7 @@
 #include <exception>
 #include <string>
 #include <unordered_map>
+#include <cmath>
 
 #include <Windows.h>
 #include <windowsx.h>
@@ -173,13 +174,13 @@ namespace EggAche_Impl
 					   int xEnd, int yEnd, int wElps, int hElps) override;
 
 		bool DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-					  int xBeg, int yBeg, int xEnd, int yEnd) override;
+					  double angleBeg, double cAngle) override;
 
 		bool DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-						int xBeg, int yBeg, int xEnd, int yEnd) override;
+						double angleBeg, double cAngle) override;
 
 		bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-					  int xBeg, int yBeg, int xEnd, int yEnd) override;
+					  double angleBeg, double cAngle) override;
 
 		bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
 		size_t GetTxtWidth (const char *szText) override;
@@ -533,8 +534,8 @@ namespace EggAche_Impl
 		if (hObj != GetStockObject (SYSTEM_FONT))
 			DeleteObject (hObj);
 
-		DeleteObject (this->_hBitmap);
 		DeleteDC (this->_hdc);
+		DeleteObject (this->_hBitmap);
 	}
 
 	bool GUIContext_Windows::SetPen (unsigned int width,
@@ -629,21 +630,93 @@ namespace EggAche_Impl
 		return !!RoundRect (this->_hdc, xBeg, yBeg, xEnd, yEnd, wElps, hElps);
 	}
 
-	bool GUIContext_Windows::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-									  int xBeg, int yBeg, int xEnd, int yEnd)
+	void ConvertAngle (double angle, int &x, int &y)
 	{
+		const unsigned RADIUS = 1000;
+		const double PI = 3.14159265;
+
+		while (angle < 0)
+			angle += 360;
+		while (angle > 360)
+			angle -= 360;
+
+		x = RADIUS * cos (angle * PI / 180);
+		y = RADIUS * sin (angle * PI / 180);
+		y = -y;
+	}
+
+	bool GUIContext_Windows::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
+									  double angleBeg, double cAngle)
+	{
+		int xBeg, yBeg, xEnd, yEnd;
+		if (cAngle > 0)
+		{
+			ConvertAngle (angleBeg, xBeg, yBeg);
+			ConvertAngle (angleBeg + cAngle, xEnd, yEnd);
+		}
+		else
+		{
+			ConvertAngle (angleBeg + cAngle, xBeg, yBeg);
+			ConvertAngle (angleBeg, xEnd, yEnd);
+		}
+
+		auto xCnt = abs (xRight - xLeft) / 2;
+		auto yCnt = abs (yBottom - yTop) / 2;
+		xBeg += xCnt;
+		xEnd += xCnt;
+		yBeg += yCnt;
+		yEnd += yCnt;
+		
 		return !!Arc (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
 	bool GUIContext_Windows::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-										int xBeg, int yBeg, int xEnd, int yEnd)
+										double angleBeg, double cAngle)
 	{
+		int xBeg, yBeg, xEnd, yEnd;
+		if (cAngle > 0)
+		{
+			ConvertAngle (angleBeg, xBeg, yBeg);
+			ConvertAngle (angleBeg + cAngle, xEnd, yEnd);
+		}
+		else
+		{
+			ConvertAngle (angleBeg + cAngle, xBeg, yBeg);
+			ConvertAngle (angleBeg, xEnd, yEnd);
+		}
+
+		auto xCnt = abs (xRight - xLeft) / 2;
+		auto yCnt = abs (yBottom - yTop) / 2;
+		xBeg += xCnt;
+		xEnd += xCnt;
+		yBeg += yCnt;
+		yEnd += yCnt;
+
 		return !!Chord (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
 	bool GUIContext_Windows::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-									  int xBeg, int yBeg, int xEnd, int yEnd)
+									  double angleBeg, double cAngle)
 	{
+		int xBeg, yBeg, xEnd, yEnd;
+		if (cAngle > 0)
+		{
+			ConvertAngle (angleBeg, xBeg, yBeg);
+			ConvertAngle (angleBeg + cAngle, xEnd, yEnd);
+		}
+		else
+		{
+			ConvertAngle (angleBeg + cAngle, xBeg, yBeg);
+			ConvertAngle (angleBeg, xEnd, yEnd);
+		}
+
+		auto xCnt = abs (xRight - xLeft) / 2;
+		auto yCnt = abs (yBottom - yTop) / 2;
+		xBeg += xCnt;
+		xEnd += xCnt;
+		yBeg += yCnt;
+		yEnd += yCnt;
+
 		return !!Pie (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 

@@ -559,10 +559,10 @@ namespace EggAche_Impl
 			DeleteObject (hObj);
 
 		// Delete HDC/HBITMAP
-		DeleteObject (_hBitmap);
 		DeleteDC (_hdc);
-		DeleteObject (_hBitMask);
+		DeleteObject (_hBitmap);
 		DeleteDC (_hdcMask);
+		DeleteObject (_hBitMask);
 	}
 
 	bool GUIContext_Windows::SetPen (unsigned int width,

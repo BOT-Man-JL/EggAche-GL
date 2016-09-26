@@ -45,11 +45,11 @@ namespace EggAche_Impl
 							   unsigned int g,
 							   unsigned int b) = 0;
 
-		virtual bool SetFont (unsigned int size = 18,
-							  const char *family = "Consolas",
-							  unsigned int r = 0,
-							  unsigned int g = 0,
-							  unsigned int b = 0) = 0;
+		virtual bool SetFont (unsigned int size,
+							  const char *family,
+							  unsigned int r,
+							  unsigned int g,
+							  unsigned int b) = 0;
 
 		virtual bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd) = 0;
 
@@ -61,13 +61,13 @@ namespace EggAche_Impl
 							   int xEnd, int yEnd, int wElps, int hElps) = 0;
 
 		virtual bool DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-							  int xBeg, int yBeg, int xEnd, int yEnd) = 0;
+							  double angleBeg, double cAngle) = 0;
 
 		virtual bool DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-								int xBeg, int yBeg, int xEnd, int yEnd) = 0;
+								double angleBeg, double cAngle) = 0;
 
 		virtual bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-							  int xBeg, int yBeg, int xEnd, int yEnd) = 0;
+							  double angleBeg, double cAngle) = 0;
 
 		virtual bool DrawTxt (int xBeg, int yBeg, const char *szText) = 0;
 		virtual size_t GetTxtWidth (const char *szText) = 0;

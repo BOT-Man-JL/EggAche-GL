@@ -167,7 +167,8 @@ namespace EggAche
 		// wElps, hElps = the width/height of the rounded corners Ellipse;
 
 		bool DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-					  int xBeg, int yBeg, int xEnd, int yEnd);
+					  double angleBeg, double cAngle);
+		// Todo: Update Doc
 		// Remarks:
 		// The points (xLeft, yTop) and (xRight, yBottom) specify the bounding box;
 		// An Ellipse formed by the bounding box defines the curve of the Arc;
@@ -176,7 +177,8 @@ namespace EggAche
 		// The Arc ends where it intersects the radial to (xEnd, yEnd);
 
 		bool DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-						int xBeg, int yBeg, int xEnd, int yEnd);
+						double angleBeg, double cAngle);
+		// Todo: Update Doc
 		// Remarks:
 		// The points (xLeft, yTop) and (xRight, yBottom) specify the bounding box;
 		// An Ellipse formed by the bounding box defines the curve of the Chord;
@@ -186,7 +188,8 @@ namespace EggAche
 		// and the curve to the intersection of the second radial and the curve;
 
 		bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-					  int xBeg, int yBeg, int xEnd, int yEnd);
+					  double angleBeg, double cAngle);
+		// Todo: Update Doc
 		// Remarks:
 		// The points (xLeft, yTop) and (xRight, yBottom) specify the bounding box;
 		// An Ellipse formed by the bounding box defines the curve of the Pie;
