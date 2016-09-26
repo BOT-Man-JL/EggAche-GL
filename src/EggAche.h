@@ -168,33 +168,33 @@ namespace EggAche
 
 		bool DrawArc (int xLeft, int yTop, int xRight, int yBottom,
 					  double angleBeg, double cAngle);
-		// Todo: Update Doc
 		// Remarks:
 		// The points (xLeft, yTop) and (xRight, yBottom) specify the bounding box;
 		// An Ellipse formed by the bounding box defines the curve of the Arc;
-		// The Arc extends in the current drawing direction from the point
-		// where it intersects the radial from the center to (xBeg, yBeg);
-		// The Arc ends where it intersects the radial to (xEnd, yEnd);
+		// 'angleBeg' specifies the start of the Arc relative to the 3-o'clock position;
+		// The Arc extends from 'angleBeg' to 'angleBeg + cAngle';
+		// Positive 'cAngle' indicates counterclockwise motion, and Negative clockwise;
 
 		bool DrawChord (int xLeft, int yTop, int xRight, int yBottom,
 						double angleBeg, double cAngle);
-		// Todo: Update Doc
 		// Remarks:
 		// The points (xLeft, yTop) and (xRight, yBottom) specify the bounding box;
 		// An Ellipse formed by the bounding box defines the curve of the Chord;
-		// The curve begins at the point where the Ellipse intersects the first radial
-		// and extends counterclockwise to the point where the second radial intersects;
+		// 'angleBeg' specifies the start of the Curve relative to the 3-o'clock position;
+		// The Curve extends from 'angleBeg' to 'angleBeg + cAngle';
+		// Positive 'cAngle' indicates counterclockwise motion, and Negative clockwise;
 		// The Chord is closed by drawing a line from the intersection of the first radial
 		// and the curve to the intersection of the second radial and the curve;
 
 		bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
 					  double angleBeg, double cAngle);
-		// Todo: Update Doc
 		// Remarks:
 		// The points (xLeft, yTop) and (xRight, yBottom) specify the bounding box;
 		// An Ellipse formed by the bounding box defines the curve of the Pie;
-		// The curve begins at the point where the Ellipse intersects the first radial
-		// and extends counterclockwise to the point where the second radial intersects;
+		// 'angleBeg' specifies the start of the Curve relative to the 3-o'clock position;
+		// The Curve extends from 'angleBeg' to 'angleBeg + cAngle';
+		// Positive 'cAngle' indicates counterclockwise motion, and Negative clockwise;
+		// The Pie is closed by drawing 2 Radius of the Angles;
 
 		bool SaveAsJpg (const char *fileName) const;		// "path/name.jpg"
 		bool SaveAsPng (const char *fileName) const;		// "path/name.png"

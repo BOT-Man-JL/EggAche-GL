@@ -141,6 +141,9 @@ And you will notice that `Snapshot.bmp` has been saved :wink:
 
 - As there's **_NO_** **built-in thread-safe** in EggAche, the reentrant behaviors of this Sample are unknown... :disappointed_relieved:
 - [Click for more Samples](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/Samples)
+  - Get Started
+  - Little Typer
+  - Beautiful Rainbow Animation
 
 ## Update History
 
