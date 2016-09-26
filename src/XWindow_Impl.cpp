@@ -199,13 +199,13 @@ namespace EggAche_Impl
                        int xEnd, int yEnd, int wElps, int hElps) override;
 
         bool DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-                      int xBeg, int yBeg, int xEnd, int yEnd) override;
+                      double angleBeg, double cAngle) override;
 
         bool DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-                        int xBeg, int yBeg, int xEnd, int yEnd) override;
+                        double angleBeg, double cAngle) override;
 
         bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-                      int xBeg, int yBeg, int xEnd, int yEnd) override;
+                      double angleBeg, double cAngle) override;
 
         bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
         size_t GetTxtWidth (const char *szText) override;
@@ -612,44 +612,33 @@ namespace EggAche_Impl
     }
 
     bool GUIContext_XWindow::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-                                      int xBeg, int yBeg, int xEnd, int yEnd)
+                                      double angleBeg, double cAngle)
     {
-        auto display = DisplayManager::display ();
-        int angle1 = 64 * 90;
-        if (xBeg - (xRight - xLeft) / 2 != 0)
-            angle1 = (int) (64 * atan ((yBeg - (yBottom - yTop) / 2) / (xBeg - (xRight - xLeft) / 2)));
 
-        int angle2 = 64 * 90 - angle1;
-        if (xEnd - (xRight - xLeft) / 2 != 0)
-            angle2 = (int) (64 * (atan ((yEnd - (yBottom - yTop) / 2) / (xEnd - (xRight - xLeft) / 2)))) - angle1;
-        XDrawArc (display, _pixmap, _penGC, xLeft, yTop, xRight - xLeft, yBottom - yTop,
-                  angle1, angle2);
-        XFillArc (display, _pixmap, _brushGC, xLeft, yTop, xRight - xLeft, yBottom - yTop,
-                  angle1, angle2);
-        // dont know what it will do
+        auto display=DisplayManager::display();
+        XDrawArc(display,_pixmap,_penGC,xLeft,yTop,xRight-xLeft,yBottom-yTop,angleBeg,cAngle);
 
         return false;
     }
 
     bool GUIContext_XWindow::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-                                        int xBeg, int yBeg, int xEnd, int yEnd)
+                                        double angleBeg, double cAngle)
     {
         auto display = DisplayManager::display ();
 
-        GUIContext_XWindow::DrawArc (xLeft, yTop, xRight, yBottom,
-                                     xBeg, yBeg, xEnd, yEnd);//needs spread in XWindow's form if necessary
-        GUIContext_XWindow::DrawLine (xBeg, yBeg, xEnd, yEnd);
+        XDrawArc(display,_pixmap,_penGC,xLeft,yTop,xRight-xLeft,yBottom-yTop,angleBeg,cAngle);
+        //GUIContext_XWindow::DrawLine (xBeg, yBeg, xEnd, yEnd);
 
         return false;
     }
 
     bool GUIContext_XWindow::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-                                      int xBeg, int yBeg, int xEnd, int yEnd)
+                                      double angleBeg, double cAngle)
     {
-        GUIContext_XWindow::DrawArc (xLeft, yTop, xRight, yBottom,
-                                     xBeg, yBeg, xEnd, yEnd);
-        GUIContext_XWindow::DrawLine (xBeg, yBeg, (xRight - xLeft) / 2, (yBottom - yTop) / 2);
-        GUIContext_XWindow::DrawLine (xEnd, yEnd, (xRight - xLeft) / 2, (yBottom - yTop) / 2);
+        //GUIContext_XWindow::DrawArc (xLeft, yTop, xRight, yBottom,
+//                                     xBeg, yBeg, xEnd, yEnd);
+        //GUIContext_XWindow::DrawLine (xBeg, yBeg, (xRight - xLeft) / 2, (yBottom - yTop) / 2);
+        //GUIContext_XWindow::DrawLine (xEnd, yEnd, (xRight - xLeft) / 2, (yBottom - yTop) / 2);
 
         // Todo
         return false;
@@ -755,7 +744,7 @@ int main (int argc, char *argv[])
         context.DrawTxt (50, 50, "thiefunvierse");
         context.DrawElps (x - 50, y - 50, x + 80, y + 150);
         context.SaveAsBmp ("thief.bmp");
-        context.DrawArc (50, 50, 150, 130, 150, 90, 100, 50);//fuck
+     //   context.DrawArc (50, 50, 150, 130, 150, 90, 100, 50);//fuck
         wnd.Draw (&context, 0, 0);
         printf ("You Click %03d, %03d\n", x, y);
     });
