@@ -855,6 +855,7 @@ namespace EggAche_Impl
 			}
 		}
 
+		// Todo: Transparent Blit
 		auto hPrePen = SelectObject (_hdcMask, GetStockObject (BLACK_PEN));
 		auto hPreBrush = SelectObject (_hdcMask, GetStockObject (BLACK_BRUSH));
 		if (!Rectangle (_hdcMask, x, y, x + width, y + height))

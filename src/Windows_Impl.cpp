@@ -115,7 +115,6 @@ namespace EggAche_Impl
 		void OnRefresh (std::function<void ()> fn) override;
 
 	protected:
-		int			_cxCanvas, _cyCanvas;
 		int			_cxClient, _cyClient;
 		std::string	capStr;
 
@@ -211,7 +210,9 @@ namespace EggAche_Impl
 #endif
 
 		static const COLORREF _colorMask;
-		static const COLORREF _GetColor (int r, int g, int b);
+		static const COLORREF _GetColor (unsigned int r,
+										 unsigned int g,
+										 unsigned int b);
 
 #ifdef _MSC_VER
 		bool SaveAsImg (const char *fileName,
@@ -247,8 +248,8 @@ namespace EggAche_Impl
 
 	WindowImpl_Windows::WindowImpl_Windows (size_t width, size_t height,
 											const char *cap_string)
-		: _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
-		capStr (cap_string), _hwnd (NULL), _hEvent (NULL), _fFailed (false)
+		: _cxClient (width), _cyClient (height), capStr (cap_string),
+		_hwnd (NULL), _hEvent (NULL), _fFailed (false)
 	{
 		if (width < 240 || height < 120)
 			throw std::runtime_error ("Err_Window_#1_Too_Small");
@@ -321,8 +322,8 @@ namespace EggAche_Impl
 	void WindowImpl_Windows::_NewWindow_Thread (WindowImpl_Windows *pew)
 	{
 		RECT rect { 0 };
-		rect.right = pew->_cxCanvas;
-		rect.bottom = pew->_cyCanvas;
+		rect.right = pew->_cxClient;
+		rect.bottom = pew->_cyClient;
 		if (!AdjustWindowRect (&rect, WS_OVERLAPPEDWINDOW, FALSE))
 		{
 			pew->_fFailed = true;
@@ -463,16 +464,16 @@ namespace EggAche_Impl
 	// Context
 
 	const COLORREF GUIContext_Windows::_colorMask = RGB (0, 0, 201);
-	const COLORREF GUIContext_Windows::_GetColor (int r, int g, int b)
+	const COLORREF GUIContext_Windows::_GetColor (unsigned int r,
+												  unsigned int g,
+												  unsigned int b)
 	{
-		const auto mMax =
-			[] (const int &a, const int &b) { return a > b ? a : b; };
 		const auto mMin =
 			[] (const int &a, const int &b) { return a < b ? a : b; };
 
-		r = mMax (0, mMin (255, r));
-		g = mMax (0, mMin (255, g));
-		b = mMax (0, mMin (255, b));
+		r = mMin (255, r);
+		g = mMin (255, g);
+		b = mMin (255, b);
 
 		if (RGB (r, b, b) != _colorMask)
 			return RGB (r, g, b);
@@ -483,38 +484,33 @@ namespace EggAche_Impl
 	GUIContext_Windows::GUIContext_Windows (size_t width, size_t height)
 		: _hdc (NULL), _hBitmap (NULL), _w (width), _h (height)
 	{
-		HBRUSH	hBrush;
-		RECT	rect;
-		HDC		hdcWnd;
+		// Get Root HDC
+		auto hdcRoot = GetDC (NULL);
 
-		hdcWnd = GetDC (NULL);
-		this->_hdc = CreateCompatibleDC (hdcWnd);
-		this->_hBitmap = CreateCompatibleBitmap (hdcWnd, this->_w, this->_h);
+		// New Canvas HDC
+		_hdc = CreateCompatibleDC (hdcRoot);
+		_hBitmap = CreateCompatibleBitmap (hdcRoot, _w, _h);
 
-		if (!this->_hdc || !this->_hBitmap)
+		if (!_hdc || !_hBitmap)
 		{
-			if (this->_hBitmap) DeleteObject (this->_hBitmap);
-			if (this->_hdc) DeleteDC (this->_hdc);
-			ReleaseDC (NULL, hdcWnd);
+			if (_hBitmap) DeleteObject (_hBitmap);
+			if (_hdc) DeleteDC (_hdc);
+			ReleaseDC (NULL, hdcRoot);
 			throw std::runtime_error ("Err_DC_#0_Bitmap");
 		}
-		SelectObject (this->_hdc, this->_hBitmap);
+		SelectObject (_hdc, _hBitmap);
 
-		rect.left = rect.top = 0;
-		rect.right = width;
-		rect.bottom = height;
-		hBrush = CreateSolidBrush (_colorMask);
-		FillRect (this->_hdc, &rect, hBrush);
+		// Release Root HDC
+		ReleaseDC (NULL, hdcRoot);
 
-		SelectObject (this->_hdc, (HBRUSH) GetStockObject (NULL_BRUSH));
-		SelectObject (this->_hdc, (HPEN) GetStockObject (BLACK_PEN));
-		SetBkMode (this->_hdc, TRANSPARENT);
+		// Set HDC init Properties
+		SetPen (1, 0, 0, 0);
+		SetBrush (true, 0, 0, 0);
+		SetFont (18, "Consolas", 0, 0, 0);
+		SetBkMode (_hdc, TRANSPARENT);
 
-		// Set default Font to Consolas :-)
-		SetFont ();
-
-		ReleaseDC (NULL, hdcWnd);
-		DeleteObject (hBrush);
+		// Clear
+		Clear ();
 	}
 
 	GUIContext_Windows::~GUIContext_Windows ()
@@ -546,21 +542,19 @@ namespace EggAche_Impl
 									 unsigned int g,
 									 unsigned int b)
 	{
+		HPEN hPen;
+
 		if (width == 0)
+			hPen = (HPEN) GetStockObject (NULL_PEN);
+		else if (width == 1 && r == 0 && g == 0 && b == 0)
+			hPen = (HPEN) GetStockObject (BLACK_PEN);
+		else
 		{
-			auto hObj = SelectObject (this->_hdc,
-				(HPEN) GetStockObject (NULL_PEN));
-			if (hObj != GetStockObject (BLACK_PEN) &&
-				hObj != GetStockObject (NULL_PEN))
-				DeleteObject (hObj);
-			return true;
+			hPen = CreatePen (PS_SOLID, width, _GetColor (r, g, b));
+			if (!hPen) return false;
 		}
 
-		auto hPen = CreatePen (PS_SOLID, max (0, width),
-							   _GetColor (r, g, b));
-		if (!hPen) return false;
-
-		auto hObj = SelectObject (this->_hdc, hPen);
+		auto hObj = SelectObject (_hdc, hPen);
 		if (hObj != GetStockObject (BLACK_PEN) &&
 			hObj != GetStockObject (NULL_PEN))
 			DeleteObject (hObj);
@@ -573,19 +567,17 @@ namespace EggAche_Impl
 									   unsigned int g,
 									   unsigned int b)
 	{
+		HBRUSH hBrush;
+
 		if (isTransparent)
+			hBrush = (HBRUSH) GetStockObject (NULL_BRUSH);
+		else
 		{
-			auto hObj = SelectObject (this->_hdc,
-				(HPEN) GetStockObject (NULL_BRUSH));
-			if (hObj != GetStockObject (NULL_BRUSH))
-				DeleteObject (hObj);
-			return true;
+			hBrush = CreateSolidBrush (_GetColor (r, g, b));
+			if (!hBrush) return false;
 		}
 
-		auto hBrush = CreateSolidBrush (_GetColor (r, g, b));
-		if (!hBrush) return false;
-
-		auto hObj = SelectObject (this->_hdc, hBrush);
+		auto hObj = SelectObject (_hdc, hBrush);
 		if (hObj != GetStockObject (NULL_BRUSH))
 			DeleteObject (hObj);
 
