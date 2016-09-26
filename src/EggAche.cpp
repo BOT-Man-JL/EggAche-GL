@@ -245,24 +245,24 @@ namespace EggAche
 	}
 
 	bool Egg::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-					   int xBeg, int yBeg, int xEnd, int yEnd)
+					   double angleBeg, double cAngle)
 	{
 		return context->DrawArc (xLeft, yTop, xRight, yBottom,
-								 xBeg, yBeg, xEnd, yEnd);
+								 angleBeg, cAngle);
 	}
 
 	bool Egg::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-						 int xBeg, int yBeg, int xEnd, int yEnd)
+						 double angleBeg, double cAngle)
 	{
-		return context->DrawChord (xLeft, yTop, xLeft, yBottom,
-								   xBeg, yBeg, xEnd, yEnd);
+		return context->DrawChord (xLeft, yTop, xRight, yBottom,
+								   angleBeg, cAngle);
 	}
 
 	bool Egg::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-					   int xBeg, int yBeg, int xEnd, int yEnd)
+					   double angleBeg, double cAngle)
 	{
-		return context->DrawPie (xLeft, yTop, xLeft, yBottom,
-								 xBeg, yBeg, xEnd, yEnd);
+		return context->DrawPie (xLeft, yTop, xRight, yBottom,
+								 angleBeg, cAngle);
 	}
 
 	bool Egg::DrawTxt (int xBeg, int yBeg, const char *szText)

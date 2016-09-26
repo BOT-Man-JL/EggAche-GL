@@ -559,10 +559,10 @@ namespace EggAche_Impl
 			DeleteObject (hObj);
 
 		// Delete HDC/HBITMAP
-		DeleteObject (_hBitmap);
 		DeleteDC (_hdc);
-		DeleteObject (_hBitMask);
+		DeleteObject (_hBitmap);
 		DeleteDC (_hdcMask);
+		DeleteObject (_hBitMask);
 	}
 
 	bool GUIContext_Windows::SetPen (unsigned int width,
@@ -855,6 +855,7 @@ namespace EggAche_Impl
 			}
 		}
 
+		// Todo: Transparent Blit
 		auto hPrePen = SelectObject (_hdcMask, GetStockObject (BLACK_PEN));
 		auto hPreBrush = SelectObject (_hdcMask, GetStockObject (BLACK_BRUSH));
 		if (!Rectangle (_hdcMask, x, y, x + width, y + height))
