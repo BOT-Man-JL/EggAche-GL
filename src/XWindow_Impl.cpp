@@ -232,6 +232,8 @@ namespace EggAche_Impl
         bool isPenTransparent;
         bool isBrushTransparent;
 
+        const int ANGLE_WEIGHT=64;
+
         DisplayManager _displayManager;
 
         friend void WindowImpl_XWindow::Draw (const GUIContext *context,
@@ -402,6 +404,7 @@ namespace EggAche_Impl
         _penGC = XCreateGC (display, _pixmap, 0, NULL);
         _brushGC = XCreateGC (display, _pixmap, 0, NULL);
         _fontGC = XCreateGC (display, _pixmap, 0, NULL);
+
     }
 
     GUIContext_XWindow::~GUIContext_XWindow ()
@@ -560,7 +563,7 @@ namespace EggAche_Impl
     bool GUIContext_XWindow::DrawElps (int xBeg, int yBeg, int xEnd, int yEnd)
     {
         auto display = DisplayManager::display ();
-        const int fullAngle = 360 * 64;
+        const int fullAngle = 360 * ANGLE_WEIGHT;
         if (!isPenTransparent)
             XDrawArc (display, _pixmap, _penGC, xBeg, yBeg, xEnd - xBeg, yEnd - yBeg, fullAngle, fullAngle);
         if (!isBrushTransparent)
@@ -573,7 +576,7 @@ namespace EggAche_Impl
                                        int wElps, int hElps)
     {
         auto display = DisplayManager::display ();
-        const int fullAngle = 360 * 64;
+        const int fullAngle = 360 * ANGLE_WEIGHT;
         int rdWid = xEnd - xBeg - 2 * wElps;
         int rdHei = yEnd - yBeg - 2 * hElps;
 
@@ -616,7 +619,7 @@ namespace EggAche_Impl
     {
 
         auto display=DisplayManager::display();
-        XDrawArc(display,_pixmap,_penGC,xLeft,yTop,xRight-xLeft,yBottom-yTop,angleBeg,cAngle);
+        XDrawArc(display,_pixmap,_penGC,xLeft,yTop,xRight-xLeft,yBottom-yTop,angleBeg*ANGLE_WEIGHT,cAngle*ANGLE_WEIGHT);
 
         return false;
     }
@@ -626,7 +629,7 @@ namespace EggAche_Impl
     {
         auto display = DisplayManager::display ();
 
-        XDrawArc(display,_pixmap,_penGC,xLeft,yTop,xRight-xLeft,yBottom-yTop,angleBeg,cAngle);
+        XDrawArc(display,_pixmap,_penGC,xLeft,yTop,xRight-xLeft,yBottom-yTop,angleBeg*ANGLE_WEIGHT,cAngle*ANGLE_WEIGHT);
         //GUIContext_XWindow::DrawLine (xBeg, yBeg, xEnd, yEnd);
 
         return false;
@@ -699,6 +702,33 @@ namespace EggAche_Impl
     void GUIContext_XWindow::PaintOnContext (GUIContext *parentContext,
                                              size_t x, size_t y) const
     {
+        auto display=DisplayManager::display();
+        Pixmap testpixmap = XCreatePixmap (display, RootWindow ((Display *) display, DefaultScreen(display)),
+                                 _w, _h,
+                                 DefaultDepth ((Display *) display, DefaultScreen(display)));
+
+        GC testGc= XCreateGC(display,testpixmap,0,NULL);
+        XSetBackground(display,_brushGC,0);
+        XFillRectangle(display,_pixmap,_brushGC,0,0,_w,_h);
+
+        XSetForeground(display,testGc,BlackPixelOfScreen(DefaultScreenOfDisplay(display)));
+        XFillArc(display,testpixmap,testGc,0,0,40,40,0,360*64);
+
+
+        XSetForeground(display,_brushGC,BlackPixelOfScreen(DefaultScreenOfDisplay(display)));
+        XFillArc(display,_pixmap,_brushGC,0,0,40,40,0,360*64);
+
+        XSetForeground(display,testGc,0);
+        XFillArc(display,testpixmap,testGc,0,0,40,40,0,360*64);
+
+
+        XSetForeground(display,_brushGC,BlackPixelOfScreen(DefaultScreenOfDisplay(display)));
+        XFillArc(display,_pixmap,_brushGC,0,0,40,40,0,360*64);
+
+
+        XSetClipMask(display,_brushGC,_pixmap);
+
+       
         // Todo
     }
 
@@ -715,7 +745,7 @@ namespace EggAche_Impl
 int main (int argc, char *argv[])
 {
     using namespace EggAche_Impl;
-    {
+ /*   {
 		// Test Multi-Window
         WindowImpl_XWindow wwnd (10, 20, "J");
 		WindowImpl_XWindow wwwnd (10, 20, "J");
@@ -724,7 +754,7 @@ int main (int argc, char *argv[])
 		{
 			std::this_thread::sleep_for (std::chrono::milliseconds (500));
 		}
-    }
+    }*/
     WindowImpl_XWindow wnd (500, 300, "Hello EggAche");
     GUIContext_XWindow context (500, 300);
     context.Clear ();
@@ -738,8 +768,10 @@ int main (int argc, char *argv[])
         context.Clear ();
         context.SetPen (4, 200, 100, 100);
         context.SetBrush (false, 20, 100, 150);
+        //context.SetBrush(false,0,0,0);
         context.DrawLine (0, 0, x, y);
         context.DrawRdRt (50, 50, 220, 220, 30, 30);
+        context.PaintOnContext(nullptr,0,0);
         context.DrawRect (x - 50, y - 50, x + 50, y + 50);
         context.DrawTxt (50, 50, "thiefunvierse");
         context.DrawElps (x - 50, y - 50, x + 80, y + 150);
