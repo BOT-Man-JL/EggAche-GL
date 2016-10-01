@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <cmath>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 #include "EggAche_Impl.h"
 
@@ -50,7 +51,7 @@ namespace EggAche_Impl
         public:
             static int refCount;
             DisplayHelper (Display *display)
-                : _display (display)
+                    : _display (display)
             {
                 refCount++;
                 printf ("lock     %d  \n", refCount);
@@ -227,8 +228,8 @@ namespace EggAche_Impl
 
     protected:
         size_t _w, _h;
-        Pixmap _pixmap;
-        GC _penGC, _brushGC, _fontGC;
+        Pixmap _pixmap,_pixmap_mask;
+        GC _penGC, _brushGC, _fontGC,_blackGC;
         bool isPenTransparent;
         bool isBrushTransparent;
 
@@ -274,38 +275,38 @@ namespace EggAche_Impl
             XNextEvent (display, &event);
             switch (event.type)
             {
-            case ButtonPress:
-                if ((*wndMapper)[event.xbutton.window]->onClick)
-                    (*wndMapper)[event.xbutton.window]->onClick (event.xbutton.x, event.xbutton.y);
-                break;
+                case ButtonPress:
+                    if ((*wndMapper)[event.xbutton.window]->onClick)
+                        (*wndMapper)[event.xbutton.window]->onClick (event.xbutton.x, event.xbutton.y);
+                    break;
 
-            case KeyPress:
-                if ((*wndMapper)[event.xkey.window]->onPress)
-                    (*wndMapper)[event.xkey.window]->onPress (event.xkey.keycode);
-                break;
+                case KeyPress:
+                    if ((*wndMapper)[event.xkey.window]->onPress)
+                        (*wndMapper)[event.xkey.window]->onPress (event.xkey.keycode);
+                    break;
 
-            case ResizeRequest:
-                if ((*wndMapper)[event.xresizerequest.window]->onResized)
-                    (*wndMapper)[event.xresizerequest.window]->onResized (event.xresizerequest.width, event.xresizerequest.height);
-                break;
+                case ResizeRequest:
+                    if ((*wndMapper)[event.xresizerequest.window]->onResized)
+                        (*wndMapper)[event.xresizerequest.window]->onResized (event.xresizerequest.width, event.xresizerequest.height);
+                    break;
 
-            case Expose:
-                if ((*wndMapper)[event.xexpose.window]->onRefresh)
-                    (*wndMapper)[event.xexpose.window]->onRefresh ();
-                break;
+                case Expose:
+                    if ((*wndMapper)[event.xexpose.window]->onRefresh)
+                        (*wndMapper)[event.xexpose.window]->onRefresh ();
+                    break;
 
-            case ClientMessage:
-                if (event.xclient.data.l[0] == wmDeleteMessage)
-                {
-                    XDestroyWindow (display, event.xany.window);
+                case ClientMessage:
+                    if (event.xclient.data.l[0] == wmDeleteMessage)
+                    {
+                        XDestroyWindow (display, event.xany.window);
 
-                    (*wndMapper)[event.xany.window]->_window = 0;
-                    wndMapper->erase (event.xany.window);
+                        (*wndMapper)[event.xany.window]->_window = 0;
+                        wndMapper->erase (event.xany.window);
 
-                    if (wndMapper->empty ())
-                        return;
-                }
-                break;
+                        if (wndMapper->empty ())
+                            return;
+                    }
+                    break;
             }
         }
     }
@@ -314,8 +315,8 @@ namespace EggAche_Impl
 
     WindowImpl_XWindow::WindowImpl_XWindow (size_t width, size_t height,
                                             const char *cap_string)
-        : _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
-        _window (0)
+            : _cxCanvas (width), _cyCanvas (height), _cxClient (width), _cyClient (height),
+              _window (0)
     {
         auto display = DisplayManager::display ();
         auto screen = DefaultScreen ((Display *) display);
@@ -357,6 +358,9 @@ namespace EggAche_Impl
         auto _context = static_cast<const GUIContext_XWindow *> (context);
         XCopyArea (display, _context->_pixmap, _window, DefaultGC ((Display *) display, screen),
                    0, 0, _context->_w, _context->_h, x, y);
+        XCopyArea (display, _context->_pixmap_mask, _window, DefaultGC ((Display *) display, screen),
+                   0, 0, _context->_w, _context->_h, x, y);
+
     }
 
     std::pair<size_t, size_t> WindowImpl_XWindow::GetSize ()
@@ -392,8 +396,8 @@ namespace EggAche_Impl
     // Context
 
     GUIContext_XWindow::GUIContext_XWindow (size_t width, size_t height)
-        : _w (width), _h (height), _pixmap (0), _penGC (0), _brushGC (0),
-        _fontGC (0), isPenTransparent (false), isBrushTransparent (true)
+            : _w (width), _h (height), _pixmap (0), _penGC (0), _brushGC (0),
+              _fontGC (0), isPenTransparent (false), isBrushTransparent (true)
     {
         auto display = DisplayManager::display ();
         auto screen = DefaultScreen ((Display *) display);
@@ -401,10 +405,17 @@ namespace EggAche_Impl
         _pixmap = XCreatePixmap (display, RootWindow ((Display *) display, screen),
                                  width, height,
                                  DefaultDepth ((Display *) display, screen));
+
+        _pixmap_mask = XCreatePixmap (display, RootWindow ((Display *) display, screen),
+                                      width, height,
+                                      DefaultDepth ((Display *) display, screen));
         _penGC = XCreateGC (display, _pixmap, 0, NULL);
         _brushGC = XCreateGC (display, _pixmap, 0, NULL);
         _fontGC = XCreateGC (display, _pixmap, 0, NULL);
 
+        _blackGC=XCreateGC (display, _pixmap, 0, NULL);
+        XSetForeground(display,_blackGC,0);
+        //XSetFunction(display,_blackGC,GXand);
     }
 
     GUIContext_XWindow::~GUIContext_XWindow ()
@@ -546,7 +557,12 @@ namespace EggAche_Impl
     {
         auto display = DisplayManager::display ();
         if (!isPenTransparent)
+        {
             XDrawLine (display, _pixmap, _penGC, xBeg, yBeg, xEnd, yEnd);
+
+            //for mask
+            XDrawLine(display,_pixmap_mask,_blackGC,xBeg,yBeg,xEnd,yEnd);
+        }
         return true;
     }
 
@@ -554,9 +570,16 @@ namespace EggAche_Impl
     {
         auto display = DisplayManager::display ();
         if (!isPenTransparent)
+        {
             XDrawRectangle (display, _pixmap, _penGC, xBeg, yBeg, xEnd, yEnd);
+            XDrawRectangle(display,_pixmap_mask,_blackGC,xBeg,yBeg,xEnd,yEnd);
+        }
         if (!isBrushTransparent)
+        {
             XFillRectangle (display, _pixmap, _brushGC, xBeg, yBeg, xEnd, yEnd);
+            XFillRectangle (display, _pixmap_mask, _blackGC, xBeg, yBeg, xEnd, yEnd);
+        }
+
         return true;
     }
 
@@ -565,9 +588,16 @@ namespace EggAche_Impl
         auto display = DisplayManager::display ();
         const int fullAngle = 360 * ANGLE_WEIGHT;
         if (!isPenTransparent)
+        {
             XDrawArc (display, _pixmap, _penGC, xBeg, yBeg, xEnd - xBeg, yEnd - yBeg, fullAngle, fullAngle);
+            XDrawArc (display, _pixmap_mask, _blackGC, xBeg, yBeg, xEnd - xBeg, yEnd - yBeg, fullAngle, fullAngle);
+        }
+
         if (!isBrushTransparent)
+        {
             XFillArc (display, _pixmap, _brushGC, xBeg, yBeg, xEnd - xBeg, yEnd - yBeg, fullAngle, fullAngle);
+            XFillArc (display, _pixmap_mask, _blackGC, xBeg, yBeg, xEnd - xBeg, yEnd - yBeg, fullAngle, fullAngle);
+        }
         return true;
     }
 
@@ -595,6 +625,24 @@ namespace EggAche_Impl
             XDrawArc (display, _pixmap, _penGC, xEnd - 2 * wElps, yBeg, wElps * 2, hElps * 2, 0, fullAngle / 4);
             // right down
             XDrawArc (display, _pixmap, _penGC, xEnd - 2 * wElps, yEnd - 2 * hElps, wElps * 2, hElps * 2, 0, -fullAngle / 4);
+
+
+
+            //for mask
+            XDrawLine (display, _pixmap_mask, _blackGC, xBeg + wElps, yBeg, xEnd - wElps, yBeg);
+            XDrawLine (display, _pixmap_mask, _blackGC, xBeg, yBeg + hElps, xBeg, yEnd - hElps);
+            XDrawLine (display, _pixmap_mask, _blackGC, xBeg + wElps, yEnd, xEnd - wElps, yEnd);
+            XDrawLine (display, _pixmap_mask, _blackGC, xEnd, yBeg + hElps, xEnd, yEnd - hElps);
+
+            // left up
+            XDrawArc (display, _pixmap_mask, _blackGC, xBeg, yBeg, wElps * 2, hElps * 2, fullAngle / 4, fullAngle / 4);
+            // left down
+            XDrawArc (display, _pixmap_mask, _blackGC, xBeg, yEnd - 2 * hElps, wElps * 2, hElps * 2, fullAngle / 2, fullAngle / 4);
+            // right up
+            XDrawArc (display, _pixmap_mask, _blackGC, xEnd - 2 * wElps, yBeg, wElps * 2, hElps * 2, 0, fullAngle / 4);
+            // right down
+            XDrawArc (display, _pixmap_mask, _blackGC, xEnd - 2 * wElps, yEnd - 2 * hElps, wElps * 2, hElps * 2, 0, -fullAngle / 4);
+
         }
 
         if (!isBrushTransparent)
@@ -610,6 +658,22 @@ namespace EggAche_Impl
             XFillArc (display, _pixmap, _brushGC, xEnd - 2 * wElps, yBeg, wElps * 2, hElps * 2, 0, fullAngle / 4);
             // right down
             XFillArc (display, _pixmap, _brushGC, xEnd - 2 * wElps, yEnd - 2 * hElps, wElps * 2, hElps * 2, 0, -fullAngle / 4);
+
+
+
+            //for mask
+            XFillRectangle (display, _pixmap_mask, _blackGC, xBeg + wElps, yBeg, rdWid, yEnd - yBeg);
+            XFillRectangle (display, _pixmap_mask, _blackGC, xBeg, yBeg + hElps, xEnd - xBeg, rdHei);
+
+            // left up
+            XFillArc (display, _pixmap_mask, _blackGC, xBeg, yBeg, wElps * 2, hElps * 2, fullAngle / 4, fullAngle / 4);
+            // left down
+            XFillArc (display, _pixmap_mask, _blackGC, xBeg, yEnd - 2 * hElps, wElps * 2, hElps * 2, fullAngle / 2, fullAngle / 4);
+            // right up
+            XFillArc (display, _pixmap_mask, _blackGC, xEnd - 2 * wElps, yBeg, wElps * 2, hElps * 2, 0, fullAngle / 4);
+            // right down
+            XFillArc (display, _pixmap_mask, _blackGC, xEnd - 2 * wElps, yEnd - 2 * hElps, wElps * 2, hElps * 2, 0, -fullAngle / 4);
+
         }
         return true;
     }
@@ -621,6 +685,8 @@ namespace EggAche_Impl
         auto display=DisplayManager::display();
         XDrawArc(display,_pixmap,_penGC,xLeft,yTop,xRight-xLeft,yBottom-yTop,angleBeg*ANGLE_WEIGHT,cAngle*ANGLE_WEIGHT);
 
+        //for mask
+        XDrawArc(display,_pixmap_mask,_blackGC,xLeft,yTop,xRight-xLeft,yBottom-yTop,angleBeg*ANGLE_WEIGHT,cAngle*ANGLE_WEIGHT);
         return false;
     }
 
@@ -657,6 +723,32 @@ namespace EggAche_Impl
     bool GUIContext_XWindow::DrawImg (const char *fileName, int x, int y,
                                       int width, int height, int r, int g, int b)
     {
+        auto display=DisplayManager::display();
+        auto screen=XDefaultScreen(display);
+        FILE* image_file=fopen(fileName,"r");
+
+        int size=600000;
+        char img_buffer[size];
+
+        if (image_file==NULL)
+        {
+            perror("Error open file");
+        }
+        else
+        {
+            if (!fgets(img_buffer,size,image_file))
+            {
+                perror("Error read file");
+            }
+            fclose(image_file);
+        }
+
+        XImage *image=XCreateImage(display,XDefaultVisual(display,screen),
+                                   XDefaultDepth(display,screen),ZPixmap,0,(char*)img_buffer,width,height,32,0);
+
+        XPutImage(display,_pixmap,_penGC,image,x,y,x+width,y+height,width,height);
+
+
         // Todo
         return false;
     }
@@ -664,7 +756,7 @@ namespace EggAche_Impl
     bool GUIContext_XWindow::SaveAsBmp (const char *fileName) const
     {
         auto display = DisplayManager::display ();
-        printf("%d             save file\n ",XWriteBitmapFile (display, fileName, _pixmap, _w, _h, 30, 30));
+        XWriteBitmapFile (display, fileName, _pixmap, _w, _h, -1, -1);
         return false;
     }
 
@@ -697,6 +789,17 @@ namespace EggAche_Impl
 
         XSetForeground (display, gc, BlackPixel ((Display *) display, screen));
         XFreeGC (display, gc);
+
+
+        //for mask
+        auto gc_black = XCreateGC (display, _pixmap_mask, 0, NULL);
+
+        XSetForeground (display, gc_black, WhitePixel ((Display *) display, screen));
+        XSetFillStyle (display, gc_black, FillSolid);
+        XFillRectangle (display, _pixmap_mask, gc_black, 0, 0, _w, _h);
+
+        XSetForeground (display, gc_black, BlackPixel ((Display *) display, screen));
+        XFreeGC (display, gc_black);
     }
 
     void GUIContext_XWindow::PaintOnContext (GUIContext *parentContext,
@@ -704,8 +807,6 @@ namespace EggAche_Impl
     {
 
         auto display=DisplayManager::display();
-
-
         // Todo
     }
 
@@ -722,16 +823,17 @@ namespace EggAche_Impl
 int main (int argc, char *argv[])
 {
     using namespace EggAche_Impl;
- /*   {
-		// Test Multi-Window
-        WindowImpl_XWindow wwnd (10, 20, "J");
-		WindowImpl_XWindow wwwnd (10, 20, "J");
+   /*{
+           // Test Multi-Window
+           WindowImpl_XWindow wwnd (10, 20, "J");
+           WindowImpl_XWindow wwwnd (10, 20, "J");
 
-		while (!wwnd.IsClosed ())
-		{
-			std::this_thread::sleep_for (std::chrono::milliseconds (500));
-		}
-    }*/
+           while (!wwnd.IsClosed ())
+           {
+               std::this_thread::sleep_for (std::chrono::milliseconds (500));
+           }
+       }*/
+
     WindowImpl_XWindow wnd (500, 300, "Hello EggAche");
     GUIContext_XWindow context (500, 300);
     context.Clear ();
@@ -740,39 +842,41 @@ int main (int argc, char *argv[])
     context2.Clear ();
     context2.DrawTxt (0, 25, "thiefunvierse");
 
+
     wnd.OnClick ([&] (int x, int y)
-    {
-        context.Clear ();
-        context.SetPen (4, 200, 100, 100);
-        context.SetBrush (false, 20, 100, 150);
-        //context.SetBrush(false,0,0,0);
-        context.DrawLine (0, 0, x, y);
-        context.DrawRdRt (50, 50, 220, 220, 30, 30);
-       // context.PaintOnContext(nullptr,0,0);
-        context.DrawRect (x - 50, y - 50, x + 50, y + 50);
-        context.DrawTxt (50, 50, "thiefunvierse");
-        context.DrawElps (x - 50, y - 50, x + 80, y + 150);
-        context.SaveAsBmp ("thief.bmp");
-     //   context.DrawArc (50, 50, 150, 130, 150, 90, 100, 50);//fuck
-        wnd.Draw (&context, 0, 0);
-        printf ("You Click %03d, %03d\n", x, y);
-    });
+                 {
+                     context.Clear ();
+                     context.SetPen (4, 200, 100, 100);
+                     context.SetBrush (false, 20, 100, 150);
+                    // context.SetBrush(false,0,0,0);
+                     context.DrawLine (0, 0, x, y);
+                     context.PaintOnContext(nullptr,0,0);
+                     context.DrawRdRt (50, 50, 220, 220, 30, 30);
+                     context.DrawRect (x - 50, y - 50, x + 50, y + 50);
+                     context.DrawTxt (50, 50, "thiefunvierse");
+                     context.DrawElps (x - 50, y - 50, x + 80, y + 150);
+                     context.SaveAsBmp ("thief.bmp");
+                     context.DrawImg("t.bmp",0,0,60,40,3,3,3);   //can't draw image now
+                     //   context.DrawArc (50, 50, 150, 130, 150, 90, 100, 50);//fuck
+                     wnd.Draw (&context, 0, 0);
+                     printf ("You Click %03d, %03d\n", x, y);
+                 });
 
     wnd.OnResized ([] (int x, int y)
-    {
-        printf ("You Resized to %03d, %03d\n", x, y);
-    });
+                   {
+                       printf ("You Resized to %03d, %03d\n", x, y);
+                   });
 
     wnd.OnPress ([] (char ch)
-    {
-        printf ("You Typed %c\n", ch);
-    });
+                 {
+                     printf ("You Typed %c\n", ch);
+                 });
 
     wnd.OnRefresh ([&] ()
-    {
-        wnd.Draw (&context, 0, 0);
-        printf ("Your Window Refreshed\n");
-    });
+                   {
+                       wnd.Draw (&context, 0, 0);
+                       printf ("Your Window Refreshed\n");
+                   });
 
     while (!wnd.IsClosed ())
     {
