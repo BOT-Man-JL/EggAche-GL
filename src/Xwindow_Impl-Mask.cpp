@@ -228,7 +228,7 @@ namespace EggAche_Impl
 
     protected:
         size_t _w, _h;
-        Pixmap _pixmap,_pixmap_mask;
+        Pixmap _pixmap,_pixmap_mask,_pixmap_inter;
         GC _penGC, _brushGC, _fontGC,_blackGC;
         bool isPenTransparent;
         bool isBrushTransparent;
@@ -406,6 +406,11 @@ namespace EggAche_Impl
         _pixmap_mask = XCreatePixmap (display, RootWindow ((Display *) display, screen),
                                       width, height,
                                       DefaultDepth ((Display *) display, screen));
+
+        _pixmap_inter = XCreatePixmap (display, RootWindow ((Display *) display, screen),
+                                            width,height,
+                                            DefaultDepth ((Display *) display, screen));
+
         _penGC = XCreateGC (display, _pixmap, 0, NULL);
         _brushGC = XCreateGC (display, _pixmap, 0, NULL);
         _fontGC = XCreateGC (display, _pixmap, 0, NULL);
@@ -422,6 +427,8 @@ namespace EggAche_Impl
         XFreeGC (display, _brushGC);
         XFreeGC (display, _fontGC);
         XFreePixmap (display, _pixmap);
+        XFreePixmap (display, _pixmap_mask);
+        XFreePixmap (display, _pixmap_inter);
     }
 
     bool GUIContext_XWindow::SetPen (unsigned int width,
@@ -797,6 +804,19 @@ namespace EggAche_Impl
 
         XSetForeground (display, gc_black, BlackPixel ((Display *) display, screen));
         XFreeGC (display, gc_black);
+
+
+
+
+
+        auto gc_inter = XCreateGC (display, _pixmap_inter, 0, NULL);
+
+       XSetForeground (display, gc_inter, WhitePixel ((Display *) display, screen));
+       XSetFillStyle (display, gc_inter, FillSolid);
+       XFillRectangle (display, _pixmap_inter, gc_inter, 0, 0, _w, _h);
+
+       XSetForeground (display, gc_inter, BlackPixel ((Display *) display, screen));
+       XFreeGC (display, gc_inter);
     }
 
     void GUIContext_XWindow::PaintOnContext (GUIContext *parentContext,
@@ -809,35 +829,24 @@ namespace EggAche_Impl
 
         //several GCs and can't draw pixmap completely
 
-        /*XSetFunction(display,_brushGC,GXand);
-        XCopyArea (display,  _context->_pixmap_mask, _pixmap, _brushGC,
-                   0, 0, _context->_w, _context->_h, x, y);
-
-        XSetFunction(display,_context->_brushGC,GXxor);
-        XCopyArea (display,  _context->_pixmap, _context->_pixmap_mask, _context->_brushGC,
-                   0, 0, _context->_w, _context->_h, x, y);
-
-        XSetFunction(display,_brushGC,GXor);
-        XCopyArea (display,  _context->_pixmap_mask, _pixmap, _brushGC,
-                   0, 0, _context->_w, _context->_h, x, y);
-        XSetFunction(display,_brushGC,1);
-        XSetFunction(display,_context->_brushGC,1);
-*/
 
         //use penGC
+
         XSetFunction(display,_penGC,GXand);
         XCopyArea (display,  _context->_pixmap_mask, _pixmap, _penGC,
                    0, 0, _context->_w, _context->_h, x, y);
 
+
         XSetFunction(display,_context->_penGC,GXxor);
         XCopyArea (display,  _context->_pixmap, _context->_pixmap_mask, _context->_penGC,
-                   0, 0, _context->_w, _context->_h, x, y);
+                   0, 0, _context->_w, _context->_h, 0, 0);
+
 
         XSetFunction(display,_penGC,GXor);
         XCopyArea (display,  _context->_pixmap_mask, _pixmap, _penGC,
                    0, 0, _context->_w, _context->_h, x, y);
+
         XSetFunction(display,_penGC,1);
-        XSetFunction(display,_context->_penGC,1);
     }
 
     // MsgBox
@@ -882,7 +891,7 @@ int main (int argc, char *argv[])
                      context.SetPen (4, 200, 100, 100);
 
                      context.SetBrush (false, 20, 100, 150);
-                     context2.SetBrush (false, 20, 100, 50);
+                     context2.SetBrush (false, 20, 10, 50);
 
                      context.DrawLine (0, 0, x, y);
                      context.DrawRect (x - 50, y - 50, x + 50, y + 50);
@@ -895,7 +904,7 @@ int main (int argc, char *argv[])
                    //  context.DrawImg("t.bmp",0,0,60,40,3,3,3);   //can't draw image now
                      //   context.DrawArc (50, 50, 150, 130, 150, 90, 100, 50);//fuck
                      wnd.Draw (&context, 0, 0);
-                     context2.PaintOnContext (&context,0,0);          //draw context on context2
+                     context2.PaintOnContext (&context,90,40);          //draw context on context2
                      wndg.Draw (&context2,0,0);
                      printf ("You Click %03d, %03d\n", x, y);
                  });
