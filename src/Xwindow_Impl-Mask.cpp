@@ -358,9 +358,6 @@ namespace EggAche_Impl
         auto _context = static_cast<const GUIContext_XWindow *> (context);
         XCopyArea (display, _context->_pixmap, _window, DefaultGC ((Display *) display, screen),
                    0, 0, _context->_w, _context->_h, x, y);
-        XCopyArea (display, _context->_pixmap_mask, _window, DefaultGC ((Display *) display, screen),
-                   0, 0, _context->_w, _context->_h, x, y);
-
     }
 
     std::pair<size_t, size_t> WindowImpl_XWindow::GetSize ()
@@ -807,7 +804,40 @@ namespace EggAche_Impl
     {
 
         auto display=DisplayManager::display();
-        // Todo
+        auto screen=XDefaultScreen(display);
+        auto _context = static_cast<const GUIContext_XWindow *> (parentContext);
+
+        //several GCs and can't draw pixmap completely
+
+        /*XSetFunction(display,_brushGC,GXand);
+        XCopyArea (display,  _context->_pixmap_mask, _pixmap, _brushGC,
+                   0, 0, _context->_w, _context->_h, x, y);
+
+        XSetFunction(display,_context->_brushGC,GXxor);
+        XCopyArea (display,  _context->_pixmap, _context->_pixmap_mask, _context->_brushGC,
+                   0, 0, _context->_w, _context->_h, x, y);
+
+        XSetFunction(display,_brushGC,GXor);
+        XCopyArea (display,  _context->_pixmap_mask, _pixmap, _brushGC,
+                   0, 0, _context->_w, _context->_h, x, y);
+        XSetFunction(display,_brushGC,1);
+        XSetFunction(display,_context->_brushGC,1);
+*/
+
+        //use penGC
+        XSetFunction(display,_penGC,GXand);
+        XCopyArea (display,  _context->_pixmap_mask, _pixmap, _penGC,
+                   0, 0, _context->_w, _context->_h, x, y);
+
+        XSetFunction(display,_context->_penGC,GXxor);
+        XCopyArea (display,  _context->_pixmap, _context->_pixmap_mask, _context->_penGC,
+                   0, 0, _context->_w, _context->_h, x, y);
+
+        XSetFunction(display,_penGC,GXor);
+        XCopyArea (display,  _context->_pixmap_mask, _pixmap, _penGC,
+                   0, 0, _context->_w, _context->_h, x, y);
+        XSetFunction(display,_penGC,1);
+        XSetFunction(display,_context->_penGC,1);
     }
 
     // MsgBox
@@ -835,6 +865,7 @@ int main (int argc, char *argv[])
        }*/
 
     WindowImpl_XWindow wnd (500, 300, "Hello EggAche");
+    WindowImpl_XWindow wndg (500, 300, "Hello mask");
     GUIContext_XWindow context (500, 300);
     context.Clear ();
     context.DrawTxt (0, 50, "thiefunvierse");
@@ -843,22 +874,29 @@ int main (int argc, char *argv[])
     context2.DrawTxt (0, 25, "thiefunvierse");
 
 
+
     wnd.OnClick ([&] (int x, int y)
                  {
                      context.Clear ();
+                     context2.Clear();
                      context.SetPen (4, 200, 100, 100);
+
                      context.SetBrush (false, 20, 100, 150);
-                    // context.SetBrush(false,0,0,0);
+                     context2.SetBrush (false, 20, 100, 50);
+
                      context.DrawLine (0, 0, x, y);
-                     context.PaintOnContext(nullptr,0,0);
-                     context.DrawRdRt (50, 50, 220, 220, 30, 30);
                      context.DrawRect (x - 50, y - 50, x + 50, y + 50);
                      context.DrawTxt (50, 50, "thiefunvierse");
                      context.DrawElps (x - 50, y - 50, x + 80, y + 150);
-                     context.SaveAsBmp ("thief.bmp");
-                     context.DrawImg("t.bmp",0,0,60,40,3,3,3);   //can't draw image now
+
+                     context2.DrawRdRt (50, 80, 220, 150, 30, 30);
+
+                     //  context.SaveAsBmp ("thief.bmp");
+                   //  context.DrawImg("t.bmp",0,0,60,40,3,3,3);   //can't draw image now
                      //   context.DrawArc (50, 50, 150, 130, 150, 90, 100, 50);//fuck
                      wnd.Draw (&context, 0, 0);
+                     context2.PaintOnContext (&context,0,0);          //draw context on context2
+                     wndg.Draw (&context2,0,0);
                      printf ("You Click %03d, %03d\n", x, y);
                  });
 
@@ -869,11 +907,13 @@ int main (int argc, char *argv[])
 
     wnd.OnPress ([] (char ch)
                  {
+
                      printf ("You Typed %c\n", ch);
                  });
 
     wnd.OnRefresh ([&] ()
                    {
+
                        wnd.Draw (&context, 0, 0);
                        printf ("Your Window Refreshed\n");
                    });
