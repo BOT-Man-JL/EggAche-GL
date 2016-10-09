@@ -35,35 +35,25 @@ Still on the way :innocent:
 
 ### Basic Usage
 
-- Create Window
-- Draw on Background Egg
+- Create Window and Canvas
+- Draw on Background Canvas
 - Refresh Window
 - Wait for User Closing the Window
 
 ``` c++
-#include <thread>    // For this_thread::sleep_for
-#include "EggAche.h"
+Window window (640, 480);               // Create a new Window
+Canvas bgCanvas (640, 480);             // Create a new Canvas
+window.SetBackground (&bgCanvas);       // Set Background Canvas of this Window
 
-int main ()
-{
-    using namespace EggAche;
+bgCanvas.DrawTxt (0, 0, "Hello EggAche");  // Draw Text at (0, 0)
+bgCanvas.DrawLine (0, 30, 100, 30);        // Draw Line From (0, 30) to (100, 30)
+bgCanvas.DrawImg ("Egg.bmp", 20, 50);      // Draw Canvas at (20, 50)
 
-    Window window;                          // Create a new Window
-    auto bgEgg = window.GetBackground ();   // Get Background Egg of this Window
+window.Refresh ();                      // Refresh the Window to View Changes
 
-    bgEgg->DrawTxt (0, 0, "Hello EggAche"); // Draw Text at (0, 0)
-    bgEgg->DrawLine (0, 30, 100, 30);       // Draw Line From (0, 30) to (100, 30)
-    bgEgg->DrawImg ("Egg.bmp", 20, 50);     // Draw Bmp at (20, 50)
-
-    window.Refresh ();                      // Refresh the Window to View Changes
-
-    while (!window.IsClosed ())             // Not Quit until the Window is closed
-    {
-        using namespace std::chrono_literals;
-        std::this_thread::sleep_for (500ms);
-    }
-    return 0;
-}
+while (!window.IsClosed ())             // Not Quit until the Window is closed
+    std::this_thread::sleep_for (
+        std::chrono::milliseconds (50));// Sleep just 50ms
 ```
 
 ![Basic](Demo/Basic.png)
@@ -71,30 +61,22 @@ int main ()
 ### Handling Click Event
 
 - Bind Event Handler to a Window
-- Associate an Egg to another one
+- Associate an Canvas to another one
 - Take a Snapshot of the Window
 
 ``` c++
-    // ...
-    //window.Refresh ();
-    
-    auto lineEgg = new Egg (1000, 750);    // Create a New Egg
-    bgEgg->AddEgg (lineEgg);               // Associate this new Egg with Background Egg
+Canvas lineCanvas (640, 480);           // Create a New Canvas
+bgCanvas += &lineCanvas;                // Associate this new Canvas with Background Canvas
 
-    window.OnClick ([&]
-    (Window *, int x, int y)               // Register OnClick Event
-    {
-        lineEgg->Clear ();                 // Clear Previous Content
-        lineEgg->DrawLine (0, 0, x, y);    // Draw Line from (0, 0) to the Point you Clicked
-        window.Refresh ();                 // Refresh the Window to View Changes
+window.OnClick ([&]
+(Window *, int x, int y)                // Register OnClick Event
+{
+    lineCanvas.Clear ();                // Clear Previous Content
+    lineCanvas.DrawLine (0, 0, x, y);   // Draw Line from (0, 0) to the Point you Clicked
+    window.Refresh ();                  // Refresh the Window to View Changes
 
-        bgEgg->SaveAsBmp ("Snapshot.bmp"); // Take a Snapshot :-)
-    });
-
-    //while (!window.IsClosed ())
-    // ...
-    delete lineEgg;                        // Remember to delete this Egg
-    //return 0;
+    bgCanvas.SaveAsBmp ("Snapshot.bmp");// Take a Snapshot :-)
+});
 ```
 
 ![Click](Demo/Click.png)
@@ -103,36 +85,45 @@ And you will notice that `Snapshot.bmp` has been saved :wink:
 
 ### Simple Animation
 
+- Add Draw Lock into your Code :wink:
 - Draw BMP File with a Color Mask
 - Add Animation into the Game Loop
 
 ``` c++
+std::mutex mtx;                         // Mutex for Draw Lock
+// ...
+window.OnClick ([&]
+(Window *, int x, int y)
+{
+    // Lock for Draw
+    std::lock_guard<std::mutex> lg (mtx);
     // ...
-    //window.OnClick (...);
+}
+// ...
+Canvas aniCanvas (100, 100,             // Create a New Canvas
+                  100, 100);            // at (100, 100) initially
+bgCanvas += &aniCanvas;                 // Associate this new Canvas with Background Canvas
+aniCanvas.DrawImg ("Egg.bmp", 0, 0,     // Draw Bmp at (0, 0)
+                   100, 100,            // of size 100 * 100
+                   255, 255, 255);      // leave out White Color (FFFFFF)
 
-    auto aniEgg = new Egg (100, 100,        // Create a New Egg
-                           100, 100);       // at (100, 100) initially
-    bgEgg->AddEgg (aniEgg);                 // Associate this new Egg with Background Egg
-    aniEgg->DrawImg ("Egg.bmp", 0, 0,       // Draw Bmp at (0, 0)
-                     100, 100,              // of size 100 * 100
-                     255, 255, 255);        // leave out White Color (FFFFFF)
-
-    auto offset = 0;
-    while (!window.IsClosed ())             // Rewrite this Part
+auto offset = 0;
+while (!window.IsClosed ())             // Rewrite this Part
+{
     {
+        // Lock for Draw
+        std::lock_guard<std::mutex> lg (mtx);
+
         if (offset < 10) offset++;          // Update offset
         else offset = -10;
-        aniEgg->MoveTo (100 + offset * 10,  // Move aniEgg
-                        100 + offset * 10);
+        aniCanvas.MoveTo (100 + offset * 10,// Move aniCanvas
+                          100 + offset * 10);
         window.Refresh ();                  // Refresh Window
-
-        using namespace std::chrono_literals;
-        std::this_thread::sleep_for (50ms); // Sleep just 50ms
     }
 
-    delete aniEgg;                          // Remember to delete this Egg
-    //delete lineEgg;
-    // ...
+    std::this_thread::sleep_for (
+        std::chrono::milliseconds (50));    // Sleep just 50ms
+}
 ```
 
 ![Animation](Demo/Animation.gif)
