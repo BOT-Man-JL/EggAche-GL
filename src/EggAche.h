@@ -15,7 +15,7 @@
 
 namespace EggAche
 {
-	class Egg;
+	class Canvas;
 
 	//===================EggAche Window========================
 
@@ -32,12 +32,12 @@ namespace EggAche
 		// Remarks:
 		// Destroy the Window
 
-		Egg &GetBackground ();								// Get Background Egg
-
+		void SetBackground (Canvas *canvas);				// Set Background Canvas
+		void ClearBackground ();							// Set BgCanvas to NULL
 		void Refresh ();									// Refresh the Window
 		// Remarks:
 		// 1. Call this function everytime you want to Render
-		//    the Background Egg and its Sub Eggs
+		//    the Background Canvas and its Sub Canvases
 		// 2. Why NO Auto Refresh?
 		//    Auto Refresh will cost much more resource if there are too many
 		//    drawing changes at a time...
@@ -48,46 +48,51 @@ namespace EggAche
 
 		void OnClick (std::function<void (Window *, unsigned, unsigned)> fn);
 		void OnPress (std::function<void (Window *, char)> fn);
+		void OnResized (std::function<void (Window *, unsigned, unsigned)> fn);
 		// Remarks:
 		// If you click or press a key on Window, back-end will callback fn;
 		// 1. Calling onClick with (unsigned x, unsigned y) means point (x, y) is Clicked;
 		// 2. Calling onPress with (char ch) means character 'ch' is Inputted;
+		// 1. Calling onResized with (unsigned x, unsigned y) means Size is x * y;
 		// 3. These functions will be called by Background Threads, so LOCK by yourself;
 
 	private:
 		EggAche_Impl::WindowImpl *windowImpl;				// Window Impl Bridge
-		Egg *bgEgg;											// Background Egg
+		Canvas *bgCanvas;									// Background Canvas
 
 		Window (const Window &) = delete;					// Not allow to copy
 		void operator= (const Window &) = delete;			// Not allow to copy
 	};
 
-	//===========================Egg===========================
+	//===========================Canvas===========================
 
-	class Egg
+	class Canvas
 	{
 	public:
-		Egg (size_t width, size_t height,					// Egg's size
-			 int pos_x = 0, int pos_y = 0);					// Egg's initial postion
-		// Remarks:
-		// When an error occurs, throw std::runtime_error
+		Canvas (size_t width, size_t height,				// Canvas' size
+				int pos_x = 0, int pos_y = 0);					// Canvas' initial postion
+		   // Remarks:
+		   // When an error occurs, throw std::runtime_error
 
-		~Egg ();
+		~Canvas ();
 		// Remarks:
-		// Destroy the Egg
+		// Destroy the Canvas
 
-		int GetX () const;									// Get Egg's coordinate x
-		int GetY () const;									// Get Egg's coordinate y
-		void MoveTo (int pos_x, int pos_y);					// Place Egg to (pos_x, pos_y)
-		void Move (int scale_x, int scale_y);				// Move Egg
+		void Buffering ();									// Buffering Canvas and Sub Canvases
 		// Remarks:
-		// If scale_x > 0, Egg will be moved right scale_x units; else moved left -scale_x;
+		// Buffer this Canvas and its Sub Canvases, for Window.Refresh ();
+		// Window.Refresh () will check if the Background is Buffered before Rendering;
+
+		void operator+= (Canvas *canvas);					// Add Sub Canvases
+		void operator-= (Canvas *canvas);					// Remove Sub Canvases
+		// Remarks:
+		// Associated Canvases will be rendered after this Canvas
+
+		void MoveTo (int pos_x, int pos_y);					// Place Canvas to (pos_x, pos_y)
+		void Move (int scale_x, int scale_y);				// Move Canvas
+		// Remarks:
+		// If scale_x > 0, Canvas will be moved right scale_x units; else moved left -scale_x;
 		// Similarly move scale_y;
-
-		void AddEgg (Egg *egg);								// Add Sub Eggs
-		void RemoveEgg (Egg *egg);							// Remove Sub Eggs
-		// Remarks:
-		// Associated Eggs will be rendered after this Egg
 
 		bool SetPen (unsigned width,						// Pen Width
 					 unsigned r = 0,						// Pen Color
@@ -105,9 +110,9 @@ namespace EggAche
 		// Remarks:
 		// If SetBrush's isTransparent is set, the Color will be ignored
 
-		void Clear ();										// Clear the Egg
+		void Clear ();										// Clear the Canvas
 		// Remarks:
-		// Erase the content in Egg
+		// Erase the content in Canvas
 
 		bool DrawTxt (int xBeg, int yBeg, const char *szText);
 		// Remarks:
@@ -119,25 +124,25 @@ namespace EggAche
 		// Return 0 if an Error occurs;
 
 		bool DrawImg (const char *fileName,					// Source: "path/*.bmp"
-					  int x, int y);						// Position to paste in Egg
+					  int x, int y);						// Position to paste in Canvas
 
 		bool DrawImg (const char *fileName,					// Source: "path/*.bmp"
-					  int x, int y,							// Position to paste in Egg
-					  unsigned width, unsigned height);		// Size to paste in Egg
+					  int x, int y,							// Position to paste in Canvas
+					  unsigned width, unsigned height);		// Size to paste in Canvas
 
 		bool DrawImg (const char *fileName,					// Source: "path/*.bmp"
-					  int x, int y,							// Position to paste in Egg
-					  unsigned width, unsigned height,		// Size to paste in Egg
+					  int x, int y,							// Position to paste in Canvas
+					  unsigned width, unsigned height,		// Size to paste in Canvas
 					  unsigned r, unsigned g, unsigned b);	// Color of mask
 		// Remarks:
-		// 1. The Bitmap file will be stretched into width * height in Egg;
+		// 1. The Bitmap file will be stretched into width * height in Canvas;
 		// 2. Only Support Bitmap (.bmp) file... currently
 		// 3. For Opaque Bitmaps, you can set ColorMask to Draw Transparently;
 
 		bool DrawImgMask (const char *srcFile,				// Source: "path/*.bmp"
 						  const char *maskFile,				// Mask: "path/*.bmp"
 						  unsigned width, unsigned height,	// Size of the part to Draw
-						  int x_pos, int y_pos,				// Position to paste in Egg
+						  int x_pos, int y_pos,				// Position to paste in Canvas
 						  unsigned x_src, unsigned y_src,	// Position in srcFile
 						  unsigned x_msk, unsigned y_msk);	// Position in maskFile
 		// Remarks:
@@ -202,25 +207,25 @@ namespace EggAche
 		bool SaveAsPng (const char *fileName) const;		// "path/*.png"
 		bool SaveAsBmp (const char *fileName) const;		// "path/*.bmp"
 		// Remarks:
-		// 1. Save Egg's Content into a .jpg/.png/.bmp File;
+		// 1. Save Canvas' Content into a .jpg/.png/.bmp File;
 		// 2. Performance: bmp = jpg >> png;
 		// 3. Size: bmp >> jpg > png;
 		// 4. Windows MinGW Version doesn't Support Jpg...
 
 	private:
 		int x, y; size_t w, h;								// Postion and Size
-		std::list<const Egg *> subEggs;						// Sub Eggs
+		std::list<const Canvas *> subCanvases;				// Sub Canvases
 		EggAche_Impl::GUIContext *context;					// GUI Impl Bridge
 
 		bool SaveAsImg (									// Helper Function of
-						std::function<bool (							// SaveAsJpg/Png/Bmp
+						std::function<bool (				// SaveAsJpg/Png/Bmp
 											EggAche_Impl::GUIContext *context)>) const;
 		void RecursiveDraw (EggAche_Impl::GUIContext *,		// Helper Function of
 							size_t, size_t) const;			// Window.Refresh
 		friend void Window::Refresh ();
 
-		Egg (const Egg &) = delete;							// Not allow to copy
-		void operator= (const Egg &) = delete;				// Not allow to copy
+		Canvas (const Canvas &) = delete;					// Not allow to copy
+		void operator= (const Canvas &) = delete;			// Not allow to copy
 	};
 
 	//======================Message Box========================

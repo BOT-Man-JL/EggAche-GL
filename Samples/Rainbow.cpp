@@ -13,7 +13,8 @@ int main (int argc, char *argv[])
 
 	const auto wndSize = 300;
 	Window window (wndSize, wndSize, "Rainbow Animation");
-	auto &bgEgg = window.GetBackground ();
+	Canvas canvas (wndSize, wndSize);
+	window.SetBackground (&canvas);
 
 	std::vector<std::tuple<unsigned, unsigned, unsigned>> colors
 	{
@@ -28,17 +29,15 @@ int main (int argc, char *argv[])
 	auto cColor = colors.size ();
 	double anglePerSeg = 360.0 / cColor;
 
-	Egg rainbowEgg (wndSize, wndSize);
-	bgEgg.AddEgg (&rainbowEgg);
-	rainbowEgg.SetPen (0, 0, 0, 0);
+	canvas.SetPen (0, 0, 0, 0);
 	auto DrawRainbow = [&] (double angleBeg,
 							unsigned r,
 							unsigned g,
 							unsigned b)
 	{
-		rainbowEgg.SetBrush (false, r, g, b);
-		rainbowEgg.DrawPie (0, 0, wndSize, wndSize,
-							angleBeg, anglePerSeg);
+		canvas.SetBrush (false, r, g, b);
+		canvas.DrawPie (0, 0, wndSize, wndSize,
+						angleBeg, anglePerSeg);
 	};
 
 	bool isStop = false;
@@ -55,7 +54,7 @@ int main (int argc, char *argv[])
 			if (offset < offsetCount) offset++;
 			else offset = 0;
 
-			rainbowEgg.Clear ();
+			canvas.Clear ();
 			for (size_t i = 0; i < cColor; i++)
 				DrawRainbow (anglePerSeg * i +
 							 offset * 360.0 / offsetCount,

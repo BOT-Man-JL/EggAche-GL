@@ -333,7 +333,7 @@ namespace EggAche_Impl
 		rect.right = (LONG) pew->_cxClient;
 		rect.bottom = (LONG) pew->_cyClient;
 		if (!AdjustWindowRect (&rect,
-							   WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME,
+							   WS_OVERLAPPEDWINDOW,
 							   FALSE))
 		{
 			pew->_fFailed = true;
@@ -341,7 +341,7 @@ namespace EggAche_Impl
 		}
 
 		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->capStr.c_str (),
-									WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME,
+									WS_OVERLAPPEDWINDOW,
 									CW_USEDEFAULT, CW_USEDEFAULT,
 									rect.right - rect.left,
 									rect.bottom - rect.top,

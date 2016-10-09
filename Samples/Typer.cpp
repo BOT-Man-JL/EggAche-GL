@@ -7,45 +7,63 @@
 #include <thread>
 #include <string>
 #include <mutex>
+#include <memory>
 
 int main (int argc, char *argv[])
 {
 	using namespace EggAche;
 
-	const size_t width = 800, height = 600;
+	size_t width = 800, height = 600;
 	Window window (width, height, "Typer");
-	auto &bgEgg = window.GetBackground ();
+
+	auto canvas = std::unique_ptr<Canvas> (new Canvas (width, height));
+	window.SetBackground (canvas.get ());
 
 	const auto fontHeight = 18;							// Default Font Height is 18
-	const auto fontWidth = bgEgg.GetTxtWidth ("a");	// Default Font is Fixed-Width
-	const auto chPerLine = width / fontWidth;
+	const auto fontWidth = canvas->GetTxtWidth ("a");	// Default Font is Fixed-Width
+	auto chPerLine = width / fontWidth;
 	std::string bufStr;
 
 	std::mutex mtx;
 	auto drawScheme = [&] ()
 	{
-		std::lock_guard<std::mutex> lg (mtx);
-		bgEgg.Clear ();
+		canvas->Clear ();
 
 		// Text
 		auto rowCount = bufStr.size () / chPerLine;
 		for (size_t i = 0; i < rowCount + 1; i++)
 		{
 			std::string strLine (bufStr, i * chPerLine, chPerLine);
-			bgEgg.DrawTxt (0, i * fontHeight, strLine.c_str ());
+			canvas->DrawTxt (0, (int) (i * fontHeight), strLine.c_str ());
 		}
 
 		// Cursor
 		auto xPos = (bufStr.size () % chPerLine) * fontWidth;
 		auto yPos = rowCount * fontHeight;
-		bgEgg.DrawLine (xPos, yPos, xPos, yPos + fontHeight);
+		canvas->DrawLine ((int) xPos, (int) yPos,
+			(int) xPos, (int) (yPos + fontHeight));
 
 		window.Refresh ();
 	};
 	drawScheme ();
 
+	window.OnResized ([&] (Window *, unsigned x, unsigned y)
+	{
+		std::lock_guard<std::mutex> lg (mtx);
+
+		width = x;
+		height = y;
+		chPerLine = width / fontWidth;
+
+		canvas = std::unique_ptr<Canvas> (new Canvas (width, height));
+		window.SetBackground (canvas.get ());
+		drawScheme ();
+	});
+
 	window.OnPress ([&] (Window *, char ch)
 	{
+		std::lock_guard<std::mutex> lg (mtx);
+
 		switch (ch)
 		{
 		case '\b':
@@ -64,7 +82,6 @@ int main (int argc, char *argv[])
 			bufStr.push_back (ch);
 			break;
 		}
-
 		drawScheme ();
 	});
 

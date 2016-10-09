@@ -23,25 +23,26 @@ int main (int argc, char *argv[])
 
 	// Init Window
 	Window window (xWnd, yWnd);
-	auto &bgEgg = window.GetBackground ();
-	bgEgg.DrawImg ("Assets/bg.bmp", 0, 0, xWnd, yWnd);
+	Canvas bgCanvas (xWnd, yWnd);
+	window.SetBackground (&bgCanvas);
+	bgCanvas.DrawImg ("Assets/bg.bmp", 0, 0, xWnd, yWnd);
 
-	// Init Eggs
-	std::vector<std::vector<std::unique_ptr<Egg>>> draEggs (cDir);
+	// Init Canvases
+	std::vector<std::vector<std::unique_ptr<Canvas>>> dras (cDir);
 	for (size_t i = 0; i < cDir; i++)
 		for (size_t j = 0; j < cDraPerDir; j++)
 		{
 			auto fileName = std::string ("Assets/dra") +
 				std::to_string (i) + ".bmp";
-			std::unique_ptr<Egg> egg (
-				new Egg (draSize[i].first, draSize[i].second));
+			std::unique_ptr<Canvas> egg (
+				new Canvas (draSize[i].first, draSize[i].second));
 
 			egg->DrawImgMask (fileName.c_str (), fileName.c_str (),
-							  (int) draSize[i].first, (int) draSize[i].second,
+				(int) draSize[i].first, (int) draSize[i].second,
 							  0, 0,
 							  (int) (j * draSize[i].first), 0,
 							  (int) (j * draSize[i].first), (int) (draSize[i].second));
-			draEggs[i].emplace_back (std::move (egg));
+			dras[i].emplace_back (std::move (egg));
 		}
 
 	// Shared Data
@@ -100,10 +101,10 @@ int main (int argc, char *argv[])
 				if (iFrame == cDraPerDir) iFrame = 0;
 
 				// Draw
-				draEggs[iDir][iFrame].get ()->MoveTo (pos_x, pos_y);
-				bgEgg.AddEgg (draEggs[iDir][iFrame].get ());
+				dras[iDir][iFrame].get ()->MoveTo (pos_x, pos_y);
+				bgCanvas += dras[iDir][iFrame].get ();
 				window.Refresh ();
-				bgEgg.RemoveEgg (draEggs[iDir][iFrame].get ());
+				bgCanvas -= dras[iDir][iFrame].get ();
 			}
 		}
 
