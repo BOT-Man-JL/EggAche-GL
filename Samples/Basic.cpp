@@ -17,9 +17,9 @@ int main (int argc, char *argv[])
 	Canvas bgCanvas (640, 480);             // Create a new Canvas
 	window.SetBackground (&bgCanvas);       // Set Background Canvas of this Window
 
-	bgCanvas.DrawTxt (0, 0, "Hello EggAche");  // Draw Text at (0, 0)
-	bgCanvas.DrawLine (0, 30, 100, 30);        // Draw Line From (0, 30) to (100, 30)
-	bgCanvas.DrawImg ("Assets/Egg.bmp", 20, 50);      // Draw Canvas at (20, 50)
+	bgCanvas.DrawTxt (0, 0, "Hello EggAche");    // Draw Text at (0, 0)
+	bgCanvas.DrawLine (0, 30, 100, 30);          // Draw Line From (0, 30) to (100, 30)
+	bgCanvas.DrawImg ("Assets/Egg.bmp", 20, 50); // Draw Canvas at (20, 50)
 
 	window.Refresh ();                      // Refresh the Window to View Changes
 

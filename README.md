@@ -45,9 +45,9 @@ Window window (640, 480);               // Create a new Window
 Canvas bgCanvas (640, 480);             // Create a new Canvas
 window.SetBackground (&bgCanvas);       // Set Background Canvas of this Window
 
-bgCanvas.DrawTxt (0, 0, "Hello EggAche");  // Draw Text at (0, 0)
-bgCanvas.DrawLine (0, 30, 100, 30);        // Draw Line From (0, 30) to (100, 30)
-bgCanvas.DrawImg ("Egg.bmp", 20, 50);      // Draw Canvas at (20, 50)
+bgCanvas.DrawTxt (0, 0, "Hello EggAche");    // Draw Text at (0, 0)
+bgCanvas.DrawLine (0, 30, 100, 30);          // Draw Line From (0, 30) to (100, 30)
+bgCanvas.DrawImg ("Assets/Egg.bmp", 20, 50); // Draw Canvas at (20, 50)
 
 window.Refresh ();                      // Refresh the Window to View Changes
 
@@ -100,12 +100,15 @@ window.OnClick ([&]
     // ...
 }
 // ...
-Canvas aniCanvas (100, 100,             // Create a New Canvas
+Canvas aniCanvas (73, 75,               // Create a New Canvas
                   100, 100);            // at (100, 100) initially
 bgCanvas += &aniCanvas;                 // Associate this new Canvas with Background Canvas
-aniCanvas.DrawImg ("Egg.bmp", 0, 0,     // Draw Bmp at (0, 0)
-                   100, 100,            // of size 100 * 100
-                   255, 255, 255);      // leave out White Color (FFFFFF)
+aniCanvas.DrawImgMask ("Assets/EggMask.bmp",
+                       "Assets/EggMask.bmp",
+                       73, 75, 0, 0,
+                       0, 0, 73, 0);
+// Draw Image EggMask.bmp with a Mask in EggMask.bmp, of size 73 * 75, at (0, 0)
+// And the left-top of Src Image is (0, 0), left-top of Mask Image is (74, 0)
 
 auto offset = 0;
 while (!window.IsClosed ())             // Rewrite this Part
@@ -128,13 +131,12 @@ while (!window.IsClosed ())             // Rewrite this Part
 
 ![Animation](Demo/Animation.gif)
 
-### Remarks
+## More Samples
 
-- As there's **_NO_** **built-in thread-safe** in EggAche, the reentrant behaviors of this Sample are unknown... :disappointed_relieved:
-- [Click for more Samples](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/Samples)
-  - Get Started
-  - Little Typer
-  - Beautiful Rainbow Animation
+- [Get Started's Full Code](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/Samples/Basic.cpp)
+- [Running Dragon, controlled by KeyBoard](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Animation.cpp)
+- [Little Responsive UI Typer](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Typer.cpp)
+- [Beautiful Rainbow Animation](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Rainbow.cpp)
 
 ## Update History
 
