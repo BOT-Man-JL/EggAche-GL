@@ -129,15 +129,9 @@ namespace EggAche
 		bool DrawImg (const char *fileName,					// Source: "path/*.bmp"
 					  int x, int y,							// Position to paste in Canvas
 					  unsigned width, unsigned height);		// Size to paste in Canvas
-
-		bool DrawImg (const char *fileName,					// Source: "path/*.bmp"
-					  int x, int y,							// Position to paste in Canvas
-					  unsigned width, unsigned height,		// Size to paste in Canvas
-					  unsigned r, unsigned g, unsigned b);	// Color of mask
 		// Remarks:
 		// 1. The Bitmap file will be stretched into width * height in Canvas;
 		// 2. Only Support Bitmap (.bmp) file... currently
-		// 3. For Opaque Bitmaps, you can set ColorMask to Draw Transparently;
 
 		bool DrawImgMask (const char *srcFile,				// Source: "path/*.bmp"
 						  const char *maskFile,				// Mask: "path/*.bmp"

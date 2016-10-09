@@ -7,7 +7,7 @@ EggAche is a **Lightweight**, **Cross-Platform** C++ Graphics Library
 
 Welcome to Join :wink:
 
-![Egg](Test_Windows/Egg.bmp)
+![EggAche](EggAche.png)
 
 ## Setup
 

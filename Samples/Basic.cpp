@@ -19,7 +19,7 @@ int main (int argc, char *argv[])
 
 	bgCanvas.DrawTxt (0, 0, "Hello EggAche");  // Draw Text at (0, 0)
 	bgCanvas.DrawLine (0, 30, 100, 30);        // Draw Line From (0, 30) to (100, 30)
-	bgCanvas.DrawImg ("Egg.bmp", 20, 50);      // Draw Canvas at (20, 50)
+	bgCanvas.DrawImg ("Assets/Egg.bmp", 20, 50);      // Draw Canvas at (20, 50)
 
 	window.Refresh ();                      // Refresh the Window to View Changes
 
@@ -38,12 +38,15 @@ int main (int argc, char *argv[])
 		bgCanvas.SaveAsBmp ("Snapshot.bmp");// Take a Snapshot :-)
 	});
 
-	Canvas aniCanvas (100, 100,             // Create a New Canvas
+	Canvas aniCanvas (73, 75,               // Create a New Canvas
 					  100, 100);            // at (100, 100) initially
 	bgCanvas += &aniCanvas;                 // Associate this new Canvas with Background Canvas
-	aniCanvas.DrawImg ("Egg.bmp", 0, 0,     // Draw Bmp at (0, 0)
-					   100, 100,            // of size 100 * 100
-					   255, 255, 255);      // leave out White Color (FFFFFF)
+	aniCanvas.DrawImgMask ("Assets/EggMask.bmp",
+						   "Assets/EggMask.bmp",
+						   73, 75, 0, 0,
+						   0, 0, 73, 0);
+	// Draw Image EggMask.bmp with a Mask in EggMask.bmp, of size 73 * 75, at (0, 0)
+	// And the left-top of Src Image is (0, 0), left-top of Mask Image is (74, 0)
 
 	auto offset = 0;
 	while (!window.IsClosed ())             // Rewrite this Part

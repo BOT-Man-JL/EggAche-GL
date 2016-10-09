@@ -284,13 +284,6 @@ namespace EggAche
 		return context->DrawImg (fileName, x, y, width, height);
 	}
 
-	bool Canvas::DrawImg (const char *fileName, int x, int y,
-						  unsigned width, unsigned height,
-						  unsigned r, unsigned g, unsigned b)
-	{
-		return context->DrawImg (fileName, x, y, width, height, r, g, b);
-	}
-
 	bool Canvas::DrawImgMask (const char *srcFile,
 							  const char *maskFile,
 							  unsigned width, unsigned height,
