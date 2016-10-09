@@ -22,7 +22,7 @@ namespace EggAche
 	class Window
 	{
 	public:
-		Window (size_t width = 1000, size_t height = 750,		// Size at least 240 * 120
+		Window (size_t width = 640, size_t height = 480,		// Size at least 240 * 120
 				const char *cap_string = "Hello EggAche");		// Caption String
 		// Remarks:
 		// 1. Create a Window of Logic Size width * height with Caption cap_string;
@@ -32,9 +32,7 @@ namespace EggAche
 		// Remarks:
 		// Destroy the Window
 
-		Egg *GetBackground ();								// Get Background Egg
-		// Remarks:
-		// DON'T DELETE this Egg...
+		Egg &GetBackground ();								// Get Background Egg
 
 		void Refresh ();									// Refresh the Window
 		// Remarks:
@@ -48,16 +46,13 @@ namespace EggAche
 		// Remarks:
 		// If the Window has been Closed by User, it will return false
 
-		void OnClick (std::function<void (Window *, int, int)> fn);
+		void OnClick (std::function<void (Window *, unsigned, unsigned)> fn);
 		void OnPress (std::function<void (Window *, char)> fn);
-		void OnResized (std::function<void (Window *, int, int)> fn);
 		// Remarks:
 		// If you click or press a key on Window, back-end will callback fn;
-		// 1. Calling onClick with (int x, int y) means point (x, y) is Clicked;
+		// 1. Calling onClick with (unsigned x, unsigned y) means point (x, y) is Clicked;
 		// 2. Calling onPress with (char ch) means character 'ch' is Inputted;
-		// 3. Calling onResized with (int x, int y) means Currently Window Size is x * y;
-		// 4. These functions will be called by Background Threads, while
-		//    NO Thread-Safe Guarantee (Reentrant Behaviors are UNKNOWN) :-(
+		// 3. These functions will be called by Background Threads, so LOCK by yourself;
 
 	private:
 		EggAche_Impl::WindowImpl *windowImpl;				// Window Impl Bridge
@@ -94,19 +89,19 @@ namespace EggAche
 		// Remarks:
 		// Associated Eggs will be rendered after this Egg
 
-		bool SetPen (unsigned int width,					// Pen Width
-					 unsigned int r = 0,					// Pen Color
-					 unsigned int g = 0,
-					 unsigned int b = 0);
+		bool SetPen (unsigned width,						// Pen Width
+					 unsigned r = 0,						// Pen Color
+					 unsigned g = 0,
+					 unsigned b = 0);
 		bool SetBrush (bool isTransparent,					// Is Transparent
-					   unsigned int r,						// Brush Color
-					   unsigned int g,
-					   unsigned int b);
-		bool SetFont (unsigned int size = 18,				// Font Size
+					   unsigned r,							// Brush Color
+					   unsigned g,
+					   unsigned b);
+		bool SetFont (unsigned size = 18,					// Font Size
 					  const char *family = "Consolas",		// Font Family
-					  unsigned int r = 0,					// Font Color
-					  unsigned int g = 0,
-					  unsigned int b = 0);
+					  unsigned r = 0,						// Font Color
+					  unsigned g = 0,
+					  unsigned b = 0);
 		// Remarks:
 		// If SetBrush's isTransparent is set, the Color will be ignored
 
@@ -123,24 +118,31 @@ namespace EggAche
 		// Return the Estimated Width of the String in Current Font;
 		// Return 0 if an Error occurs;
 
-		bool DrawImg (const char *fileName,					// Source: "path/name.*"
+		bool DrawImg (const char *fileName,					// Source: "path/*.bmp"
 					  int x, int y);						// Position to paste in Egg
 
-		bool DrawImg (const char *fileName,					// Source: "path/name.*"
+		bool DrawImg (const char *fileName,					// Source: "path/*.bmp"
 					  int x, int y,							// Position to paste in Egg
-					  int width, int height);				// Size to paste in Egg
+					  unsigned width, unsigned height);		// Size to paste in Egg
 
-		bool DrawImg (const char *fileName,					// Source: "path/name.bmp"
+		bool DrawImg (const char *fileName,					// Source: "path/*.bmp"
 					  int x, int y,							// Position to paste in Egg
-					  int width, int height,				// Size to paste in Egg
-					  unsigned int r,						// Red color of mask
-					  unsigned int g,						// Green color of mask
-					  unsigned int b);						// Blue color of mask
+					  unsigned width, unsigned height,		// Size to paste in Egg
+					  unsigned r, unsigned g, unsigned b);	// Color of mask
 		// Remarks:
-		// 1. The Image file will be stretched into width * height in Egg;
-		// 2. Support Bitmap (.bmp), JPEG (.jpg/.jpeg), PNG (.png), GIF (.gif);
-		//    MinGW only Support Bitmap (.bmp) file... (Impl.ed by GDI)
-		// 3. For Opaque Images, you can set ColorMask to Draw Transparently;
+		// 1. The Bitmap file will be stretched into width * height in Egg;
+		// 2. Only Support Bitmap (.bmp) file... currently
+		// 3. For Opaque Bitmaps, you can set ColorMask to Draw Transparently;
+
+		bool DrawImgMask (const char *srcFile,				// Source: "path/*.bmp"
+						  const char *maskFile,				// Mask: "path/*.bmp"
+						  unsigned width, unsigned height,	// Size of the part to Draw
+						  int x_pos, int y_pos,				// Position to paste in Egg
+						  unsigned x_src, unsigned y_src,	// Position in srcFile
+						  unsigned x_msk, unsigned y_msk);	// Position in maskFile
+		// Remarks:
+		// 1. The Bitmap file will NOT be stretched;
+		// 2. The Mask is usually Black (foreground) and White (background)
 
 		bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd);
 		// Remarks:
@@ -196,22 +198,23 @@ namespace EggAche
 		// Positive 'cAngle' indicates counterclockwise motion, and Negative clockwise;
 		// The Pie is closed by drawing 2 Radius of the Angles;
 
-		bool SaveAsJpg (const char *fileName) const;		// "path/name.jpg"
-		bool SaveAsPng (const char *fileName) const;		// "path/name.png"
-		bool SaveAsBmp (const char *fileName) const;		// "path/name.bmp"
+		bool SaveAsJpg (const char *fileName) const;		// "path/*.jpg"
+		bool SaveAsPng (const char *fileName) const;		// "path/*.png"
+		bool SaveAsBmp (const char *fileName) const;		// "path/*.bmp"
 		// Remarks:
 		// 1. Save Egg's Content into a .jpg/.png/.bmp File;
 		// 2. Performance: bmp = jpg >> png;
 		// 3. Size: bmp >> jpg > png;
+		// 4. Windows MinGW Version doesn't Support Jpg...
 
 	private:
-		int x, y, w, h;										// Postion and Size
+		int x, y; size_t w, h;								// Postion and Size
 		std::list<const Egg *> subEggs;						// Sub Eggs
 		EggAche_Impl::GUIContext *context;					// GUI Impl Bridge
 
 		bool SaveAsImg (									// Helper Function of
-			std::function<bool (							// SaveAsJpg/Png/Bmp
-				EggAche_Impl::GUIContext *context)>) const;
+						std::function<bool (							// SaveAsJpg/Png/Bmp
+											EggAche_Impl::GUIContext *context)>) const;
 		void RecursiveDraw (EggAche_Impl::GUIContext *,		// Helper Function of
 							size_t, size_t) const;			// Window.Refresh
 		friend void Window::Refresh ();

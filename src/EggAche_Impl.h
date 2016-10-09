@@ -24,9 +24,9 @@ namespace EggAche_Impl
 		virtual std::pair<size_t, size_t> GetSize () = 0;
 		virtual bool IsClosed () const = 0;
 
-		virtual void OnClick (std::function<void (int, int)> fn) = 0;
+		virtual void OnClick (std::function<void (unsigned, unsigned)> fn) = 0;
 		virtual void OnPress (std::function<void (char)> fn) = 0;
-		virtual void OnResized (std::function<void (int, int)> fn) = 0;
+		virtual void OnResized (std::function<void (unsigned, unsigned)> fn) = 0;
 		virtual void OnRefresh (std::function<void ()> fn) = 0;
 	};
 
@@ -35,21 +35,21 @@ namespace EggAche_Impl
 	public:
 		virtual ~GUIContext () {}
 
-		virtual bool SetPen (unsigned int width,
-							 unsigned int r = 0,
-							 unsigned int g = 0,
-							 unsigned int b = 0) = 0;
+		virtual bool SetPen (unsigned width,
+							 unsigned r = 0,
+							 unsigned g = 0,
+							 unsigned b = 0) = 0;
 
 		virtual bool SetBrush (bool isTransparent,
-							   unsigned int r,
-							   unsigned int g,
-							   unsigned int b) = 0;
+							   unsigned r,
+							   unsigned g,
+							   unsigned b) = 0;
 
-		virtual bool SetFont (unsigned int size,
+		virtual bool SetFont (unsigned size,
 							  const char *family,
-							  unsigned int r,
-							  unsigned int g,
-							  unsigned int b) = 0;
+							  unsigned r,
+							  unsigned g,
+							  unsigned b) = 0;
 
 		virtual bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd) = 0;
 
@@ -78,6 +78,13 @@ namespace EggAche_Impl
 							  int r = -1,
 							  int g = -1,
 							  int b = -1) = 0;
+
+		virtual bool DrawImgMask (const char *srcFile,
+								  const char *maskFile,
+								  unsigned width, unsigned height,
+								  int x_pos, int y_pos,
+								  unsigned x_src, unsigned y_src,
+								  unsigned x_msk, unsigned y_msk) = 0;
 
 		virtual bool SaveAsJpg (const char *fileName) const = 0;
 		virtual bool SaveAsPng (const char *fileName) const = 0;

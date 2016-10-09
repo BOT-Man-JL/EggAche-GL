@@ -13,7 +13,7 @@ int main (int argc, char *argv[])
 
 	const auto wndSize = 300;
 	Window window (wndSize, wndSize, "Rainbow Animation");
-	auto bgEgg = window.GetBackground ();
+	auto &bgEgg = window.GetBackground ();
 
 	std::vector<std::tuple<unsigned, unsigned, unsigned>> colors
 	{
@@ -29,7 +29,7 @@ int main (int argc, char *argv[])
 	double anglePerSeg = 360.0 / cColor;
 
 	Egg rainbowEgg (wndSize, wndSize);
-	bgEgg->AddEgg (&rainbowEgg);
+	bgEgg.AddEgg (&rainbowEgg);
 	rainbowEgg.SetPen (0, 0, 0, 0);
 	auto DrawRainbow = [&] (double angleBeg,
 							unsigned r,

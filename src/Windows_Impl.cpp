@@ -110,22 +110,22 @@ namespace EggAche_Impl
 		std::pair<size_t, size_t> GetSize () override;
 		bool IsClosed () const override;
 
-		void OnClick (std::function<void (int, int)> fn) override;
+		void OnClick (std::function<void (unsigned, unsigned)> fn) override;
 		void OnPress (std::function<void (char)> fn) override;
-		void OnResized (std::function<void (int, int)> fn) override;
+		void OnResized (std::function<void (unsigned, unsigned)> fn) override;
 		void OnRefresh (std::function<void ()> fn) override;
 
 	protected:
-		int			_cxClient, _cyClient;
+		size_t		_cxClient, _cyClient;
 		std::string	capStr;
 
 		HWND		_hwnd;
 		HANDLE		_hEvent;
 		bool		_fFailed;
 
-		std::function<void (int, int)> onClick;
+		std::function<void (unsigned, unsigned)> onClick;
 		std::function<void (char)> onPress;
-		std::function<void (int, int)> onResized;
+		std::function<void (unsigned, unsigned)> onResized;
 		std::function<void ()> onRefresh;
 
 		HwndManager _hwndManager;
@@ -148,21 +148,21 @@ namespace EggAche_Impl
 		GUIContext_Windows (size_t width, size_t height);
 		~GUIContext_Windows () override;
 
-		bool SetPen (unsigned int width,
-					 unsigned int r = 0,
-					 unsigned int g = 0,
-					 unsigned int b = 0) override;
+		bool SetPen (unsigned width,
+					 unsigned r = 0,
+					 unsigned g = 0,
+					 unsigned b = 0) override;
 
 		bool SetBrush (bool isTransparent,
-					   unsigned int r,
-					   unsigned int g,
-					   unsigned int b) override;
+					   unsigned r,
+					   unsigned g,
+					   unsigned b) override;
 
-		bool SetFont (unsigned int size = 18,
+		bool SetFont (unsigned size = 18,
 					  const char *family = "Consolas",
-					  unsigned int r = 0,
-					  unsigned int g = 0,
-					  unsigned int b = 0) override;
+					  unsigned r = 0,
+					  unsigned g = 0,
+					  unsigned b = 0) override;
 
 		bool DrawLine (int xBeg, int yBeg, int xEnd, int yEnd) override;
 
@@ -192,6 +192,13 @@ namespace EggAche_Impl
 					  int g = -1,
 					  int b = -1) override;
 
+		bool DrawImgMask (const char *srcFile,
+						  const char *maskFile,
+						  unsigned width, unsigned height,
+						  int x_pos, int y_pos,
+						  unsigned x_src, unsigned y_src,
+						  unsigned x_msk, unsigned y_msk) override;
+
 		bool SaveAsJpg (const char *fileName) const override;
 		bool SaveAsPng (const char *fileName) const override;
 		bool SaveAsBmp (const char *fileName) const override;
@@ -211,9 +218,9 @@ namespace EggAche_Impl
 #endif
 
 		static const COLORREF _colorMask;
-		static const COLORREF _GetColor (unsigned int r,
-										 unsigned int g,
-										 unsigned int b);
+		static const COLORREF _GetColor (unsigned r,
+										 unsigned g,
+										 unsigned b);
 
 #ifdef _MSC_VER
 		bool SaveAsImg (const char *fileName,
@@ -323,17 +330,18 @@ namespace EggAche_Impl
 	void WindowImpl_Windows::_NewWindow_Thread (WindowImpl_Windows *pew)
 	{
 		RECT rect { 0 };
-		rect.right = pew->_cxClient;
-		rect.bottom = pew->_cyClient;
-		if (!AdjustWindowRect (&rect, WS_OVERLAPPEDWINDOW, FALSE))
+		rect.right = (LONG) pew->_cxClient;
+		rect.bottom = (LONG) pew->_cyClient;
+		if (!AdjustWindowRect (&rect,
+							   WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME,
+							   FALSE))
 		{
 			pew->_fFailed = true;
 			SetEvent (pew->_hEvent);
 		}
 
 		pew->_hwnd = CreateWindowA ("LJN_WNDCLASSA", pew->capStr.c_str (),
-									WS_OVERLAPPEDWINDOW,
-									// & ~WS_THICKFRAME &~WS_MAXIMIZEBOX,
+									WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME,
 									CW_USEDEFAULT, CW_USEDEFAULT,
 									rect.right - rect.left,
 									rect.bottom - rect.top,
@@ -377,8 +385,8 @@ namespace EggAche_Impl
 
 		// Assume that context is GUIContext_Windows
 		auto _context = static_cast<const GUIContext_Windows *> (context);
-		if (!TransparentBlt (hdcWnd, x, y, _context->_w, _context->_h,
-							 _context->_hdc, 0, 0, _context->_w, _context->_h,
+		if (!TransparentBlt (hdcWnd, (int) x, (int) y, (int) (_context->_w), (int) (_context->_h),
+							 _context->_hdc, 0, 0, (int) (_context->_w), (int) (_context->_h),
 							 GUIContext_Windows::_colorMask))
 		{
 			ReleaseDC (this->_hwnd, hdcWnd);
@@ -398,7 +406,7 @@ namespace EggAche_Impl
 		return this->_hwnd == NULL;
 	}
 
-	void WindowImpl_Windows::OnClick (std::function<void (int, int)> fn)
+	void WindowImpl_Windows::OnClick (std::function<void (unsigned, unsigned)> fn)
 	{
 		onClick = std::move (fn);
 	}
@@ -408,7 +416,7 @@ namespace EggAche_Impl
 		onPress = std::move (fn);
 	}
 
-	void WindowImpl_Windows::OnResized (std::function<void (int, int)> fn)
+	void WindowImpl_Windows::OnResized (std::function<void (unsigned, unsigned)> fn)
 	{
 		onResized = std::move (fn);
 	}
@@ -442,7 +450,9 @@ namespace EggAche_Impl
 			(*hwndMapper)[hwnd]->_cxClient = LOWORD (lParam);
 			(*hwndMapper)[hwnd]->_cyClient = HIWORD (lParam);
 			if ((*hwndMapper)[hwnd]->onResized)
-				(*hwndMapper)[hwnd]->onResized ((*hwndMapper)[hwnd]->_cxClient, (*hwndMapper)[hwnd]->_cyClient);
+				(*hwndMapper)[hwnd]->onResized
+				((unsigned) (*hwndMapper)[hwnd]->_cxClient,
+				(unsigned) (*hwndMapper)[hwnd]->_cyClient);
 			return 0;
 
 		case WM_PAINT:
@@ -465,9 +475,9 @@ namespace EggAche_Impl
 	// Context
 
 	const COLORREF GUIContext_Windows::_colorMask = RGB (0, 0, 201);
-	const COLORREF GUIContext_Windows::_GetColor (unsigned int r,
-												  unsigned int g,
-												  unsigned int b)
+	const COLORREF GUIContext_Windows::_GetColor (unsigned r,
+												  unsigned g,
+												  unsigned b)
 	{
 		const auto mMin =
 			[] (const int &a, const int &b) { return a < b ? a : b; };
@@ -490,7 +500,7 @@ namespace EggAche_Impl
 
 		// New Canvas HDC
 		_hdc = CreateCompatibleDC (hdcRoot);
-		_hBitmap = CreateCompatibleBitmap (hdcRoot, _w, _h);
+		_hBitmap = CreateCompatibleBitmap (hdcRoot, (int) _w, (int) _h);
 
 		if (!_hdc || !_hBitmap)
 		{
@@ -538,10 +548,10 @@ namespace EggAche_Impl
 		DeleteObject (this->_hBitmap);
 	}
 
-	bool GUIContext_Windows::SetPen (unsigned int width,
-									 unsigned int r,
-									 unsigned int g,
-									 unsigned int b)
+	bool GUIContext_Windows::SetPen (unsigned width,
+									 unsigned r,
+									 unsigned g,
+									 unsigned b)
 	{
 		HPEN hPen;
 
@@ -564,9 +574,9 @@ namespace EggAche_Impl
 	}
 
 	bool GUIContext_Windows::SetBrush (bool isTransparent,
-									   unsigned int r,
-									   unsigned int g,
-									   unsigned int b)
+									   unsigned r,
+									   unsigned g,
+									   unsigned b)
 	{
 		HBRUSH hBrush;
 
@@ -585,11 +595,11 @@ namespace EggAche_Impl
 		return true;
 	}
 
-	bool GUIContext_Windows::SetFont (unsigned int size,
+	bool GUIContext_Windows::SetFont (unsigned size,
 									  const char *family,
-									  unsigned int r,
-									  unsigned int g,
-									  unsigned int b)
+									  unsigned r,
+									  unsigned g,
+									  unsigned b)
 	{
 		SetTextColor (this->_hdc, _GetColor (r, g, b));
 
@@ -640,8 +650,8 @@ namespace EggAche_Impl
 		while (angle > 360)
 			angle -= 360;
 
-		x = RADIUS * cos (angle * PI / 180);
-		y = RADIUS * sin (angle * PI / 180);
+		x = (int) (RADIUS * cos (angle * PI / 180));
+		y = (int) (RADIUS * sin (angle * PI / 180));
 		y = -y;
 	}
 
@@ -666,7 +676,7 @@ namespace EggAche_Impl
 		xEnd += xCnt;
 		yBeg += yCnt;
 		yEnd += yCnt;
-		
+
 		return !!Arc (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
@@ -734,7 +744,7 @@ namespace EggAche_Impl
 		{
 			if (!GetCharABCWidthsFloatA (this->_hdc, ch, ch, &abcFloat))
 				return 0;
-			ret += abcFloat.abcfA + abcFloat.abcfB + abcFloat.abcfC;
+			ret += (int) (abcFloat.abcfA + abcFloat.abcfB + abcFloat.abcfC);
 		}
 		return ret;
 	}
@@ -788,21 +798,18 @@ namespace EggAche_Impl
 	}
 
 #else
-	// MinGW doesn't support GDI+
+
 	bool GUIContext_Windows::DrawImg (const char *fileName, int x, int y,
 									  int width, int height, int r, int g, int b)
 	{
-		HDC			hdcMemImag;
-		HBITMAP		hBitmapImag;
-		BITMAP		bitmap;
-		COLORREF	colorMask;
-
-		hBitmapImag = (HBITMAP) LoadImageA (NULL, fileName, IMAGE_BITMAP,
-											0, 0, LR_LOADFROMFILE);
+		auto hBitmapImag = (HBITMAP) LoadImageA (NULL, fileName, IMAGE_BITMAP,
+												 0, 0, LR_LOADFROMFILE);
 		if (!hBitmapImag) return false;
+
+		BITMAP bitmap;
 		GetObject (hBitmapImag, sizeof (BITMAP), &bitmap);
 
-		hdcMemImag = CreateCompatibleDC (this->_hdc);
+		auto hdcMemImag = CreateCompatibleDC (this->_hdc);
 		if (!hdcMemImag)
 		{
 			DeleteObject (hBitmapImag);
@@ -827,9 +834,9 @@ namespace EggAche_Impl
 		}
 		else
 		{
-			colorMask = RGB (max (0, min (255, r)),
-							 max (0, min (255, g)),
-							 max (0, min (255, b)));
+			auto colorMask = RGB (max (0, min (255, r)),
+								  max (0, min (255, g)),
+								  max (0, min (255, b)));
 			if (!TransparentBlt (this->_hdc, x, y, width, height,
 								 hdcMemImag, 0, 0,
 								 bitmap.bmWidth, bitmap.bmHeight,
@@ -847,6 +854,65 @@ namespace EggAche_Impl
 	}
 
 #endif
+
+	bool GUIContext_Windows::DrawImgMask (
+		const char *srcFile,
+		const char *maskFile,
+		unsigned width, unsigned height,
+		int x_pos, int y_pos,
+		unsigned x_src, unsigned y_src,
+		unsigned x_msk, unsigned y_msk)
+	{
+		auto hSrcBmp = (HBITMAP) LoadImageA (NULL, srcFile, IMAGE_BITMAP,
+											 0, 0, LR_LOADFROMFILE);
+		auto hMskBmp = (HBITMAP) LoadImageA (NULL, maskFile, IMAGE_BITMAP,
+											 0, 0, LR_LOADFROMFILE);
+		if (!hSrcBmp || !hMskBmp)
+		{
+			if (hSrcBmp) DeleteObject (hSrcBmp);
+			if (hMskBmp) DeleteObject (hMskBmp);
+			return false;
+		}
+
+		auto hdcSrc = CreateCompatibleDC (this->_hdc);
+		auto hdcMsk = CreateCompatibleDC (this->_hdc);
+		if (!hdcSrc || !hdcMsk)
+		{
+			if (hdcSrc) DeleteDC (hdcSrc);
+			if (hdcMsk) DeleteDC (hdcMsk);
+			DeleteObject (hSrcBmp);
+			DeleteObject (hMskBmp);
+			return false;
+		}
+		SelectObject (hdcSrc, hSrcBmp);
+		SelectObject (hdcMsk, hMskBmp);
+
+		if (!BitBlt (_hdc, x_pos, y_pos, width, height,
+					 hdcMsk, x_msk, y_msk, SRCAND))
+		{
+			DeleteDC (hdcSrc);
+			DeleteDC (hdcMsk);
+			DeleteObject (hSrcBmp);
+			DeleteObject (hMskBmp);
+			return false;
+		}
+
+		if (!BitBlt (_hdc, x_pos, y_pos, width, height,
+					 hdcSrc, x_src, y_src, SRCPAINT))
+		{
+			DeleteDC (hdcSrc);
+			DeleteDC (hdcMsk);
+			DeleteObject (hSrcBmp);
+			DeleteObject (hMskBmp);
+			return false;
+		}
+
+		DeleteDC (hdcSrc);
+		DeleteDC (hdcMsk);
+		DeleteObject (hSrcBmp);
+		DeleteObject (hMskBmp);
+		return true;
+	}
 
 #ifdef _MSC_VER
 	// Using GDI+ to Encode Images
@@ -875,13 +941,13 @@ namespace EggAche_Impl
 
 				GetImageEncoders (num, size, pImageCodecInfo);
 
-				for (int j = 0; j < num; ++j)
+				for (size_t j = 0; j < num; ++j)
 				{
 					if (wcscmp (pImageCodecInfo[j].MimeType, format) == 0)
 					{
 						*pClsid = pImageCodecInfo[j].Clsid;
 						free (pImageCodecInfo);
-						return j;  // Success
+						return (int) j;  // Success
 					}
 				}
 
@@ -1095,15 +1161,15 @@ namespace EggAche_Impl
 	{
 		// Not Implemented
 		return false;
-	}
+}
 #endif
 
 	void GUIContext_Windows::Clear ()
 	{
 		RECT rect;
 		rect.left = rect.top = 0;
-		rect.right = this->_w;
-		rect.bottom = this->_h;
+		rect.right = (LONG) this->_w;
+		rect.bottom = (LONG) this->_h;
 
 		auto hBrush = CreateSolidBrush (_colorMask);
 		FillRect (this->_hdc, &rect, hBrush);
@@ -1115,8 +1181,8 @@ namespace EggAche_Impl
 	{
 		// Assume that context is GUIContext_Windows
 		auto _context = static_cast<const GUIContext_Windows *> (parentContext);
-		TransparentBlt (_context->_hdc, x, y, this->_w, this->_h,
-						this->_hdc, 0, 0, this->_w, this->_h,
+		TransparentBlt (_context->_hdc, (int) x, (int) y, (int) this->_w, (int) this->_h,
+						this->_hdc, 0, 0, (int) this->_w, (int) this->_h,
 						GUIContext_Windows::_colorMask);
 	}
 

@@ -3,6 +3,8 @@
 // By BOT Man, 2016
 //
 
+#include <memory>
+
 #include "EggAche.h"
 #include "EggAche_Impl.h"
 
@@ -21,17 +23,20 @@ namespace EggAche
 	Window::Window (size_t width,
 					size_t height,
 					const char *cap_string)
-		: bgEgg (nullptr), windowImpl (nullptr)
+		: bgEgg (new Egg (width, height)), windowImpl (nullptr)
 	{
-		// Assume 2000 is big enough
-		bgEgg = new Egg (2000, 2000);
+		try
+		{
+			std::unique_ptr<EggAche_Impl::GUIFactory> guiFactory (
+				NewGUIFactory ());
 
-		auto guiFactory = NewGUIFactory ();
-
-		windowImpl = guiFactory->NewWindow (width, height, cap_string);
-		windowImpl->OnRefresh (std::bind (&Window::Refresh, this));
-
-		delete guiFactory;
+			windowImpl = guiFactory->NewWindow (width, height, cap_string);
+			windowImpl->OnRefresh (std::bind (&Window::Refresh, this));
+		}
+		catch (const std::exception&)
+		{
+			delete bgEgg;
+		}
 	}
 
 	Window::~Window ()
@@ -40,9 +45,9 @@ namespace EggAche
 		delete bgEgg;
 	}
 
-	Egg *Window::GetBackground ()
+	Egg &Window::GetBackground ()
 	{
-		return bgEgg;
+		return *bgEgg;
 	}
 
 	void Egg::RecursiveDraw (EggAche_Impl::GUIContext *parentContext,
@@ -61,40 +66,38 @@ namespace EggAche
 		if (IsClosed ())
 			return;
 
-		auto guiFactory = NewGUIFactory ();
+		std::unique_ptr<EggAche_Impl::GUIFactory> guiFactory (
+			NewGUIFactory ());
 
 		// Remarks:
 		// Buffering the Drawing Content into a Context
 		// to avoid flash Screen
 
 		auto wndSize = windowImpl->GetSize ();
-		auto context = 
-			guiFactory->NewGUIContext (wndSize.first, wndSize.second);
+		std::unique_ptr<EggAche_Impl::GUIContext> context (
+			guiFactory->NewGUIContext (wndSize.first, wndSize.second));
 
 		context->SetBrush (false, 255, 255, 255);
-		context->DrawRect (-10, -10, wndSize.first + 10, wndSize.second + 10);
+		context->DrawRect (-10, -10,
+			(int) (wndSize.first + 10), (int) (wndSize.second + 10));
 
-		this->bgEgg->RecursiveDraw (context, 0, 0);
-		windowImpl->Draw (context, 0, 0);
-
-		delete context;
-		delete guiFactory;
+		this->bgEgg->RecursiveDraw (context.get (), 0, 0);
+		windowImpl->Draw (context.get (), 0, 0);
 	}
 
 	bool Egg::SaveAsImg (std::function<bool (EggAche_Impl::GUIContext *context)> fn) const
 	{
-		auto guiFactory = NewGUIFactory ();
-		auto context =
-			guiFactory->NewGUIContext (this->w, this->h);
+		std::unique_ptr<EggAche_Impl::GUIFactory> guiFactory (
+			NewGUIFactory ());
+		std::unique_ptr<EggAche_Impl::GUIContext> context (
+			guiFactory->NewGUIContext (this->w, this->h));
 
 		context->SetBrush (false, 255, 255, 255);
-		context->DrawRect (-10, -10, this->w + 10, this->h + 10);
+		context->DrawRect (-10, -10, (int) (this->w + 10), (int) (this->h + 10));
 
-		this->RecursiveDraw (context, 0, 0);
-		auto ret = fn (context);
+		this->RecursiveDraw (context.get (), 0, 0);
+		auto ret = fn (context.get ());
 
-		delete context;
-		delete guiFactory;
 		return ret;
 	}
 
@@ -130,9 +133,9 @@ namespace EggAche
 		return windowImpl->IsClosed ();
 	}
 
-	void Window::OnClick (std::function<void (Window *, int, int)> fn)
+	void Window::OnClick (std::function<void (Window *, unsigned, unsigned)> fn)
 	{
-		windowImpl->OnClick ([=] (int x, int y)
+		windowImpl->OnClick ([=] (unsigned x, unsigned y)
 		{
 			fn (this, x, y);
 		});
@@ -146,21 +149,13 @@ namespace EggAche
 		});
 	}
 
-	void Window::OnResized (std::function<void (Window *, int, int)> fn)
-	{
-		windowImpl->OnResized ([=] (int x, int y)
-		{
-			fn (this, x, y);
-		});
-	}
-
 	Egg::Egg (size_t width, size_t height,
 			  int pos_x, int pos_y)
 		: context (nullptr), x (pos_x), y (pos_y), w (width), h (height)
 	{
-		auto guiFactory = NewGUIFactory ();
+		std::unique_ptr<EggAche_Impl::GUIFactory> guiFactory (
+			NewGUIFactory ());
 		context = guiFactory->NewGUIContext (width, height);
-		delete guiFactory;
 	}
 
 	Egg::~Egg ()
@@ -204,20 +199,20 @@ namespace EggAche
 		subEggs.remove (egg);
 	}
 
-	bool Egg::SetPen (unsigned int width,
-					  unsigned int r, unsigned int g, unsigned int b)
+	bool Egg::SetPen (unsigned width,
+					  unsigned r, unsigned g, unsigned b)
 	{
 		return context->SetPen (width, r, g, b);
 	}
 
 	bool Egg::SetBrush (bool isTransparent,
-						unsigned int r, unsigned int g, unsigned int b)
+						unsigned r, unsigned g, unsigned b)
 	{
 		return context->SetBrush (isTransparent, r, g, b);
 	}
 
-	bool Egg::SetFont (unsigned int size, const char *family,
-					   unsigned int r, unsigned int g, unsigned int b)
+	bool Egg::SetFont (unsigned size, const char *family,
+					   unsigned r, unsigned g, unsigned b)
 	{
 		return context->SetFont (size, family, r, g, b);
 	}
@@ -281,16 +276,30 @@ namespace EggAche
 	}
 
 	bool Egg::DrawImg (const char *fileName, int x, int y,
-					   int width, int height)
+					   unsigned width, unsigned height)
 	{
 		return context->DrawImg (fileName, x, y, width, height);
 	}
 
 	bool Egg::DrawImg (const char *fileName, int x, int y,
-					   int width, int height,
-					   unsigned int r, unsigned int g, unsigned int b)
+					   unsigned width, unsigned height,
+					   unsigned r, unsigned g, unsigned b)
 	{
 		return context->DrawImg (fileName, x, y, width, height, r, g, b);
+	}
+
+	bool Egg::DrawImgMask (const char *srcFile,
+						   const char *maskFile,
+						   unsigned width, unsigned height,
+						   int x_pos, int y_pos,
+						   unsigned x_src, unsigned y_src,
+						   unsigned x_msk, unsigned y_msk)
+	{
+		return context->DrawImgMask (srcFile, maskFile,
+									 width, height,
+									 x_pos, y_pos,
+									 x_src, y_src,
+									 x_msk, y_msk);
 	}
 
 	void Egg::Clear ()
