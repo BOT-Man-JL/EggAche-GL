@@ -28,13 +28,9 @@ namespace EggAche
 		std::unique_ptr<EggAche_Impl::GUIFactory> guiFactory (
 			NewGUIFactory ());
 
-		windowImpl = guiFactory->NewWindow (width, height, cap_string);
+		windowImpl = std::unique_ptr<EggAche_Impl::WindowImpl> (
+			guiFactory->NewWindow (width, height, cap_string));
 		windowImpl->OnRefresh (std::bind (&Window::Refresh, this));
-	}
-
-	Window::~Window ()
-	{
-		delete windowImpl;
 	}
 
 	void Window::SetBackground (Canvas *canvas)
@@ -47,85 +43,14 @@ namespace EggAche
 		bgCanvas = nullptr;
 	}
 
-	void Canvas::RecursiveDraw (EggAche_Impl::GUIContext *parentContext,
-								size_t x, size_t y) const
-	{
-		// Actual Position of this Canvas
-		this->context->PaintOnContext (parentContext, x, y);
-
-		for (auto subCanvas : this->subCanvases)
-			subCanvas->RecursiveDraw (parentContext,
-									  x + subCanvas->x, y + subCanvas->y);
-	}
-
 	void Window::Refresh ()
 	{
-		if (IsClosed ())
+		if (IsClosed () || !this->bgCanvas)
 			return;
 
-		if (!this->bgCanvas)
-			return;
-
-		std::unique_ptr<EggAche_Impl::GUIFactory> guiFactory (
-			NewGUIFactory ());
-
-		// Remarks:
-		// Buffering the Drawing Content into a Context
-		// to avoid flash Screen
-
-		auto wndSize = windowImpl->GetSize ();
-		std::unique_ptr<EggAche_Impl::GUIContext> context (
-			guiFactory->NewGUIContext (wndSize.first, wndSize.second));
-
-		context->SetBrush (false, 255, 255, 255);
-		context->DrawRect (-10, -10,
-			(int) (wndSize.first + 10), (int) (wndSize.second + 10));
-
-		this->bgCanvas->RecursiveDraw (context.get (), 0, 0);
-		windowImpl->Draw (context.get (), 0, 0);
-	}
-
-	bool Canvas::SaveAsImg (std::function<bool (EggAche_Impl::GUIContext *context)> fn) const
-	{
-		std::unique_ptr<EggAche_Impl::GUIFactory> guiFactory (
-			NewGUIFactory ());
-		std::unique_ptr<EggAche_Impl::GUIContext> context (
-			guiFactory->NewGUIContext (this->w, this->h));
-
-		context->SetBrush (false, 255, 255, 255);
-		context->DrawRect (-10, -10, (int) (this->w + 10), (int) (this->h + 10));
-
-		this->RecursiveDraw (context.get (), 0, 0);
-		auto ret = fn (context.get ());
-
-		return ret;
-	}
-
-	bool Canvas::SaveAsJpg (const char * fileName) const
-	{
-		auto fn = [&] (EggAche_Impl::GUIContext *context)
-		{
-			return context->SaveAsJpg (fileName);
-		};
-		return SaveAsImg (fn);
-	}
-
-	bool Canvas::SaveAsPng (const char * fileName) const
-	{
-		auto fn = [&] (EggAche_Impl::GUIContext *context)
-		{
-			return context->SaveAsPng (fileName);
-		};
-		return SaveAsImg (fn);
-	}
-
-	bool Canvas::SaveAsBmp (const char *fileName) const
-	{
-		auto fn = [&] (EggAche_Impl::GUIContext *context)
-		{
-			return context->SaveAsBmp (fileName);
-		};
-		return SaveAsImg (fn);
+		if (!this->bgCanvas->isLatest)
+			this->bgCanvas->Buffering ();
+		windowImpl->Draw (this->bgCanvas->buffer.get (), 0, 0);
 	}
 
 	bool Window::IsClosed () const
@@ -159,45 +84,78 @@ namespace EggAche
 
 	Canvas::Canvas (size_t width, size_t height,
 					int pos_x, int pos_y)
-		: context (nullptr), x (pos_x), y (pos_y), w (width), h (height)
+		: isLatest (false),
+		x (pos_x), y (pos_y), w (width), h (height)
 	{
 		std::unique_ptr<EggAche_Impl::GUIFactory> guiFactory (
 			NewGUIFactory ());
-		context = guiFactory->NewGUIContext (width, height);
+		context = std::unique_ptr<EggAche_Impl::GUIContext>(
+			guiFactory->NewGUIContext (width, height));
 	}
 
-	Canvas::~Canvas ()
+	void Canvas::RecursiveDraw (EggAche_Impl::GUIContext *parentContext,
+								size_t x, size_t y) const
 	{
-		delete context;
+		// Actual Position of this Canvas
+		this->context->PaintOnContext (parentContext, x, y);
+
+		for (auto subCanvas : this->subCanvases)
+			subCanvas->RecursiveDraw (parentContext,
+									  x + subCanvas->x, y + subCanvas->y);
+	}
+
+	void Canvas::RecursiveInvalidate ()
+	{
+		this->isLatest = false;
+		for (auto& pa : this->parCanvases)
+			pa->RecursiveInvalidate ();
 	}
 
 	void Canvas::Buffering ()
 	{
-		// Todo:
+		std::unique_ptr<EggAche_Impl::GUIFactory> guiFactory (
+			NewGUIFactory ());
+		buffer = std::unique_ptr<EggAche_Impl::GUIContext> (
+			guiFactory->NewGUIContext (this->w, this->h));
+
+		buffer->SetBrush (false, 255, 255, 255);
+		buffer->DrawRect (-10, -10, (int) (this->w + 10), (int) (this->h + 10));
+
+		this->RecursiveDraw (buffer.get (), 0, 0);
+		isLatest = true;
 	}
 
 	void Canvas::operator+= (Canvas *canvas)
 	{
 		if (canvas != this)
 		{
+			this->RecursiveInvalidate ();
+
 			subCanvases.push_back (canvas);
 			subCanvases.unique ();
+
+			canvas->parCanvases.push_back (this);
+			canvas->parCanvases.unique ();
 		}
 	}
 
 	void Canvas::operator-= (Canvas *canvas)
 	{
+		this->RecursiveInvalidate ();
 		subCanvases.remove (canvas);
+		canvas->parCanvases.remove (this);
 	}
 
 	void Canvas::Move (int scale_x, int scale_y)
 	{
+		this->RecursiveInvalidate ();
 		x = x + scale_x;
 		y = y + scale_y;
 	}
 
 	void Canvas::MoveTo (int pos_x, int pos_y)
 	{
+		this->RecursiveInvalidate ();
 		x = pos_x;
 		y = pos_y;
 	}
@@ -220,24 +178,34 @@ namespace EggAche
 		return context->SetFont (size, family, r, g, b);
 	}
 
+	void Canvas::Clear ()
+	{
+		this->RecursiveInvalidate ();
+		context->Clear ();
+	}
+
 	bool Canvas::DrawLine (int xBeg, int yBeg, int xEnd, int yEnd)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawLine (xBeg, yBeg, xEnd, yEnd);
 	}
 
 	bool Canvas::DrawRect (int xBeg, int yBeg, int xEnd, int yEnd)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawRect (xBeg, yBeg, xEnd, yEnd);
 	}
 
 	bool Canvas::DrawElps (int xBeg, int yBeg, int xEnd, int yEnd)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawElps (xBeg, yBeg, xEnd, yEnd);
 	}
 
 	bool Canvas::DrawRdRt (int xBeg, int yBeg, int xEnd, int yEnd,
 						   int wElps, int hElps)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawRdRt (xBeg, yBeg, xEnd, yEnd,
 								  wElps, hElps);
 	}
@@ -245,6 +213,7 @@ namespace EggAche
 	bool Canvas::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
 						  double angleBeg, double cAngle)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawArc (xLeft, yTop, xRight, yBottom,
 								 angleBeg, cAngle);
 	}
@@ -252,6 +221,7 @@ namespace EggAche
 	bool Canvas::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
 							double angleBeg, double cAngle)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawChord (xLeft, yTop, xRight, yBottom,
 								   angleBeg, cAngle);
 	}
@@ -259,12 +229,14 @@ namespace EggAche
 	bool Canvas::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
 						  double angleBeg, double cAngle)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawPie (xLeft, yTop, xRight, yBottom,
 								 angleBeg, cAngle);
 	}
 
 	bool Canvas::DrawTxt (int xBeg, int yBeg, const char *szText)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawTxt (xBeg, yBeg, szText);
 	}
 
@@ -275,12 +247,14 @@ namespace EggAche
 
 	bool Canvas::DrawImg (const char *fileName, int x, int y)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawImg (fileName, x, y);
 	}
 
 	bool Canvas::DrawImg (const char *fileName, int x, int y,
 						  unsigned width, unsigned height)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawImg (fileName, x, y, width, height);
 	}
 
@@ -291,6 +265,7 @@ namespace EggAche
 							  unsigned x_src, unsigned y_src,
 							  unsigned x_msk, unsigned y_msk)
 	{
+		this->RecursiveInvalidate ();
 		return context->DrawImgMask (srcFile, maskFile,
 									 width, height,
 									 x_pos, y_pos,
@@ -298,9 +273,25 @@ namespace EggAche
 									 x_msk, y_msk);
 	}
 
-	void Canvas::Clear ()
+	bool Canvas::SaveAsJpg (const char * fileName)
 	{
-		context->Clear ();
+		if (!isLatest)
+			this->Buffering ();
+		return buffer->SaveAsJpg (fileName);
+	}
+
+	bool Canvas::SaveAsPng (const char * fileName)
+	{
+		if (!isLatest)
+			this->Buffering ();
+		return buffer->SaveAsPng (fileName);
+	}
+
+	bool Canvas::SaveAsBmp (const char *fileName)
+	{
+		if (!isLatest)
+			this->Buffering ();
+		return buffer->SaveAsBmp (fileName);
 	}
 
 	void MsgBox (const char *szTxt, const char *szCap)

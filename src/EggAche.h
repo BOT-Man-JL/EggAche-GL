@@ -10,6 +10,7 @@
 //#define EGGACHE_XWINDOW
 
 #include <functional>
+#include <memory>
 #include <list>
 #include "EggAche_Impl.h"
 
@@ -27,10 +28,6 @@ namespace EggAche
 		// Remarks:
 		// 1. Create a Window of Logic Size width * height with Caption cap_string;
 		// 2. When an error occurs, throw std::runtime_error
-
-		~Window ();
-		// Remarks:
-		// Destroy the Window
 
 		void SetBackground (Canvas *canvas);				// Set Background Canvas
 		void ClearBackground ();							// Set BgCanvas to NULL
@@ -57,8 +54,8 @@ namespace EggAche
 		// 3. These functions will be called by Background Threads, so LOCK by yourself;
 
 	private:
-		EggAche_Impl::WindowImpl *windowImpl;				// Window Impl Bridge
-		Canvas *bgCanvas;									// Background Canvas
+		std::unique_ptr<EggAche_Impl::WindowImpl> windowImpl;	// Window Impl Bridge
+		Canvas *bgCanvas;										// Background Canvas
 
 		Window (const Window &) = delete;					// Not allow to copy
 		void operator= (const Window &) = delete;			// Not allow to copy
@@ -73,10 +70,6 @@ namespace EggAche
 				int pos_x = 0, int pos_y = 0);					// Canvas' initial postion
 		   // Remarks:
 		   // When an error occurs, throw std::runtime_error
-
-		~Canvas ();
-		// Remarks:
-		// Destroy the Canvas
 
 		void Buffering ();									// Buffering Canvas and Sub Canvases
 		// Remarks:
@@ -197,9 +190,9 @@ namespace EggAche
 		// Positive 'cAngle' indicates counterclockwise motion, and Negative clockwise;
 		// The Pie is closed by drawing 2 Radius of the Angles;
 
-		bool SaveAsJpg (const char *fileName) const;		// "path/*.jpg"
-		bool SaveAsPng (const char *fileName) const;		// "path/*.png"
-		bool SaveAsBmp (const char *fileName) const;		// "path/*.bmp"
+		bool SaveAsJpg (const char *fileName);				// "path/*.jpg"
+		bool SaveAsPng (const char *fileName);				// "path/*.png"
+		bool SaveAsBmp (const char *fileName);				// "path/*.bmp"
 		// Remarks:
 		// 1. Save Canvas' Content into a .jpg/.png/.bmp File;
 		// 2. Performance: bmp = jpg >> png;
@@ -208,14 +201,17 @@ namespace EggAche
 
 	private:
 		int x, y; size_t w, h;								// Postion and Size
-		std::list<const Canvas *> subCanvases;				// Sub Canvases
-		EggAche_Impl::GUIContext *context;					// GUI Impl Bridge
+		std::unique_ptr<EggAche_Impl::GUIContext> context;	// GUI Impl Bridge
 
-		bool SaveAsImg (									// Helper Function of
-						std::function<bool (				// SaveAsJpg/Png/Bmp
-											EggAche_Impl::GUIContext *context)>) const;
+		std::list<Canvas *> subCanvases;				// Sub Canvases
+		std::list<Canvas *> parCanvases;				// Parent Canvases
+
+		bool isLatest;
+		std::unique_ptr<EggAche_Impl::GUIContext> buffer;	// Buffer with White Bg
+
 		void RecursiveDraw (EggAche_Impl::GUIContext *,		// Helper Function of
-							size_t, size_t) const;			// Window.Refresh
+							size_t, size_t) const;			// Buffering
+		void RecursiveInvalidate ();
 		friend void Window::Refresh ();
 
 		Canvas (const Canvas &) = delete;					// Not allow to copy

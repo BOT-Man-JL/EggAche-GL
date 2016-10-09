@@ -9,6 +9,8 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <ctime>
+#include <iostream>
 
 int main (int argc, char *argv[])
 {
@@ -89,9 +91,14 @@ int main (int argc, char *argv[])
 		}
 	});
 
+	// For fps
+	auto cc = 0;
+	auto tt = clock ();
+
 	// Game Loop
 	for (auto iFrame = 0; !window.IsClosed ();)
 	{
+		auto tBeg = clock ();
 		{
 			std::lock_guard<std::mutex> lg (mtx);
 			if (!isPaused)
@@ -104,11 +111,23 @@ int main (int argc, char *argv[])
 				dras[iDir][iFrame].get ()->MoveTo (pos_x, pos_y);
 				bgCanvas += dras[iDir][iFrame].get ();
 				window.Refresh ();
+				bgCanvas.Buffering ();
 				bgCanvas -= dras[iDir][iFrame].get ();
 			}
 		}
 
-		std::this_thread::sleep_for (std::chrono::milliseconds { 50 });
+		// Count fps
+		if (cc > 100)
+		{
+			cc = 0;
+			tt = clock ();
+		}
+		cc++;
+		std::cout << "fps: " << cc * 1000.0 / (clock () - tt) << std::endl;
+
+		auto tElapse = (clock () - tBeg);
+		if (tElapse < 50)
+			std::this_thread::sleep_for (std::chrono::milliseconds { 50 - tElapse });
 	}
 
 	return 0;
