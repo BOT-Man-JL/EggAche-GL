@@ -109,9 +109,9 @@ namespace EggAche_Impl
 		std::pair<size_t, size_t> GetSize () override;
 		bool IsClosed () const override;
 
-		void OnClick (std::function<void (int, int)> fn) override;
+		void OnClick (std::function<void (unsigned, unsigned)> fn) override;
 		void OnPress (std::function<void (char)> fn) override;
-		void OnResized (std::function<void (int, int)> fn) override;
+		void OnResized (std::function<void (unsigned, unsigned)> fn) override;
 		void OnRefresh (std::function<void ()> fn) override;
 
 	protected:
@@ -173,13 +173,13 @@ namespace EggAche_Impl
 					   int xEnd, int yEnd, int wElps, int hElps) override;
 
 		bool DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-					  int xBeg, int yBeg, int xEnd, int yEnd) override;
+					  double angleBeg, double cAngle) override;
 
 		bool DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-						int xBeg, int yBeg, int xEnd, int yEnd) override;
+						double angleBeg, double cAngle) override;
 
 		bool DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-					  int xBeg, int yBeg, int xEnd, int yEnd) override;
+					  double angleBeg, double cAngle) override;
 
 		bool DrawTxt (int xBeg, int yBeg, const char *szText) override;
 		size_t GetTxtWidth (const char *szText) override;
@@ -190,6 +190,13 @@ namespace EggAche_Impl
 					  int r = -1,
 					  int g = -1,
 					  int b = -1) override;
+
+		bool DrawImgMask (const char *srcFile,
+						  const char *maskFile,
+						  unsigned width, unsigned height,
+						  int x_pos, int y_pos,
+						  unsigned x_src, unsigned y_src,
+						  unsigned x_msk, unsigned y_msk) override;
 
 		bool SaveAsJpg (const char *fileName) const override;
 		bool SaveAsPng (const char *fileName) const override;
@@ -405,7 +412,7 @@ namespace EggAche_Impl
 		return _hwnd == NULL;
 	}
 
-	void WindowImpl_Windows::OnClick (std::function<void (int, int)> fn)
+	void WindowImpl_Windows::OnClick (std::function<void (unsigned, unsigned)> fn)
 	{
 		onClick = std::move (fn);
 	}
@@ -415,7 +422,7 @@ namespace EggAche_Impl
 		onPress = std::move (fn);
 	}
 
-	void WindowImpl_Windows::OnResized (std::function<void (int, int)> fn)
+	void WindowImpl_Windows::OnResized (std::function<void (unsigned, unsigned)> fn)
 	{
 		onResized = std::move (fn);
 	}
@@ -702,34 +709,94 @@ namespace EggAche_Impl
 		return true;
 	}
 
-	bool GUIContext_Windows::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
-									  int xBeg, int yBeg, int xEnd, int yEnd)
+	void ConvertAngle (double angle, int &x, int &y)
 	{
-		if (!Arc (_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd))
-			return false;
-		if (!Arc (_hdcMask, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd))
-			return false;
-		return true;
+		const unsigned RADIUS = 1000;
+		const double PI = 3.14159265;
+
+		while (angle < 0)
+			angle += 360;
+		while (angle > 360)
+			angle -= 360;
+
+		x = (int) (RADIUS * cos (angle * PI / 180));
+		y = (int) (RADIUS * sin (angle * PI / 180));
+		y = -y;
+	}
+
+	bool GUIContext_Windows::DrawArc (int xLeft, int yTop, int xRight, int yBottom,
+									  double angleBeg, double cAngle)
+	{
+		int xBeg, yBeg, xEnd, yEnd;
+		if (cAngle > 0)
+		{
+			ConvertAngle (angleBeg, xBeg, yBeg);
+			ConvertAngle (angleBeg + cAngle, xEnd, yEnd);
+		}
+		else
+		{
+			ConvertAngle (angleBeg + cAngle, xBeg, yBeg);
+			ConvertAngle (angleBeg, xEnd, yEnd);
+		}
+
+		auto xCnt = abs (xRight - xLeft) / 2;
+		auto yCnt = abs (yBottom - yTop) / 2;
+		xBeg += xCnt;
+		xEnd += xCnt;
+		yBeg += yCnt;
+		yEnd += yCnt;
+
+		return !!Arc (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
 	bool GUIContext_Windows::DrawChord (int xLeft, int yTop, int xRight, int yBottom,
-										int xBeg, int yBeg, int xEnd, int yEnd)
+										double angleBeg, double cAngle)
 	{
-		if (!Chord (_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd))
-			return false;
-		if (!Chord (_hdcMask, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd))
-			return false;
-		return true;
+		int xBeg, yBeg, xEnd, yEnd;
+		if (cAngle > 0)
+		{
+			ConvertAngle (angleBeg, xBeg, yBeg);
+			ConvertAngle (angleBeg + cAngle, xEnd, yEnd);
+		}
+		else
+		{
+			ConvertAngle (angleBeg + cAngle, xBeg, yBeg);
+			ConvertAngle (angleBeg, xEnd, yEnd);
+		}
+
+		auto xCnt = abs (xRight - xLeft) / 2;
+		auto yCnt = abs (yBottom - yTop) / 2;
+		xBeg += xCnt;
+		xEnd += xCnt;
+		yBeg += yCnt;
+		yEnd += yCnt;
+
+		return !!Chord (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
 	bool GUIContext_Windows::DrawPie (int xLeft, int yTop, int xRight, int yBottom,
-									  int xBeg, int yBeg, int xEnd, int yEnd)
+									  double angleBeg, double cAngle)
 	{
-		if (!Pie (_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd))
-			return false;
-		if (!Pie (_hdcMask, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd))
-			return false;
-		return true;
+		int xBeg, yBeg, xEnd, yEnd;
+		if (cAngle > 0)
+		{
+			ConvertAngle (angleBeg, xBeg, yBeg);
+			ConvertAngle (angleBeg + cAngle, xEnd, yEnd);
+		}
+		else
+		{
+			ConvertAngle (angleBeg + cAngle, xBeg, yBeg);
+			ConvertAngle (angleBeg, xEnd, yEnd);
+		}
+
+		auto xCnt = abs (xRight - xLeft) / 2;
+		auto yCnt = abs (yBottom - yTop) / 2;
+		xBeg += xCnt;
+		xEnd += xCnt;
+		yBeg += yCnt;
+		yEnd += yCnt;
+
+		return !!Pie (this->_hdc, xLeft, yTop, xRight, yBottom, xBeg, yBeg, xEnd, yEnd);
 	}
 
 	bool GUIContext_Windows::DrawTxt (int xBeg, int yBeg, const char * szText)
@@ -873,6 +940,75 @@ namespace EggAche_Impl
 	}
 
 #endif
+
+	bool GUIContext_Windows::DrawImgMask (
+		const char *srcFile,
+		const char *maskFile,
+		unsigned width, unsigned height,
+		int x_pos, int y_pos,
+		unsigned x_src, unsigned y_src,
+		unsigned x_msk, unsigned y_msk)
+	{
+		auto hSrcBmp = (HBITMAP) LoadImageA (NULL, srcFile, IMAGE_BITMAP,
+											 0, 0, LR_LOADFROMFILE);
+		auto hMskBmp = (HBITMAP) LoadImageA (NULL, maskFile, IMAGE_BITMAP,
+											 0, 0, LR_LOADFROMFILE);
+		if (!hSrcBmp || !hMskBmp)
+		{
+			if (hSrcBmp) DeleteObject (hSrcBmp);
+			if (hMskBmp) DeleteObject (hMskBmp);
+			return false;
+		}
+
+		auto hdcSrc = CreateCompatibleDC (this->_hdc);
+		auto hdcMsk = CreateCompatibleDC (this->_hdc);
+		if (!hdcSrc || !hdcMsk)
+		{
+			if (hdcSrc) DeleteDC (hdcSrc);
+			if (hdcMsk) DeleteDC (hdcMsk);
+			DeleteObject (hSrcBmp);
+			DeleteObject (hMskBmp);
+			return false;
+		}
+		SelectObject (hdcSrc, hSrcBmp);
+		SelectObject (hdcMsk, hMskBmp);
+
+		if (!BitBlt (_hdc, x_pos, y_pos, width, height,
+					 hdcMsk, x_msk, y_msk, SRCAND))
+		{
+			DeleteDC (hdcSrc);
+			DeleteDC (hdcMsk);
+			DeleteObject (hSrcBmp);
+			DeleteObject (hMskBmp);
+			return false;
+		}
+
+		if (!BitBlt (_hdc, x_pos, y_pos, width, height,
+					 hdcSrc, x_src, y_src, SRCPAINT))
+		{
+			DeleteDC (hdcSrc);
+			DeleteDC (hdcMsk);
+			DeleteObject (hSrcBmp);
+			DeleteObject (hMskBmp);
+			return false;
+		}
+
+		if (!BitBlt (_hdcMask, x_pos, y_pos, width, height,
+					 hdcMsk, x_msk, y_msk, SRCAND))
+		{
+			DeleteDC (hdcSrc);
+			DeleteDC (hdcMsk);
+			DeleteObject (hSrcBmp);
+			DeleteObject (hMskBmp);
+			return false;
+		}
+
+		DeleteDC (hdcSrc);
+		DeleteDC (hdcMsk);
+		DeleteObject (hSrcBmp);
+		DeleteObject (hMskBmp);
+		return true;
+	}
 
 #ifdef _MSC_VER
 	// Using GDI+ to Encode Images
