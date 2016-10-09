@@ -24,7 +24,7 @@ int main (int argc, char *argv[])
 	{ { 66, 94 }, { 68, 82 }, { 95, 99 }, { 95, 99 } };
 
 	// Init Window
-	Window window (xWnd, yWnd);
+	Window window (xWnd, yWnd, "Little Dragon");
 	Canvas bgCanvas (xWnd, yWnd);
 	window.SetBackground (&bgCanvas);
 	bgCanvas.DrawImg ("Assets/bg.bmp", 0, 0, xWnd, yWnd);
@@ -96,6 +96,7 @@ int main (int argc, char *argv[])
 	auto tt = clock ();
 
 	// Game Loop
+	Canvas *pDra = nullptr;
 	for (auto iFrame = 0; !window.IsClosed ();)
 	{
 		auto tBeg = clock ();
@@ -108,11 +109,15 @@ int main (int argc, char *argv[])
 				if (iFrame == cDraPerDir) iFrame = 0;
 
 				// Draw
-				dras[iDir][iFrame].get ()->MoveTo (pos_x, pos_y);
-				bgCanvas += dras[iDir][iFrame].get ();
+				if (pDra != nullptr)
+					bgCanvas -= pDra;
+				pDra = dras[iDir][iFrame].get ();
+				pDra->MoveTo (pos_x, pos_y);
+				bgCanvas += pDra;
 				window.Refresh ();
+
+				// Buffering for next Frame
 				bgCanvas.Buffering ();
-				bgCanvas -= dras[iDir][iFrame].get ();
 			}
 		}
 

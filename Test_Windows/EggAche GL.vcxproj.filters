@@ -26,7 +26,7 @@
     <ClCompile Include="..\src\EggAche.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Samples\Basic.cpp">
+    <ClCompile Include="..\Samples\Animation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

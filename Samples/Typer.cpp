@@ -14,7 +14,7 @@ int main (int argc, char *argv[])
 	using namespace EggAche;
 
 	size_t width = 800, height = 600;
-	Window window (width, height, "Typer");
+	Window window (width, height, "Little Typer");
 
 	auto canvas = std::unique_ptr<Canvas> (new Canvas (width, height));
 	window.SetBackground (canvas.get ());

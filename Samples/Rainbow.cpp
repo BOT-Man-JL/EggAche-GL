@@ -12,7 +12,7 @@ int main (int argc, char *argv[])
 	using namespace EggAche;
 
 	const auto wndSize = 300;
-	Window window (wndSize, wndSize, "Rainbow Animation");
+	Window window (wndSize, wndSize, "Little Rainbow");
 	Canvas canvas (wndSize, wndSize);
 	window.SetBackground (&canvas);
 

@@ -134,8 +134,8 @@ while (!window.IsClosed ())             // Rewrite this Part
 ## More Samples
 
 - [Get Started's Full Code](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/Samples/Basic.cpp)
-- [Running Dragon (Buffering and *fps*)](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Animation.cpp)
-- [Little Responsive UI Typer](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Typer.cpp)
+- [Running Dragon (*Buffering* and *fps*)](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Animation.cpp)
+- [*Responsive* Typer](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Typer.cpp)
 - [Beautiful Rainbow Animation](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Rainbow.cpp)
 
 ## Update History
