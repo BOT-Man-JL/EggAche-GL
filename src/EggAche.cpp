@@ -43,14 +43,14 @@ namespace EggAche
 		bgCanvas = nullptr;
 	}
 
-	void Window::Refresh ()
+	bool Window::Refresh ()
 	{
 		if (IsClosed () || !this->bgCanvas)
-			return;
+			return false;
 
 		if (!this->bgCanvas->isLatest)
 			this->bgCanvas->Buffering ();
-		windowImpl->Draw (this->bgCanvas->buffer.get (), 0, 0);
+		return windowImpl->Draw (this->bgCanvas->buffer.get (), 0, 0);
 	}
 
 	bool Window::IsClosed () const
@@ -58,28 +58,58 @@ namespace EggAche
 		return windowImpl->IsClosed ();
 	}
 
+	// Basic Events
 	void Window::OnClick (std::function<void (Window *, unsigned, unsigned)> fn)
 	{
 		windowImpl->OnClick ([=] (unsigned x, unsigned y)
-		{
-			fn (this, x, y);
-		});
+		{ fn (this, x, y); });
 	}
-
 	void Window::OnPress (std::function<void (Window *, char)> fn)
 	{
 		windowImpl->OnPress ([=] (char ch)
-		{
-			fn (this, ch);
-		});
+		{ fn (this, ch); });
 	}
-
 	void Window::OnResized (std::function<void (Window *, unsigned, unsigned)> fn)
 	{
 		windowImpl->OnResized ([=] (unsigned x, unsigned y)
-		{
-			fn (this, x, y);
-		});
+		{ fn (this, x, y); });
+	}
+
+	// New Events
+	void Window::OnMouseMove (std::function<void (Window *, unsigned, unsigned)> fn)
+	{
+		windowImpl->OnMouseMove ([=] (unsigned x, unsigned y)
+		{ fn (this, x, y); });
+	}
+	void Window::OnLButtonDown (std::function<void (Window *, unsigned, unsigned)> fn)
+	{
+		windowImpl->OnLButtonDown ([=] (unsigned x, unsigned y)
+		{ fn (this, x, y); });
+	}
+	void Window::OnRButtonDown (std::function<void (Window *, unsigned, unsigned)> fn)
+	{
+		windowImpl->OnRButtonDown ([=] (unsigned x, unsigned y)
+		{ fn (this, x, y); });
+	}
+	void Window::OnLButtonUp (std::function<void (Window *, unsigned, unsigned)> fn)
+	{
+		windowImpl->OnLButtonUp ([=] (unsigned x, unsigned y)
+		{ fn (this, x, y); });
+	}
+	void Window::OnRButtonUp (std::function<void (Window *, unsigned, unsigned)> fn)
+	{
+		windowImpl->OnRButtonUp ([=] (unsigned x, unsigned y)
+		{ fn (this, x, y); });
+	}
+	void Window::OnKeyDown (std::function<void (Window *, char)> fn)
+	{
+		windowImpl->OnKeyDown ([=] (char ch)
+		{ fn (this, ch); });
+	}
+	void Window::OnKeyUp (std::function<void (Window *, char)> fn)
+	{
+		windowImpl->OnKeyUp ([=] (char ch)
+		{ fn (this, ch); });
 	}
 
 	Canvas::Canvas (size_t width, size_t height,

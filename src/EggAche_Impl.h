@@ -18,7 +18,7 @@ namespace EggAche_Impl
 	public:
 		virtual ~WindowImpl () {}
 
-		virtual void Draw (const GUIContext *context,
+		virtual bool Draw (const GUIContext *context,
 						   size_t x, size_t y) = 0;
 
 		virtual std::pair<size_t, size_t> GetSize () = 0;
@@ -28,6 +28,14 @@ namespace EggAche_Impl
 		virtual void OnPress (std::function<void (char)> fn) = 0;
 		virtual void OnResized (std::function<void (unsigned, unsigned)> fn) = 0;
 		virtual void OnRefresh (std::function<void ()> fn) = 0;
+
+		virtual void OnMouseMove (std::function<void (unsigned, unsigned)> fn) = 0;
+		virtual void OnLButtonDown (std::function<void (unsigned, unsigned)> fn) = 0;
+		virtual void OnRButtonDown (std::function<void (unsigned, unsigned)> fn) = 0;
+		virtual void OnLButtonUp (std::function<void (unsigned, unsigned)> fn) = 0;
+		virtual void OnRButtonUp (std::function<void (unsigned, unsigned)> fn) = 0;
+		virtual void OnKeyDown (std::function<void (char)> fn) = 0;
+		virtual void OnKeyUp (std::function<void (char)> fn) = 0;
 	};
 
 	class GUIContext

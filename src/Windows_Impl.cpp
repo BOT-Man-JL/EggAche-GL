@@ -105,7 +105,7 @@ namespace EggAche_Impl
 							const char *cap_string);
 		~WindowImpl_Windows () override;
 
-		void Draw (const GUIContext *context, size_t x, size_t y) override;
+		bool Draw (const GUIContext *context, size_t x, size_t y) override;
 
 		std::pair<size_t, size_t> GetSize () override;
 		bool IsClosed () const override;
@@ -114,6 +114,14 @@ namespace EggAche_Impl
 		void OnPress (std::function<void (char)> fn) override;
 		void OnResized (std::function<void (unsigned, unsigned)> fn) override;
 		void OnRefresh (std::function<void ()> fn) override;
+
+		void OnMouseMove (std::function<void (unsigned, unsigned)> fn) override;
+		void OnLButtonDown (std::function<void (unsigned, unsigned)> fn) override;
+		void OnRButtonDown (std::function<void (unsigned, unsigned)> fn) override;
+		void OnLButtonUp (std::function<void (unsigned, unsigned)> fn) override;
+		void OnRButtonUp (std::function<void (unsigned, unsigned)> fn) override;
+		void OnKeyDown (std::function<void (char)> fn) override;
+		void OnKeyUp (std::function<void (char)> fn) override;
 
 	protected:
 		size_t		_cxClient, _cyClient;
@@ -127,6 +135,14 @@ namespace EggAche_Impl
 		std::function<void (char)> onPress;
 		std::function<void (unsigned, unsigned)> onResized;
 		std::function<void ()> onRefresh;
+
+		std::function<void (unsigned, unsigned)> onMouseMove;
+		std::function<void (unsigned, unsigned)> onLButtonDown;
+		std::function<void (unsigned, unsigned)> onRButtonDown;
+		std::function<void (unsigned, unsigned)> onLButtonUp;
+		std::function<void (unsigned, unsigned)> onRButtonUp;
+		std::function<void (char)> onKeyDown;
+		std::function<void (char)> onKeyUp;
 
 		HwndManager _hwndManager;
 #ifdef _MSC_VER
@@ -230,7 +246,7 @@ namespace EggAche_Impl
 			std::function<bool (BYTE *pData,
 								BITMAPINFOHEADER *pbmInfoHeader)> fnSave) const;
 #endif
-		friend void WindowImpl_Windows::Draw (const GUIContext *, size_t, size_t);
+		friend bool WindowImpl_Windows::Draw (const GUIContext *, size_t, size_t);
 
 		GUIContext_Windows (const GUIContext_Windows &) = delete;		// Not allow to copy
 		void operator= (const GUIContext_Windows &) = delete;			// Not allow to copy
@@ -374,14 +390,15 @@ namespace EggAche_Impl
 			SendMessage (this->_hwnd, WM_CLOSE, 0, 0);
 	}
 
-	void WindowImpl_Windows::Draw (const GUIContext *context,
+	bool WindowImpl_Windows::Draw (const GUIContext *context,
 								   size_t x, size_t y)
 	{
 		if (this->_hwnd == NULL)
-			return;
+			return false;
 
 		auto hdcWnd = GetDC (this->_hwnd);
-		if (!hdcWnd) throw std::runtime_error ("Draw Failed at GetDC");
+		if (!hdcWnd)
+			return false;
 
 		// Assume that context is GUIContext_Windows
 		auto _context = static_cast<const GUIContext_Windows *> (context);
@@ -390,10 +407,11 @@ namespace EggAche_Impl
 							 GUIContext_Windows::_colorMask))
 		{
 			ReleaseDC (this->_hwnd, hdcWnd);
-			throw std::runtime_error ("Draw Failed at TransparentBlt");
+			return false;
 		}
 
 		ReleaseDC (this->_hwnd, hdcWnd);
+		return true;
 	}
 
 	std::pair<size_t, size_t> WindowImpl_Windows::GetSize ()
@@ -410,20 +428,46 @@ namespace EggAche_Impl
 	{
 		onClick = std::move (fn);
 	}
-
 	void WindowImpl_Windows::OnPress (std::function<void (char)> fn)
 	{
 		onPress = std::move (fn);
 	}
-
 	void WindowImpl_Windows::OnResized (std::function<void (unsigned, unsigned)> fn)
 	{
 		onResized = std::move (fn);
 	}
-
 	void WindowImpl_Windows::OnRefresh (std::function<void ()> fn)
 	{
 		onRefresh = std::move (fn);
+	}
+
+	void WindowImpl_Windows::OnMouseMove (std::function<void (unsigned, unsigned)> fn)
+	{
+		onMouseMove = std::move (fn);
+	}
+	void WindowImpl_Windows::OnLButtonDown (std::function<void (unsigned, unsigned)> fn)
+	{
+		onLButtonDown = std::move (fn);
+	}
+	void WindowImpl_Windows::OnRButtonDown (std::function<void (unsigned, unsigned)> fn)
+	{
+		onRButtonDown = std::move (fn);
+	}
+	void WindowImpl_Windows::OnLButtonUp (std::function<void (unsigned, unsigned)> fn)
+	{
+		onLButtonUp = std::move (fn);
+	}
+	void WindowImpl_Windows::OnRButtonUp (std::function<void (unsigned, unsigned)> fn)
+	{
+		onRButtonUp = std::move (fn);
+	}
+	void WindowImpl_Windows::OnKeyDown (std::function<void (char)> fn)
+	{
+		onKeyDown = std::move (fn);
+	}
+	void WindowImpl_Windows::OnKeyUp (std::function<void (char)> fn)
+	{
+		onKeyUp = std::move (fn);
 	}
 
 	LRESULT CALLBACK WindowImpl_Windows::_WndProc (
@@ -435,8 +479,31 @@ namespace EggAche_Impl
 
 		switch (message)
 		{
+		case WM_MOUSEMOVE:
+			if ((*hwndMapper)[hwnd]->onMouseMove)
+				(*hwndMapper)[hwnd]->onMouseMove (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
+			return 0;
+
+		case WM_LBUTTONDOWN:
+			if ((*hwndMapper)[hwnd]->onLButtonDown)
+				(*hwndMapper)[hwnd]->onLButtonDown (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
+			return 0;
+
+		case WM_RBUTTONDOWN:
+			if ((*hwndMapper)[hwnd]->onRButtonDown)
+				(*hwndMapper)[hwnd]->onRButtonDown (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
+			return 0;
+
 		case WM_LBUTTONUP:
+			if ((*hwndMapper)[hwnd]->onLButtonUp)
+				(*hwndMapper)[hwnd]->onLButtonUp (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
+			if ((*hwndMapper)[hwnd]->onClick)
+				(*hwndMapper)[hwnd]->onClick (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
+			return 0;
+
 		case WM_RBUTTONUP:
+			if ((*hwndMapper)[hwnd]->onRButtonUp)
+				(*hwndMapper)[hwnd]->onRButtonUp (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
 			if ((*hwndMapper)[hwnd]->onClick)
 				(*hwndMapper)[hwnd]->onClick (GET_X_LPARAM (lParam), GET_Y_LPARAM (lParam));
 			return 0;
@@ -444,6 +511,14 @@ namespace EggAche_Impl
 		case WM_CHAR:
 			if ((*hwndMapper)[hwnd]->onPress)
 				(*hwndMapper)[hwnd]->onPress ((char) wParam);
+			return 0;
+		case WM_KEYDOWN:
+			if ((*hwndMapper)[hwnd]->onKeyDown && wParam >= 0x41 && wParam <= 0x5A)
+				(*hwndMapper)[hwnd]->onKeyDown ((char) (wParam - 0x41) + 'A');
+			return 0;
+		case WM_KEYUP:
+			if ((*hwndMapper)[hwnd]->onKeyUp && wParam >= 0x41 && wParam <= 0x5A)
+				(*hwndMapper)[hwnd]->onKeyUp ((char) (wParam - 0x41) + 'A');
 			return 0;
 
 		case WM_SIZE:
@@ -1161,7 +1236,7 @@ namespace EggAche_Impl
 	{
 		// Not Implemented
 		return false;
-}
+	}
 #endif
 
 	void GUIContext_Windows::Clear ()

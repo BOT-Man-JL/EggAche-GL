@@ -31,7 +31,7 @@ namespace EggAche
 
 		void SetBackground (Canvas *canvas);				// Set Background Canvas
 		void ClearBackground ();							// Set BgCanvas to NULL
-		void Refresh ();									// Refresh the Window
+		bool Refresh ();									// Refresh the Window
 		// Remarks:
 		// 1. Call this function everytime you want to Render
 		//    the Background Canvas and its Sub Canvases
@@ -50,8 +50,22 @@ namespace EggAche
 		// If you click or press a key on Window, back-end will callback fn;
 		// 1. Calling onClick with (unsigned x, unsigned y) means point (x, y) is Clicked;
 		// 2. Calling onPress with (char ch) means character 'ch' is Inputted;
-		// 1. Calling onResized with (unsigned x, unsigned y) means Size is x * y;
-		// 3. These functions will be called by Background Threads, so LOCK by yourself;
+		// 3. Calling onResized with (unsigned x, unsigned y) means Size is x * y;
+		// 4. These functions will be called by Background Threads, so LOCK by yourself;
+
+		void OnMouseMove (std::function<void (Window *, unsigned, unsigned)> fn);
+		void OnLButtonDown (std::function<void (Window *, unsigned, unsigned)> fn);
+		void OnRButtonDown (std::function<void (Window *, unsigned, unsigned)> fn);
+		void OnLButtonUp (std::function<void (Window *, unsigned, unsigned)> fn);
+		void OnRButtonUp (std::function<void (Window *, unsigned, unsigned)> fn);
+		// Remarks:
+		// Params are Similar to OnClick
+
+		void OnKeyDown (std::function<void (Window *, char)> fn);
+		void OnKeyUp (std::function<void (Window *, char)> fn);
+		// Remarks:
+		// Params are Similar to OnPress
+		// Only Support 'A' - 'Z' in this Version (If needed, you can Add by yourself :-)
 
 	private:
 		std::unique_ptr<EggAche_Impl::WindowImpl> windowImpl;	// Window Impl Bridge
@@ -212,7 +226,7 @@ namespace EggAche
 		void RecursiveDraw (EggAche_Impl::GUIContext *,		// Helper Function of
 							size_t, size_t) const;			// Buffering
 		void RecursiveInvalidate ();
-		friend void Window::Refresh ();
+		friend bool Window::Refresh ();
 
 		Canvas (const Canvas &) = delete;					// Not allow to copy
 		void operator= (const Canvas &) = delete;			// Not allow to copy

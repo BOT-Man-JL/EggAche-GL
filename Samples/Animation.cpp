@@ -20,6 +20,7 @@ int main (int argc, char *argv[])
 	const auto xWnd = 640, yWnd = 480;
 	const auto cDir = 4;
 	const auto cDraPerDir = 8;
+	const auto stepLen = 10;
 	const std::vector<std::pair<size_t, size_t>> draSize
 	{ { 66, 94 }, { 68, 82 }, { 95, 99 }, { 95, 99 } };
 
@@ -48,50 +49,102 @@ int main (int argc, char *argv[])
 		}
 
 	// Shared Data
-	auto isPaused = false;
 	auto iDir = 0;
+	bool isMouseDown = false;
+	std::vector<bool> isKeyDown (4, false);
 	auto pos_x = 0, pos_y = 0;
+	auto mouse_x = 0, mouse_y = 0;
 	std::mutex mtx;
 
-	// Handle KeyPress
-	window.OnPress ([&] (Window*, char ch)
+	// Fix Pos
+	auto fixPos = [&] ()
+	{
+		if (pos_x < 0)
+			pos_x = 0;
+		if (pos_x > xWnd - draSize[iDir].first)
+			pos_x = xWnd - draSize[iDir].first;
+
+		if (pos_y < 0)
+			pos_y = 0;
+		if (pos_y > yWnd - draSize[iDir].second)
+			pos_y = yWnd - draSize[iDir].second;
+	};
+
+	// Handle Mouse
+	window.OnLButtonDown ([&] (Window*, unsigned x, unsigned y)
 	{
 		std::lock_guard<std::mutex> lg (mtx);
+		isMouseDown = true;
+	});
+	window.OnLButtonUp ([&] (Window*, unsigned x, unsigned y)
+	{
+		std::lock_guard<std::mutex> lg (mtx);
+		isMouseDown = false;
+	});
+	window.OnMouseMove ([&] (Window*, unsigned x, unsigned y)
+	{
+		std::lock_guard<std::mutex> lg (mtx);
+		mouse_x = x - draSize[iDir].first / 2;
+		mouse_y = y - draSize[iDir].second / 2;
+	});
+
+	// Handle Key
+	window.OnKeyDown ([&] (Window*, char ch)
+	{
+		std::lock_guard<std::mutex> lg (mtx);
+		auto isValid = false;
 		switch (ch)
 		{
 		case 'W':
-		case 'w':
 			iDir = 0;
-			pos_y -= 10;
-			if (pos_y < 0) pos_y = 0;
+			isValid = true;
 			break;
 		case 'S':
-		case 's':
 			iDir = 1;
-			pos_y += 10;
-			if (pos_y > yWnd) pos_y = yWnd;
+			isValid = true;
 			break;
 		case 'A':
-		case 'a':
 			iDir = 2;
-			pos_x -= 10;
-			if (pos_x < 0) pos_x = 0;
+			isValid = true;
 			break;
 		case 'D':
-		case 'd':
 			iDir = 3;
-			pos_x += 10;
-			if (pos_x > xWnd) pos_x = xWnd;
-			break;
-		case ' ':
-			isPaused = !isPaused;
+			isValid = true;
 			break;
 		default:
 			break;
 		}
+		if (isValid)
+			isKeyDown[iDir] = true;
+	});
+
+	window.OnKeyUp ([&] (Window*, char ch)
+	{
+		std::lock_guard<std::mutex> lg (mtx);
+		auto iDirKey = -1;
+		switch (ch)
+		{
+		case 'W':
+			iDirKey = 0;
+			break;
+		case 'S':
+			iDirKey = 1;
+			break;
+		case 'A':
+			iDirKey = 2;
+			break;
+		case 'D':
+			iDirKey = 3;
+			break;
+		default:
+			break;
+		}
+		if (iDirKey != -1)
+			isKeyDown[iDirKey] = false;
 	});
 
 	// For fps
+	const auto sampleCount = 100;
 	auto cc = 0;
 	auto tt = clock ();
 
@@ -102,34 +155,68 @@ int main (int argc, char *argv[])
 		auto tBeg = clock ();
 		{
 			std::lock_guard<std::mutex> lg (mtx);
-			if (!isPaused)
+
+			// Draw Previous Frame
+			window.Refresh ();
+
+			// Update pos
+			if (isKeyDown[0])
+				pos_y -= stepLen;
+			if (isKeyDown[1])
+				pos_y += stepLen;
+			if (isKeyDown[2])
+				pos_x -= stepLen;
+			if (isKeyDown[3])
+				pos_x += stepLen;
+			if (isMouseDown)
 			{
-				// Control Frame
-				++iFrame;
-				if (iFrame == cDraPerDir) iFrame = 0;
-
-				// Draw
-				if (pDra != nullptr)
-					bgCanvas -= pDra;
-				pDra = dras[iDir][iFrame].get ();
-				pDra->MoveTo (pos_x, pos_y);
-				bgCanvas += pDra;
-				window.Refresh ();
-
-				// Buffering for next Frame
-				bgCanvas.Buffering ();
+				if (mouse_x - pos_x > stepLen)
+				{
+					pos_x += stepLen;
+					iDir = 3;
+				}
+				else if (pos_x - mouse_x > stepLen)
+				{
+					pos_x -= stepLen;
+					iDir = 2;
+				}
+				if (mouse_y - pos_y > stepLen)
+				{
+					pos_y += stepLen;
+					iDir = 1;
+				}
+				else if (pos_y - mouse_y > stepLen)
+				{
+					pos_y -= stepLen;
+					iDir = 0;
+				}
 			}
+			fixPos ();
+
+			// Control Frame
+			++iFrame;
+			if (iFrame == cDraPerDir) iFrame = 0;
+
+			// Compute what to Draw
+			if (pDra != nullptr)
+				bgCanvas -= pDra;
+			pDra = dras[iDir][iFrame].get ();
+			pDra->MoveTo (pos_x, pos_y);
+			bgCanvas += pDra;
+
+			// Buffering for next Refresh
+			bgCanvas.Buffering ();
 		}
 
 		// Count fps
-		if (cc > 100)
+		if (cc > sampleCount)
 		{
 			cc = 0;
 			tt = clock ();
 		}
-		cc++;
-		std::cout << "fps: " << cc * 1000.0 / (clock () - tt) << std::endl;
+		std::cout << "fps: " << cc++ * 1000.0 / (clock () - tt) << std::endl;
 
+		// Sleep
 		auto tElapse = (clock () - tBeg);
 		if (tElapse < 50)
 			std::this_thread::sleep_for (std::chrono::milliseconds { 50 - tElapse });
