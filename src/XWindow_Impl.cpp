@@ -263,7 +263,7 @@ namespace EggAche_Impl
     void WindowManager::EventHandler ()
     {
         // Add refCount of DisplayManager
-        DisplayManager ();
+        DisplayManager _dependency ();
 
         XEvent event;
         while (auto wndMapper = WindowManager::hwndMapper ())
