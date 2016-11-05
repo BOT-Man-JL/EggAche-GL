@@ -133,14 +133,14 @@ while (!window.IsClosed ())             // Rewrite this Part
 
 ## More Samples
 
-- [Get Started's Full Code](https://github.com/BOT-Man-JL/EggAche-GL/tree/master/Samples/Basic.cpp)
-- [Running Dragon (*Buffering* and *fps*)](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Animation.cpp)
-- [*Responsive* Typer](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Typer.cpp)
-- [Beautiful Rainbow Animation](https://github.com/BOT-Man-JL/EggAche-GL/blob/master/Samples/Rainbow.cpp)
+- [Get Started's Full Code](Samples/Basic.cpp)
+- [Running Dragon (*Buffering* and *fps*)](Samples/Animation.cpp)
+- [*Responsive* Typer](Samples/Typer.cpp)
+- [Beautiful Rainbow Animation](Samples/Rainbow.cpp)
 
 ## Update History
 
-- [v1.0](https://github.com/BOT-Man-JL/EggAche-GL/raw/master/EggAche_C.zip)
+- [v1.0](/EggAche_C.zip)
   - This version is written in **C**
   - There's **No Classes and Objects**
   - There's only **GDI Wrappers**...
@@ -151,10 +151,9 @@ while (!window.IsClosed ())             // Rewrite this Part
   - **Decoupling** Platform Dependency
   - Introducing **C++ 11 Features** (*concept, lambda, stl...*)
   - Using **Bridge Pattern** to Separate the Common Interface (`EggAche_Impl.h`) from Platform-specific Implementations (`*_Impl.h`)
-  - Using **Template Method** to Implement the Common Behaviors (`EggAche.cpp`)
   - Using **Abstract Factory** to Produce Platform-specific Implementation Objects for diverse Platforms (`EggAche.cpp`)
   - Using **Composite Pattern** to Define the Layout of Canvases (`EggAche.h`)
   - Using **Adapter Pattern** to Convert the interface of `WindowImpl Events` into `Window Events` (`EggAche.cpp`)
   - Using **Observer Pattern** to Notify Window Events and Auto Redraw (`*_Impl.h`)
-  - Using **Strategy Pattern** to Implement *Inversion of Control* in Window Event System and Saving Images (`EggAche.h`, `EggAche.cpp`, `*_Impl.cpp`)
+  - Using **Dependency Injection** in Window Event System and Saving Images (`EggAche.h`, `EggAche.cpp`, `*_Impl.cpp`)
   - Using **[RAII](https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization) ~~Singleton Pattern~~** to Maintain the Global Resource Manager (`*_Impl.h`)
